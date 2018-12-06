@@ -1,7 +1,8 @@
 # EXT文件系统原理 #
 
-## 文件系统结构 ##
+## 一、文件系统结构 ##
 开局一张图，内容全靠编
+
 ![文件系统结构](img/structure.png)
 
 ## Block ##
@@ -43,3 +44,15 @@ inode的大小数量、block大小数量、使用量、剩余量、文件系统�
 - 设备文件、FIFO和socket等特殊文件没有数据块，设备文件的主设备号和次设备号保存在inode中
 
 ## dumpe2fs ##
+对于ext文件系统家族，我们可以使用dumpe2fs命令查看其诸多信息
+![dumpe2fs](img/dumpe2fs.png)
+从上图中我们能看到很多有用的信息，此文件系统的挂载点、Inode号总数、Block总数、保留的Block数量、空闲Inode号数量、空闲Block数量、每个Block的大小、每个块组的block数量等。
+
+## Boot Block（引导块） ##
+存在于装了操作系统的主分区和装了操作系统的逻辑分区上的第一个块，不是每个分区都有这个Boot Block。它占用1024字节，里边存放的是Boot loader，称为VBR(主分区装操作系统时)或EBR(扩展分区装操作系统时)。当操作系统开机时，会首先加载MBR中的boot loader，然后定位到操作系统所在分区的Boot sector上加载此处的Boot loader。当安装了多个操作系统时，在加载MBR中的Boot loader后会列出所装的操作系统列表，列表上的各个操作系统指向它们所在分区的Boot sector上。
+MBR全称是Master Boot Record,中文名叫“主引导记录”，位于硬盘第一个扇区的前446字节。一个扇区共512字节，剩下另外的64个字节用于存储“硬盘分区表”DPT(Disk Partition Table)，最后两个字节“55，AA”是分区表结束的标志。整个512字节构成了硬盘的主引导扇区。
+
+![dumpe2fs](img/MBR.png)
+
+通常我们也用dd if=/dev/XXX of=mbr bs=512 count=1来备份MBR。
+
