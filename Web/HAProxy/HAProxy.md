@@ -84,10 +84,82 @@ An optional ‘use_domain_only’ parameter is available, for reducing the hash 
 
 This algorithm is static by default, which means that changing a server’s weight on the fly will have no effect, but this can be changed using “hash-type”.
 
-- rdp-cookie()
+- rdp-cookie(name)
+
+根据cookie(name)来锁定并哈希每一次TCP请求
 
 The RDP cookie (or “mstshash” if omitted) will be looked up and hashed for each incoming TCP request. Just as with the equivalent ACL ‘req_rdp_cookie()’ function, the name is not case-sensitive. This mechanism is useful as a degraded persistence mode, as it makes it possible to always send the same user (or the same session ID) to the same server. If the cookie is not found, the normal roundrobin algorithm is used instead.
 
 Note that for this to work, the frontend must ensure that an RDP cookie is already present in the request buffer. For this you must use ‘tcp-request content accept’ rule combined with a ‘req_rdp_cookie_cnt’ ACL.
 
 This algorithm is static by default, which means that changing a server’s weight on the fly will have no effect, but this can be changed using “hash-type”. See also the rdp_cookie pattern fetch function.
+
+## 会话保持方式 ##
+
+**source**
+
+HAProxy将客户端IP经过hash计算，通过hash值将流量转发到后端服务器上，同一个源IP的请求可以转发到同一个backend server。当后端一台服务器挂了以后会造成部分session丢失，并且如果当某个源IP的请求量较大，或者用户请求经过NAT后到达HAProxy，会导致backend server的负载严重不均衡。
+
+**cookie**
+
+将服务端返回给客户端的cookie中插入(或添加加前缀)haproxy定义的后端的服务器COOKIE ID。
+
+HAProxy支持三种设置cookie的方式：
+
+- insert
+
+	      This keyword indicates that the persistence cookie will have to
+          be inserted by haproxy in server responses if the client did not
+
+          already have a cookie that would have permitted it to access this
+          server. When used without the "preserve" option, if the server
+          emits a cookie with the same name, it will be remove before
+          processing.  For this reason, this mode can be used to upgrade
+          existing configurations running in the "rewrite" mode. The cookie
+          will only be a session cookie and will not be stored on the
+          client's disk. By default, unless the "indirect" option is added,
+          the server will see the cookies emitted by the client. Due to
+          caching effects, it is generally wise to add the "nocache" or
+          "postonly" keywords (see below). The "insert" keyword is not
+          compatible with "rewrite" and "prefix".
+
+HAProxy会在客户端请求中没有cookie时，在响应报文中插入一个cookie。没有配置关键词"preserve"选项时，如果后端服务器设置的cookie名称和HAProxy设置的名称相同时，HAProxy将首先删除服务端设置的cookie。HAProxy设置的cookie只能作为会话保持使用，无法在客户端处持久化(因为haproxy设置的cookie没有maxAge属性，无法持久保存，只能保存在浏览器缓存中)。默认情况下，HAProxy没有配置"indirect"选项，服务端可以看到客户端请求时的所有cookie信息，如果其配合了"indirect"选项，haproxy在将请求转发给后端时，会把自己设置的cookie删除，这样后端服务器只能看到它自己的cookie。另外，由于缓存的影响，建议加上"nocache"或"postonly"选项。
+
+- prefix
+
+		  This keyword indicates that instead of relying on a dedicated
+          cookie for the persistence, an existing one will be completed.
+          This may be needed in some specific environments where the client
+          does not support more than one single cookie and the application
+          already needs it. In this case, whenever the server sets a cookie
+          named <name>, it will be prefixed with the server's identifier
+          and a delimiter. The prefix will be removed from all client
+          requests so that the server still finds the cookie it emitted.
+          Since all requests and responses are subject to being modified,
+          this mode doesn't work with tunnel mode. The "prefix" keyword is
+          not compatible with "rewrite" and "insert". Note: it is highly
+          recommended not to use "indirect" with "prefix", otherwise server
+          cookie updates would not be sent to clients.
+
+使用prefix方式时，HAProxy会在已有的cookie上添加前缀cookie值，前缀部分是server指令中的cookie设置的，代表服务器标识符。客户端再次访问时，HAProxy会自动把这部分前缀移除，这样服务端只能看到它自己设置的cookie。注意，cookie指令设置的cookie名必须和后端服务器设置的cookie名称一样，否则在prefix模式下，HAProxy不会对响应报文做任何修改。
+
+- rewrite
+
+		  This keyword indicates that the cookie will be provided by the
+          server and that haproxy will have to modify its value to set the
+          server's identifier in it. This mode is handy when the management
+          of complex combinations of "Set-cookie" and "Cache-control"
+          headers is left to the application. The application can then
+          decide whether or not it is appropriate to emit a persistence
+          cookie. Since all responses should be monitored, this mode
+          doesn't work in HTTP tunnel mode. Unless the application
+          behaviour is very complex and/or broken, it is advised not to
+          start with this mode for new deployments. This keyword is
+          incompatible with "insert" and "prefix".
+
+使用rewrite方式时，HAProxy会将已有的cookie将重写，以为后端服务器的标识符。同样，rewrite模式下，cookie指令设置的cookie名必须和后端服务器设置的cookie名称一样，否则HAProxy不会对响应报文做任何修改。
+
+**appsession**
+
+使用appsession模式时，HAProxy会把后端服务器产生的session和后端服务器标识保存在HAProxy中的一张表里。当有客户端请求进来时，HAProxy会先查询这张表，根据这张表里的对应关系将数据转发至后端服务器上。
+
