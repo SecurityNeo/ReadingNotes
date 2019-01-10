@@ -163,3 +163,11 @@ HAProxy会在客户端请求中没有cookie时，在响应报文中插入一个c
 
 使用appsession模式时，HAProxy会把后端服务器产生的session和后端服务器标识保存在HAProxy中的一张表里。当有客户端请求进来时，HAProxy会先查询这张表，根据这张表里的对应关系将数据转发至后端服务器上。
 
+
+## HAProxy配置 ##
+
+[https://cbonte.github.io/haproxy-dconv/1.9/configuration.html](https://cbonte.github.io/haproxy-dconv/1.9/configuration.html)
+
+[http://www.ttlsa.com/linux/haproxy-study-tutorial/](http://www.ttlsa.com/linux/haproxy-study-tutorial/)
+
+感谢“田飞雨”分享了如此精彩的文章，这篇文章写得非常全，作为参考文档的话非常合适
