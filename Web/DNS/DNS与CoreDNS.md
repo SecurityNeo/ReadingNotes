@@ -42,6 +42,35 @@ SOA记录格式如下：
 
 A记录用于记录IPv4地址与域名的对应关系，AAAA记录用于记录IPv6地址与域名的对应关系。
 
+**CNAME记录**
+
+别名记录，用于将某个别名指向到某个A记录上，这样就不需要再为某个新名字另外创建一条新的A记录。
+
+**MX记录**
+
+MX（Mail Exchanger Record）记录也叫做邮件路由记录，用户可以将该域名下的邮件服务器指向到自己的mail server上，然后即可自行操控所有的邮箱设置
+
+**NS记录**
+
+NS（Name Server）记录是域名服务器记录，用来指定该域名由哪个DNS服务器来进行解析。
+
+**PTR记录**
+
+PTR (Pointer Record)，指针记录，用于将一个IP地址映射到对应的域名，可看成是反向A记录，通过IP地址解析出域名。 PTR主要用于邮件服务器，比如邮箱AAA@XXX.com给邮箱BBB@yahoo.com发了一封邮件，yahoo邮件服务器接到邮件时会查看这封邮件的头文件，并分析是由哪个IP地址发出来的，然后根据这个IP地址进行反向解析，如果解析结果对应XXX.com的IP地址就接受这封邮件，反之则拒绝接收这封邮件。
+
+**CAA记录**
+
+[https://tools.ietf.org/html/rfc6844](https://tools.ietf.org/html/rfc6844)
+
+CAA，全称Certificate Authority Authorization，即证书颁发机构授权。它为了改善PKI(Public Key Infrastructure：公钥基础设施)生态系统强度、减少证书意外错误发布的风险，通过DNS机制创建CAA资源记录，从而限定了特定域名颁发的证书和CA(证书颁发机构)之间的联系。从此，再也不能是任意CA都可以为任意域名颁发证书了。
+
+CAA记录可以控制单域名SSL证书的发行，也可以控制通配符证书。当域名存在CAA记录时，则只允许在记录中列出的CA颁发针对该域名(或子域名)的证书。
+
+**SRV记录**
+
+[https://tools.ietf.org/html/rfc2782](https://tools.ietf.org/html/rfc2782)
+
+服务位置记录，用于定义提供特定服务的服务器的位置，如主机(hostname)，端口(port number)等。
 
 
 ## CoreDNS ##
