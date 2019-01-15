@@ -6,7 +6,7 @@
 
 DNS(Domain Name System)是“域名系统”的英文缩写，，主要功能是将主机名或域名解析为IP地址。DNS是多层命名服务器构成的分布式数据库，属于应用层协议。
 
-## DNS主要术语 ##
+### DNS主要术语 ###
 
 **顶级域名**
 
@@ -77,5 +77,10 @@ CAA记录可以控制单域名SSL证书的发行，也可以控制通配符证�
 
 [https://coredns.io/](https://coredns.io/)
 
+CoreDNS其实就是一个DNS服务，整个CoreDNS服务建立在一个使用Go编写的HTTP/2 Web服务器上。CoreDNS的大多数功能都是由插件来实现的，插件和服务本身都使用[Caddy](https://github.com/mholt/caddy)提供的一些功能，所以项目本身也不是特别的复杂。
 
+CoreDNS架构如下：
 
+![](img/CoreDNS.png)
+
+CoreDNS通过四种方式对外直接提供DNS服务，分别是UDP、gRPC、HTTPS和TLS。
