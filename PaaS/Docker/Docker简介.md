@@ -64,4 +64,7 @@ Docker默认使用AuFS（Advanced Union FS）来支持Docker镜像的Layer，也
 
 ![](img/docker-info.png)
 
+Overlay2文件层级目录结构如下：
+
+![](img/overlay2.png)
 
