@@ -33,8 +33,17 @@ Management plane for container and cluster orchestration.
 
 ## Docker底层实现 ##
 
-- OCI Open Container Initiative，也就是常说的OCI，是由多家公司共同成立的项目，并由linux基金会进行管理，致力于container runtime的标准的制定和runc的开发等工作。
-- [runCrunc](https://github.com/opencontainers/runc)， 前身是libcontainer，是对于OCI标准的一个参考实现，是一个可以用于创建和运行容器的CLI(command-line interface)工具。runc直接与容器所依赖的cgroup/linux kernel等进行交互，负责为容器配置cgroup/namespace等启动容器所需的环境，创建启动容器的相关进程。为了兼容OCI标准，Docker也做了架构调整。将容器运行时相关的程序从docker daemon剥离出来，形成了containerd。Containerd向docker提供运行容器的API，二者通过grpc进行交互。containerd最后会通过runc来实际运行容器。
+- OCI Open Container Initiative
+
+也就是常说的OCI，是由多家公司共同成立的项目，并由linux基金会进行管理，致力于container runtime的标准的制定和runc的开发等工作，目前OCI发布了两个规范：runtime spec 和 image format spec。
+
+- 容器runtime
+
+runtime跟操作系统kernel紧密协作，为容器提供运行环境，lxc、runc和rkt是目前主流的三种容器 runtime。
+
+- [runCrunc](https://github.com/opencontainers/runc)
+
+前身是libcontainer，是对于OCI标准的一个参考实现，是一个可以用于创建和运行容器的CLI(command-line interface)工具。runc直接与容器所依赖的cgroup/linux kernel等进行交互，负责为容器配置cgroup/namespace等启动容器所需的环境，创建启动容器的相关进程。为了兼容OCI标准，Docker也做了架构调整。将容器运行时相关的程序从docker daemon剥离出来，形成了containerd。Containerd向docker提供运行容器的API，二者通过grpc进行交互。containerd最后会通过runc来实际运行容器。
 
 ### Docker Engine使用的Linux隔离技术 ###
 
