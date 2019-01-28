@@ -43,4 +43,9 @@ Derek McGowan在[PR22126](https://github.com/moby/moby/pull/22126)中添加了ov
 
 ![](img/Overlay2_img02.png)
 
+当启动容器之后，也是会在/var/lib/docker/overlay2目录下生成一层容器层，其中包括diff，merged和work目录，link和lower文件。diff目录中记录了每一层自己的数据，link文件中记录了该层链接目录，在lower文件中，使用:符号来分割不同的底层，并且顺序是从高层到底层。
+
+![](img/Overlay_img03.png)
+
+
 
