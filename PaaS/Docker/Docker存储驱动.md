@@ -51,7 +51,7 @@ Derek McGowan在[PR22126](https://github.com/moby/moby/pull/22126)中添加了ov
 
 在Linux Kernel 2.6.9之后支持Device Mapper，Device Mapper提供一种从逻辑设备到物理设备的映射框架机制,为实现用于存储资源管理的块设备驱动提供了一个高度模块化的内核架构。
 
-Device Mapper包含三个比较重要的对象概念，Mapped Device、Mapping Table和Target device。Mapped Device是一个抽象出来的逻辑设备，通过Mapping Table映射关系与Target Device建立映射，Target Device即为Mapped Device所映射的物理空间段。
+Device Mapper包含三个比较重要的对象概念，Mapped Device、Mapping Table和Target Device。Mapped Device是一个抽象出来的逻辑设备，通过Mapping Table映射关系与Target Device建立映射，Target Device即为Mapped Device所映射的物理空间段。
 
 ![](img/DeviceMapper_structure.png)
 
@@ -60,18 +60,57 @@ Device Mapper在内核中实现了诸多Target Driver插件，包括软Raid、�
 尹洋老师写了一篇[Linux 内核中的 Device Mapper 机制](https://www.ibm.com/developerworks/cn/linux/l-devmapper/index.html)，非常详细，复习时需仔细品味。
 
 
-Docker的Device mapper利用Thin-provisioning snapshot管理镜像和容器。Snapshot是Lvm的一种特性，它可以在线为the origin（original device）创建一个虚拟快照(Snapshot)。Thin-Provisioning就是精简制备，逻辑上为其分配足够的空间，但实际上是真正占用多少空间就为其分配多少空间。Thin-provisioning Snapshot将Thin-Provisioning和Snapshoting两种技术结合起来，将多个虚拟设备同时挂载到一个数据卷从而实现数据共享。
+Docker的Device mapper利用Thin-provisioning snapshot管理镜像和容器。Snapshot是Lvm的一种特性，它可以在线为the origin（original device）创建一个虚拟快照(Snapshot)。Thin-Provisioning就是精简置备，逻辑上为其分配足够的空间，但实际上是真正占用多少空间就为其分配多少空间。Thin-provisioning Snapshot将Thin-Provisioning和Snapshoting两种技术结合起来，将多个虚拟设备同时挂载到一个数据卷从而实现数据共享。
 
-Thin-provisioning snapshot的特点：
+上边提到的AUFS和OverlayFS是文件级存储，Device mapper是块级存储，所有的操作都是直接对块进行操作，而不是文件。
 
-- 不同的snaptshot可以挂载到同一个the origin上，节省磁盘空间。
+Docker Daemon第一次启动时会创建thin-pool，thin-pool的命名规则为"docker-dev_num-inode_num-pool"（dev是/var/lib/docker/devicemapper目录所在块设备的设备号，形式为主设备号:二级设备号；inode是这个目录的inode号），如下：
 
-- 当多个Snapshot挂载到了同一个the origin上，并在the origin上发生写操作时，将会触发COW操作。这样不会降低效率。
+![](img/NeedToAddImg.png)
 
-- Thin-Provisioning Snapshot支持递归操作，即一个Snapshot可以作为另一个Snapshot的the origin，且没有深度限制。
+thin-pool基于块设备或者loop设备创建，这取决于使用loop-lvm还是direct-lvm，默认情况下是使用loop-lvm，但这仅仅适用于测试环境，若是生产环境强烈建议使用direct-lvm。块设备有两个，一个为data，存放数据，另一个为metadata，存放元数据(通过--storage-opt dm.datadev和--storage-optdm.metadatadev指定块设备)。
 
-- 在Snapshot上可以创建一个逻辑卷，这个逻辑卷在实际写操作（COW，Snapshot写操作）发生之前是不占用磁盘空间的。
+在 Docker 17.06或更高版本，Docker可以自动管理块设备，简化direct-lvm模式的配置。而这仅适用于Docker的首次设置，并且只能使用一个块设备，如果需要使用多个块设备，需手动配置direct-lvm模式。参考以下配置选项：
 
-上边提到的AUFS和OverlayFS是文件级存储，Device mapper是块级存储，所有的操作都是直接对块进行操作，而不是文件。Device mapper驱动会先在块设备上创建一个资源池，然后在资源池上创建一个带有文件系统的基本设备，所有镜像都是这个基本设备的快照，而容器则是镜像的快照。所以在容器里看到文件系统是资源池上基本设备的文件系统的快照，并没有为容器分配空间。当要写入一个新文件时，在容器的镜像内为其分配新的块并写入数据，这个叫用时分配。当要修改已有文件时，再使用CoW为容器快照分配块空间，将要修改的数据复制到在容器快照中新的块里再进行修改。Device mapper 驱动默认会创建一个100G的文件包含镜像和容器。每一个容器被限制在10G大小的卷内，可以自己配置调整。
+![](img/direct-lvm.png)
+
+**Device Mapper的工作流程**
+Docker采用devicemapper存储驱动时，所有和镜像及容器层相关的对象都保存在/var/lib/docker/devicemapper/里。base device是最底层的对象，就是上边说到的thin-pool（可使用`docker info` 命令查看），它包含一个文件系统，每个容器镜像层和容器层都从它开始。base device的元数据和所有的镜像及容器层都以JSON格式存储在/var/lib/docker/devicemapper/metadata/中，这些层是CoW的快照。每个容器的可写层都会挂载到/var/lib/docker/devicemapper/mnt/中的一个挂载点。对每个只读镜像层和每个停止状态的容器，都对应一个空目录。
+
+对于一个镜像来说，每个镜像层都是其下一层的snapshot，而每个镜像的最底层是Pool中的一个已存在base device的snapshot。当一个容器运行起来时，容器就是它所依赖镜像的snapshot。下图是官方提供的两个容器的层级结构图：
+
+![](img/Container_Layer.png)
+
+**容器的读写操作（devicemapper）**
+
+**读取文件**：
+
+devicemapper的读取操作也发生在块级别，以官方给的例子为例：
+
+1、容器内的一个APP要读`0x44f`块的内容，容器的dm设备是基于镜像的snapshot，容器里没有这个数据，但是它有一个指针指向这个块数据在镜像dm设备的位置，`0x44f`这个块的内容在`a005e`设备的`0xf33`块上。
+
+2、从镜像`a005e`中读取`0xf33`块的内容到内存中，把数据返回给APP。
+
+3、一个镜像有很多层，应用所需要的数据不一定在镜像的最上层就能找到，如果找不到就会依次往下层去寻找。
 
 ![](img/DeviceMapper_ReadingFile.png)
+
+**写入文件**：
+
+
+- 写入新文件
+
+使用devicemapper驱动程序，通过allocate-on-demand操作实现将新数据写到容器中，新文件的每个块都分配到容器的可写层。
+
+- 更新文件
+
+将待更新文件的相关块从最近的镜像层中读取出来，当容器写入文件时，只有修改后的块被写入容器的可写层。
+
+- 删除文件或目录
+
+当删除容器可写层中的文件或目录，或者镜像层删除其父层中存在的文件时，devicemapper存储驱动程序会截获对该文件或目录的进一步读取尝试，并回应文件或目录不存在，不会真的删除，并且在读取相关文件或目录时告诉程序其已不存在。
+
+- 写然后删除文件
+
+如果在容器中写入文件并稍后删除该文件，所有这些操作都发生在容器的可写层中。在这种情况下，如果使用`direct-lvm`，块将被释放。如果使用`loop-lvm`，块可能不会被释放。这是不在生产环境中使用`loop-lvm`的另一个原因。
+
