@@ -2,6 +2,8 @@
 
 ## AUFS ##
 
+[https://docs.docker.com/storage/storagedriver/aufs-driver/](https://docs.docker.com/storage/storagedriver/aufs-driver/)
+
 Aufs最初代表的意思“另一个联合文件系统（another union filesystem）”，试图对当时已经存在的UnionFS实现进行重写。后来叫Alternative UnionFS，再后来就叫成了高大上的Advance UnionFS。
 
 AUFS把若干目录按照顺序和权限挂载为一个目录，默认情况下，只有第一层是可写的，其余都是只读层，新写的文件都会被放在最上面的可写层中，当需要删除只读层中的文件时，AUFS通过在可写层目录下建立对应的whiteout隐藏文件来实现。此外AUFS利用其CoW（copy-on-write）特性来修改只读层中的文件。AUFS工作在文件层面，因此，只要有对只读层中的文件做修改，不管修改数据的量的多少，在第一次修改时，文件都会被拷贝到可写层然后再被修改。AUFS的CoW特性能够允许在多个容器之间共享分层，从而减少物理空间占用。
@@ -13,6 +15,8 @@ AUFS把若干目录按照顺序和权限挂载为一个目录，默认情况下�
 AUFS只在Ubuntu或者Debian的内核上才可以启用，因为Aufs从来没有被上游Linux内核社区接受，且原作者已经放弃了让它被内核采纳的努力。不过在Ubtuntu或者Debian上，默认的graphdriver就是aufs，它能满足绝大多数需求。
 
 ## Overlay ##
+
+[https://docs.docker.com/storage/storagedriver/overlayfs-driver/](https://docs.docker.com/storage/storagedriver/overlayfs-driver/)
 
 Overlay是一个联合文件系统，相比aufs来说，它的分支模型更为简单。Overlay只有两层：一个是下层目录（lower-dir）”，对应镜像层，另一个是“上层目录（upper-dir）”，对应容器层，同样的，镜像层是只读的，容器层可写。
 
@@ -49,6 +53,8 @@ Derek McGowan在[PR22126](https://github.com/moby/moby/pull/22126)中添加了ov
 
 ## Device Mapper ##
 
+[https://docs.docker.com/storage/storagedriver/device-mapper-driver/](https://docs.docker.com/storage/storagedriver/device-mapper-driver/)
+
 在Linux Kernel 2.6.9之后支持Device Mapper，Device Mapper提供一种从逻辑设备到物理设备的映射框架机制,为实现用于存储资源管理的块设备驱动提供了一个高度模块化的内核架构。
 
 Device Mapper包含三个比较重要的对象概念，Mapped Device、Mapping Table和Target Device。Mapped Device是一个抽象出来的逻辑设备，通过Mapping Table映射关系与Target Device建立映射，Target Device即为Mapped Device所映射的物理空间段。
@@ -66,7 +72,7 @@ Docker的Device mapper利用Thin-provisioning snapshot管理镜像和容器。Sn
 
 Docker Daemon第一次启动时会创建thin-pool，thin-pool的命名规则为"docker-dev_num-inode_num-pool"（dev是/var/lib/docker/devicemapper目录所在块设备的设备号，形式为主设备号:二级设备号；inode是这个目录的inode号），如下：
 
-![](img/NeedToAddImg.png)
+![](img/poll_name.png)
 
 thin-pool基于块设备或者loop设备创建，这取决于使用loop-lvm还是direct-lvm，默认情况下是使用loop-lvm，但这仅仅适用于测试环境，若是生产环境强烈建议使用direct-lvm。块设备有两个，一个为data，存放数据，另一个为metadata，存放元数据(通过--storage-opt dm.datadev和--storage-optdm.metadatadev指定块设备)。
 
@@ -114,3 +120,9 @@ devicemapper的读取操作也发生在块级别，以官方给的例子为例�
 
 如果在容器中写入文件并稍后删除该文件，所有这些操作都发生在容器的可写层中。在这种情况下，如果使用`direct-lvm`，块将被释放。如果使用`loop-lvm`，块可能不会被释放。这是不在生产环境中使用`loop-lvm`的另一个原因。
 
+
+## Btrfs ##
+
+Btrfs被称为下一代写时复制文件系统，也是文件级级存储，但是可以像Device mapper一样直接操作底层设备。Btrfs设计实现高级功能的同时，着重于容错、修复以及易于管理。
+
+Btrfs利用subvolumes和snapshots管理镜像容器分层。Btrfs把文件系统的一部分配置为一个完整的子文件系统，称之为subvolume，snapshot是subvolumn的实时读写拷贝，chunk是分配单位，通常是1GB
