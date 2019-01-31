@@ -163,3 +163,63 @@ Docker的Btrfs存储驱动将每个镜像层与容器层都存储为到subvolume
 
 使用Btfs存储驱动，做大量小文件写入或更新时，会影响系统性能。
 
+
+## ZFS ##
+
+[https://docs.docker.com/storage/storagedriver/zfs-driver/](https://docs.docker.com/storage/storagedriver/zfs-driver/)
+
+ZFS是下一代文件系统，它支持许多高级存储特性，诸如卷（volume）管理，快照（snapshots），校验，压缩，重复数据删除（deduplication），复制（replication）等。由于CDDL和GPL的许可证不兼容，ZFS无法合入Linux内核主线。不过，Linux的ZFS(ZoL)提供了在内核树之外的模块并且可以单独安装用户空间工具。Linux的ZFS(ZoL)目前已经是稳定成熟了。不过，除非你在Linux上拥有丰富的ZFS使用经验，否则不建议目前在生产环境使用zfs Docker存储驱动。
+
+[https://docs.oracle.com/cd/E26926_01/html/E25826/toc.html](https://docs.oracle.com/cd/E26926_01/html/E25826/toc.html)
+
+Docker的zfs存储驱动大量使用了下面三种ZFS数据集：
+
+* 文件系统（filesystems） - 精简配置，按需从zpool分配空间。
+* 快照（snapshots） - 文件系统或卷在给定时间点的只读副本。
+* 克隆（clones） - 可写入的卷或文件系统，其初始内容与从中创建它的数据集的内容相同
+
+ZFS文件系统是自动精简配置的，它只在正真需要时才会从ZFS的资源池（zpool）中分配空间，快照是只读的，而克隆是读写的，克隆只能从一个快照创建，流程如下：
+
+![](img/ZFS_CreateClone.png)
+
+Docker使用zfs存储驱动时，每个运行容器的文件系统都挂载在`/var/lib/docker/zfs/graph/`上。镜像的最底层（Base Layer）是一个ZFS文件系统，此外的每个镜像层都是一个基于下层ZFS快照的ZFS克隆。一个运行容器的文件系统是一个ZFS克隆，下层是从镜像层创建的快照。所有ZFS数据实体都是从一个共用的zpool分配空间。
+
+![](img/ZFS_Container_Layer.png)
+
+当启动一个容器时会经历如下步骤：
+
+- 1、镜像的Base层作为ZFS文件系统存在于Docker主机上，该文件系统消耗zpool中的存储空间。
+
+- 2、其它的镜像层是在其下方的镜像层的数据集的克隆。
+ 
+- 在上图中，创建Base层的一个ZFS快照，然后再从这个快照创建一个克隆以作为“Layer 1”。这个克隆是可写的，并根据需要从zpool按需分配空间。而快照是只读的，让Base层成为一个不可变的对象。
+
+- 3、当创建一个容器后，会在镜像层上增加一个可读写层，在上图中，这个容器的可读写层是通过创建镜像顶层(Layer1)的快照，然后从这个快照创建一个克隆创建的。
+ 
+- 4、所有对容器的更改，将通过按需分配操作从zpool中分配空间。默认下，ZFS以128K大小的数据块分配空间。
+
+
+**容器的读写操作（ZFS）**
+
+**读取文件**
+
+每个容器的可写层都是ZFS的克隆，它与创建它的数据集（其父层的快照）共享所有数据，所以读取操作非常快，即是需要读取的数据存在于镜像的较底层。
+
+![](img/ZFS_ReadingFile.png)
+
+**写入文件**
+
+- 写入新文件
+
+每次需要写数据到容器中时，都会从zpool中分配新的数据块。
+
+- 更新文件
+
+更新容器存在的文件是通过分配新数据块给容器clone并存储更改的数据到这些新数据块中来完成的。
+
+- 删除文件或目录
+
+当删除存在于较低层的文件或目录时，ZFS驱动会将该文件或者目录标记为不存在，这样在容器可写层看来，此文件或目录已被删除。
+
+如果先创建文件或目录，然后再将其删除，则相应的块将被zpool回收。
+
