@@ -125,4 +125,41 @@ devicemapper的读取操作也发生在块级别，以官方给的例子为例�
 
 Btrfs被称为下一代写时复制文件系统，也是文件级级存储，但是可以像Device mapper一样直接操作底层设备。Btrfs设计实现高级功能的同时，着重于容错、修复以及易于管理。
 
-Btrfs利用subvolumes和snapshots管理镜像容器分层。Btrfs把文件系统的一部分配置为一个完整的子文件系统，称之为subvolume，snapshot是subvolumn的实时读写拷贝，chunk是分配单位，通常是1GB
+Btrfs利用subvolumes和snapshots管理镜像容器分层。使用Btrfs存储引擎时，镜像层信息和容器可写层全部保存在`/var/lib/docker/btrfs/subvolumes/`目录下，在此目录下，每个镜像或容器层都有一个目录。subvolumes就像一个普通的Unix文件系统，其有自己的内部目录结构。subvolumes在更新文件时会涉及到CoW操作，在写入新文件时会从底层存储池内按需分配空间。它们能嵌套也能做snapshot。下图中有4个subvolume，`subvolume 2`和`subvloume 3`嵌套存在而`subvolume 4`则有自己的内部目录树。
+
+![](img/Btrfs_Subvolume_Dir.png)
+
+在Btrfs里，一个镜像只有最底层是一个真正的subvolume，其它层都是snapshot。
+
+![](img/Btrfs_Subvolume_Snapshot.png)
+
+在磁盘上，snapshot看起来与subvolume一致，但实际上它们更小，Btrfs的快照空间利用率高且很少或没有性能开销。当一个容器需要更多空间时，Btfs会从一个底层存储池为其分配空间，分配单元称为块（chunk），块大小大约为1GB。下图展示了一个subvolume与它的snapshot共享同样的数据。
+
+![](img/Btrfs_Storage_Pool.png)
+
+Docker的Btrfs存储驱动将每个镜像层与容器层都存储为到subvolume或snapshot中，镜像的最底层存储到subvolume，而其它镜像层和容器层都存储在snapshot中。
+
+![](img/Btrfs_Docker_Strunct.png)
+
+**容器的读写操作（Btrfs）**
+
+**读取文件**：
+
+容器是镜像的一个高效利用空间的快照，快照中的元数据指向存储池中的实际数据块，这个和subvolume是一致的，从快照中读和从subvolume中读本质上是一样的。所以，Btrfs驱动没有额外的性能损耗。
+
+**写入文件**：
+
+- 写入新文件
+
+向一个容器中写入一个新文件将调用`allocate-on-demand`为其分配新的数据块给容器的snapshot。文件会写到这块新的空间。`allocate-on-demand`和所有Btrfs写操作一样，和写新数据到subvolume也是一样的。因此，向容器的snapshot写文件和原生的Btrfs写操作速度一致。
+
+- 更新文件
+
+在容器中更新一个文件会引起copy-on-write操作（实际上是redirect-on-write），源数据从待更新文件所在层中读取，只有更新的块会被写入容器的可写层。Btrfs驱动将更新snapshot中的文件系统元数据，以指向这块新数据。此行为性能损耗极小。
+
+- 删除文件或目录
+
+如果容器删除了一个存在于较低层的文件或目录，那么btrfs会屏蔽此文件或目录。如果容器创建了一个文件，然后再将其删除，则此操作将在Btrfs文件系统本身中执行，并回收这部分空间。
+
+使用Btfs存储驱动，做大量小文件写入或更新时，会影响系统性能。
+
