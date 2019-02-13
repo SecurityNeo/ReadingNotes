@@ -14,29 +14,37 @@ Kubernetes的调度策略分为Predicates（预选策略）和Priorites（优选
 
 ## 预选策略 ##
 
-MatchInterPodAffinity
+**MatchInterPodAffinity**
 
-CheckVolumeBinding
+根据亲和性规则筛选Node。
 
-CheckNodeCondition
+**CheckVolumeBinding**
+
+检查存储卷是否能绑定到Node上。
+
+**CheckNodeCondition**
+
+检查节点状态是否正常。
  
-GeneralPredicates
+**GeneralPredicates**
 
-**HostName**
+包含一些基本的筛选规则，主要考虑Kubernetes资源是否充足，比如CPU和内存是否足够，端口是否冲突、selector是否匹配等。（PodFitsResources、PodFitsHostPorts、HostName、MatchNodeSelector）
 
-检查Node是否满足PodSpec的NodeName字段中指定节点主机名，不满足的Node会被过滤掉。
+- **HostName**
 
-**PodFitsHostPorts**
+  检查Node是否满足PodSpec的NodeName字段中指定节点主机名，不满足的Node会被过滤掉。
 
-检查Pod定义的HostPort是否已被该Node上其它容器或服务占用。如果存在已被占用的情况，那么Pod将不会调度到这个Node上。（1.0版本被称之为PodFitsPorts，1.0之后版本变更为PodFitsHostPorts，为了向前兼容，PodFitsPorts名称仍然保留。）
+- **PodFitsHostPorts**
  
-**MatchNodeSelector**
-
-检查Node节点的label定义是否满足Pod的NodeSelector属性需求。
-
-**PodFitsResources**
-
-检查Node上的空闲资源(CPU、Memory、GPU资源)是否满足Pod的需求，注意其是根据实际已经分配的资源量做调度，而不是使用已实际使用的资源量做调度。
+  检查Pod定义的HostPort是否已被该Node上其它容器或服务占用。如果存在已被占用的情况，那么Pod将不会调度到这个Node上。（1.0版本被称之为PodFitsPorts，1.0之后版本变更为PodFitsHostPorts，为了向前兼容，PodFitsPorts名称仍然保留。）
+ 
+- **MatchNodeSelector**
+ 
+  检查Node节点的label定义是否满足Pod的NodeSelector属性需求。
+ 
+- **PodFitsResources**
+ 
+  检查Node上的空闲资源(CPU、Memory、GPU资源)是否满足Pod的需求，注意其是根据实际已经分配的资源量做调度，而不是使用已实际使用的资源量做调度。
  
 **NoDiskConflict**
 
@@ -52,15 +60,25 @@ ISCSI、GCE、AWS EBS和Ceph RBD的规则如下:
 - Ceph RBD：不允许任何两个Pod分享相同的monitor，match pool和image。
 
 **PodToleratesNodeTaints**
+
+根据taints和toleration的关系来判断Pod是否可以调度到该Node上。
  
-CheckNodeUnschedulable
+**CheckNodeUnschedulable**
 
-PodToleratesNodeNoExecuteTaints
+检查节点是否处于不可调度状态。
 
-CheckNodeLabelPresence
+**PodToleratesNodeNoExecuteTaints**
 
-CheckServiceAffinity
+检查Pod是否容忍节点上有NoExecute污点。如果一个Pod上运行在一个没有污点的Node上后，这个Node又给加上污点了，那么NoExecute表示这个新加污点的Node会祛除其上正在运行的Pod；不加NoExecute不会祛除节点上运行的Pod，表示接受。
+
+**CheckNodeLabelPresence**
+
+检查所有指定的Label是否存在于Node上（此处不考虑Label的值）。
+
+**CheckServiceAffinity**
  
+检查服务亲和性。多个Pod可以绑定到一个Service上，如果这些Pod都集中在集群中某一部分Node上，那新加入的Pod也会调度到这些Node上。
+
 **MaxEBSVolumeCount**
 
  确保已挂载的EBS存储卷不超过设置的最大值。（默认值是39，Amazon推荐最大卷数量为40，其中一个卷为root卷，[参考官网说明](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/volume_limits.html#linux-specific-volume-limits)）。调度器会检查直接使用和间接使用这种类型存储的PVC，计算不同卷的总和，如果待调度的Pod部署上去后卷的数目会超过设置的最大值，那么该Pod就不能调度到这个Node上。我们可以通过环境变量`KUBE_MAX_PD_VOLS`设置最大卷的数量。
@@ -69,11 +87,17 @@ CheckServiceAffinity
 
 确保已挂载的GCE存储卷不超过预设的最大值。（默认值是16,[参考官网说明](https://cloud.google.com/compute/docs/disks/add-persistent-disk#limits_for_predefined_machine_types))。与MaxEBSVolumeCount类似，最大卷的数量同样可通过环境变量`KUBE_MAX_PD_VOLS`设置。
 
-MaxAzureDiskVolumeCount
- 
-MaxCinderVolumeCount
+**MaxAzureDiskVolumeCount**
 
-MaxCSIVolumeCountPred
+确保已挂载的Azure存储卷不超过设置的最大值,默认为16。与MaxEBSVolumeCount类似，最大卷的数量同样可通过环境变量`KUBE_MAX_PD_VOLS`设置。
+ 
+**MaxCinderVolumeCount**
+
+确保已挂载的Cinder存储卷不超过设置的最大值。
+
+**MaxCSIVolumeCountPred**
+
+确保已挂载的CSI存储卷不超过设置的最大值。
 
 **NoVolumeZoneConflict**
 
@@ -81,6 +105,12 @@ MaxCSIVolumeCountPred
 
 **CheckNodeMemoryPressure**
 
-CheckNodeDiskPressure
+判断Node是否已经进入到内存压力状态，如果是则只允许调度内存为0的Pod到该Node上。
 
-CheckNodePIDPressure
+**CheckNodeDiskPressure**
+
+判断Node是否已经进入到磁盘压力状态，如果是，则不调度新的Pod到该Node上。
+
+**CheckNodePIDPressure**
+
+检查Node上PID数量压力是否过大，但是一般PID时可以重复使用的。
