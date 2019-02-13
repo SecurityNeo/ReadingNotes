@@ -130,7 +130,8 @@ Node上的空闲资源与Node上总容量的比值来决定此Node的优先级�
 
 `BalancedResourceAllocation`不能单独使用，必须和`LeastRequestedPriority`同时使用。打分时CPU和内存使用率越接近的Node权重越高，kube-scheduler尽量选择在部署Pod后各项资源更均衡的Node上。此函数分别计算Node上的cpu和memory的比重，Node的分数由cpu比重和memory比重的“距离”决定。计算公式如下：
 `score = 10 – abs(cpuFraction-memoryFraction)*10`
-**注意**：kubernetes主线上计算公式为`score = 10 - variance(cpuFraction,memoryFraction,volumeFraction)*10`[具体参考github上的代码](https://github.com/kubernetes/kubernetes/blob/master/pkg/scheduler/algorithm/priorities/balanced_resource_allocation.go)
+
+**注意**：kubernetes主线上计算公式为`score = 10 - variance(cpuFraction,memoryFraction,volumeFraction)*10`。[具体参考github上的代码](https://github.com/kubernetes/kubernetes/blob/master/pkg/scheduler/algorithm/priorities/balanced_resource_allocation.go)
 
 **NodeAffinityPriority**
 
@@ -166,4 +167,40 @@ Pod亲和性选择策略，通过迭代`weightedPodAffinityTerm`的元素计算�
 
 `(cpu(10 * sum(requested) / capacity) + memory(10 * sum(requested) / capacity)) / 2`
 
+
+## 自定义调度策略 ##
+
+前面提到的调度策略在默认情况下只有一部分被使用，在很多情况下，用户需要自定义kube-scheduler采用的调度策略。kube-scheduler在启动的时候可以通过`--policy-config-file`参数指定调度策略文件，用户可以根据实际需求组装Predicates和Priority函数。选择不同的预选策略和优先级函数、控制优先级函数的权重、调整过滤函数的顺序都会影响调度过程。
+
+
+```json
+{
+"kind" : "Policy",
+"apiVersion" : "v1",
+"predicates" : [
+    {"name" : "PodFitsHostPorts"},
+    {"name" : "PodFitsResources"},
+    {"name" : "NoDiskConflict"},
+    {"name" : "MatchNodeSelector"},
+    {"name" : "HostName"}
+    ],
+"priorities" : [
+    {"name" : "LeastRequestedPriority", "weight" : 1},
+    {"name" : "BalancedResourceAllocation", "weight" : 1},
+    {"name" : "ServiceSpreadingPriority", "weight" : 1},
+    {"name" : "EqualPriority", "weight" : 1}
+    ],
+"extenders":[
+    {
+        "urlPrefix": "http://127.0.0.1:12346/scheduler",
+        "apiVersion": "v1beta1",
+        "filterVerb": "filter",
+        "prioritizeVerb": "prioritize",
+        "weight": 5,
+        "enableHttps": false,
+        "nodeCacheCapable": false
+    }
+    ]
+}
+```
 
