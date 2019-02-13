@@ -105,7 +105,7 @@ ISCSI、GCE、AWS EBS和Ceph RBD的规则如下:
 
 **CheckNodeMemoryPressure**
 
-判断Node是否已经进入到内存压力状态，如果是则只允许调度内存为0的Pod到该Node上。
+判断Node是否已经进入到内存压力状态，如果是，则只允许调度内存为0的Pod到该Node上。
 
 **CheckNodeDiskPressure**
 
@@ -114,3 +114,56 @@ ISCSI、GCE、AWS EBS和Ceph RBD的规则如下:
 **CheckNodePIDPressure**
 
 检查Node上PID数量压力是否过大，但是一般PID时可以重复使用的。
+
+## 优选策略 ##
+
+经过预选策略之后，会得到一个符合预选策略的Node列表，在优选策略阶段将根据优选策略对这些Node进行打分，最终得出一个分数最高的Node，Pod也将调度到此Node上。kube-scheduler通过一系列优选策略函数对这些Node计算分数，每一个函数都会对这些Node给出`0-10`的分数，每一个函数也会有自己的权重大小。最终一个Node的得分为每一个函数给出的得分的加权分数之和，即：
+`finalScoreNode = (weight1 * priorityFunc1) + (weight2 * priorityFunc2) + … + (weightn * priorityFuncn)`
+
+**LeastRequestedPriority**
+
+Node上的空闲资源与Node上总容量的比值来决定此Node的优先级，即`（总容量-节点上Pod的容量总和-新Pod的容量）/总容量）`，CPU和memory权重相同，Node的资源空闲比例越高，此Node的得分也就越高。计算公式如下：
+
+`(cpu((capacity-sum(requested))*10/capacity) + memory((capacity-sum(requested))*10/capacity))/2`
+
+**BalancedResourceAllocation**
+
+`BalancedResourceAllocation`不能单独使用，必须和`LeastRequestedPriority`同时使用。打分时CPU和内存使用率越接近的Node权重越高，kube-scheduler尽量选择在部署Pod后各项资源更均衡的Node上。此函数分别计算Node上的cpu和memory的比重，Node的分数由cpu比重和memory比重的“距离”决定。计算公式如下：
+`score = 10 – abs(cpuFraction-memoryFraction)*10`
+**注意**：kubernetes主线上计算公式为`score = 10 - variance(cpuFraction,memoryFraction,volumeFraction)*10`[具体参考github上的代码](https://github.com/kubernetes/kubernetes/blob/master/pkg/scheduler/algorithm/priorities/balanced_resource_allocation.go)
+
+**NodeAffinityPriority**
+
+节点亲和性选择策略，支持两种类型的选择器，一种是`hard（requiredDuringSchedulingIgnoredDuringExecution）`选择器，它保证所选的主机必须满足所有Pod对主机的规则要求。另一种是`soft（preferresDuringSchedulingIgnoredDuringExecution）`选择器，调度器会尽量但不保证满足NodeSelector的所有要求。
+
+**InterPodAffinityPriority**
+
+Pod亲和性选择策略，通过迭代`weightedPodAffinityTerm`的元素计算和，并且如果对该节点满足相应的PodAffinityTerm，则再把 “weight” 加到和中，最终和最高的Node是最优选的。其中有两个子策略：`podAffinity`和`podAntiAffinity`。
+
+**SelectorSpreadPriority**
+
+对同属于一个Service、RC，RS或者StatefulSet的多个Pod副本，尽量调度到多个不同的节点上。如果指定了区域，调度器则会尽量把Pod分散在不同区域的不同节点上。当一个Pod的被调度时，调度器按Service、RC、RS或者StatefulSet归属计算Node上分布最少的同类Pod数量，数量越少得分越高。
+
+**TaintTolerationPriority**
+
+用Pod对象的spec.toleration与Node的taint列表进行匹配度，匹配的条目越多，得分越低。
+
+**NodePreferAvoidPodsPriority（权重1W）**
+
+如果Node的Anotation上没有设置`key-value:scheduler. alpha.kubernetes.io/ preferAvoidPods = "..."`，则该Node对应此policy的得分就是10分，加上权重10000，那么该node对该policy的得分至少10W分。如果Node的Anotation设置了`scheduler.alpha.kubernetes.io/preferAvoidPods = "..." `，如果该Pod对应的Controller是ReplicationController或ReplicaSet，则该Node对应此policy的得分就是0分。
+
+**ImageLocalityPriority**
+
+根据Node上是否存在运行Pod的容器运行所需镜像大小对优先级打分，分值为0-10。遍历全部Node，如果某个Node上pod容器所需的镜像一个都不存在，分值为0；如果Node上存在Pod容器部分所需镜像，则根据这些镜像的大小来决定分值，镜像越大，分值就越高；如果Node上存在pod所需全部镜像，分值为10。
+
+**EqualPriority**
+
+所有Node的优先级相同。
+
+**MostRequestedPriority**
+
+在ClusterAutoscalerProvider中，替换`LeastRequestedPriority`，给使用多资源的Node，更高的优先级。在动态伸缩集群环境下比较适用，调度器会优先调度Pod到使用率最高的主机节点，这样在伸缩集群时，就会腾出空闲机器，从而进行停机处理。计算公式如下：
+
+`(cpu(10 * sum(requested) / capacity) + memory(10 * sum(requested) / capacity)) / 2`
+
+
