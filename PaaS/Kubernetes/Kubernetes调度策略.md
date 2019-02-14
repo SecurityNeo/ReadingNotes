@@ -167,6 +167,12 @@ Pod亲和性选择策略，通过迭代`weightedPodAffinityTerm`的元素计算�
 
 `(cpu(10 * sum(requested) / capacity) + memory(10 * sum(requested) / capacity)) / 2`
 
+整个调度流程如下：
+
+摘自[https://blog.csdn.net/waltonwang/article/details/54409917](https://blog.csdn.net/waltonwang/article/details/54409917)
+
+![](img/kube-scheduler.jpg)
+
 
 ## 自定义调度策略 ##
 
