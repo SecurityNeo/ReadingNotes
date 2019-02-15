@@ -1,4 +1,4 @@
-# Kubernetes服务质量（QoS）#
+# Kubernetes服务质量（QoS）
 
 摘自[http://dockone.io/article/2592](http://dockone.io/article/2592)
 
@@ -127,12 +127,12 @@ func GetContainerOOMScoreAdjust(pod *v1.Pod, container *v1.Container, memoryCapa
 
 3. **Burstable**
 
-	- 如果总的memory request 大于 99.9%的可用内存，OOM_SCORE_ADJ设置为 2。否则， OOM_SCORE_ADJ = 1000 10 * (% of memory requested)，这确保了burstable的 POD OOM_SCORE > 1
-	- 如果memory request设置为0，OOM_SCORE_ADJ 默认设置为999。所以如果burstable pods和guaranteed pods冲突时，前者会被kill。
+	- 如果总的memory request大于99.9%的可用内存，OOM_SCORE_ADJ设置为2。否则，OOM_SCORE_ADJ = 1000-10 * (% of memory requested)，这确保了burstable的POD OOM_SCORE > 1
+	- 如果memory request设置为0，OOM_SCORE_ADJ默认设置为999。所以如果burstable pods和guaranteed pods冲突时，前者会被kill。
 	- 如果burstable pod使用的内存少于request值，那它的OOM_SCORE < 1000。如果best-effort pod和这些 burstable pod冲突时，best-effort pod会先被kill掉。
-	- 如果 burstable pod容器中进程使用比request值的内存更多，OOM_SCORE设置为1000。反之，OOM_SCORES少于1000。
+	- 如果burstable pod容器中进程使用比request值的内存更多，OOM_SCORE设置为1000。反之，OOM_SCORES少于1000。
 	- 在一堆burstable pod中，使用内存超过request值的pod，优先于内存使用少于request值的pod被kill。
-	- 如果 burstable pod 有多个进程冲突，则OOM_SCORE会被随机设置，不受“request & limit”限制。
+	- 如果burstable pod有多个进程冲突，则OOM_SCORE会被随机设置，不受“request & limit”限制。
 
 4. **Pod infra containers or Special Pod init process**
 
@@ -142,6 +142,60 @@ func GetContainerOOMScoreAdjust(pod *v1.Pod, container *v1.Container, memoryCapa
 
 	OOM_SCORE_ADJ: -999 (won’t be OOM killed)
 	系统上的关键进程，如果和guranteed 进程冲突，则会优先被kill 。将来会被放到一个单独的cgroup中，并且限制内存。
+
+
+## 节点可用资源 ##
+
+理想情况下，我们总是希望节点所有的资源都能提供给Pod使用，但实际上，节点上还会运行很多其它进程，包括一些系统进程、Kubelet、Docker进程等，而这些进程是保障Kubernetes集群能正常运行，甚至是这个集群能正常运行的，所以，我们需要为这些进程预留一部分资源，保障其正常运行，剩余的资源再分配给集群Pod使用。
+
+节点资源分配大致如下：
+摘自[从一次集群雪崩看Kubelet资源预留的正确姿势](https://my.oschina.net/jxcdwangtao/blog/1629059)
+
+![](img/Node_Resources.png)
+
+- Node Capacity: Node的所有硬件资源
+- Kube-Reserved: 预留给kube组件的资源
+- System-Reserved： 预留给System进程的资源
+- Hard-Eviction-Threshold： kubelet eviction设定的阈值
+- Allocatable： scheduler调度Pod时的参考值
+
+计算方式： ` [Allocatable] = [Node Capacity] - [Kube-Reserved] - [System-Reserved] - [Hard-Eviction-Threshold]`
+
+[参考官方说明](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/node/node-allocatable.md#recommended-cgroups-setup)
+
+Kubernetes相关配置：
+
+- --enforce-node-allocatable
+
+	默认为pods，要为kube组件和System进程预留资源，则需要设置为`pods,kube-reserved,system-reserve`。
+
+- --cgroups-per-qos
+
+	默认开启。开启后，kubelet会将管理所有workload Pods的cgroups。
+
+- --cgroup-driver
+
+	默认为cgroupfs，另一可选项为systemd。取决于容器运行时使用的cgroup driver，kubelet与其保持一致。比如配置docker使用systemd cgroup driver，那么kubelet也需要配置`--cgroup-driver=systemd`。
+
+- --kube-reserved
+ 
+	用于配置为kube组件（kubelet,kube-proxy,dockerd等）预留的资源量，比如`—kube-reserved=cpu=1000m,memory=8Gi，ephemeral-storage=16Gi`。
+
+- --kube-reserved-cgroup
+ 
+	如果你设置了--kube-reserved，那么一定要设置对应的cgroup，并且该cgroup目录要事先创建好，否则kubelet将不会自动创建导致kubelet启动失败。比如设置为`kube-reserved-cgroup=/kubelet.service`。
+
+- --system-reserved
+
+	用于配置为System进程预留的资源量，比如`—system-reserved=cpu=500m,memory=4Gi,ephemeral-storage=4Gi`。
+
+- --system-reserved-cgroup
+
+	如果你设置了--system-reserved，那么一定要设置对应的cgroup，并且该cgroup目录要事先创建好，否则kubelet将不会自动创建导致kubelet启动失败。比如设置为`system-reserved-cgroup=/system.slice`。
+
+- --eviction-hard
+ 
+	用来配置kubelet的hard eviction条件，只支持memory和ephemeral-storage两种不可压缩资源。当出现MemoryPressure时，Scheduler不会调度新的Best-Effort QoS Pods到此节点。当出现DiskPressure时，Scheduler不会调度任何新Pods到此节点。
 
 
 
