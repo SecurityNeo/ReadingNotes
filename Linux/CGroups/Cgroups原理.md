@@ -2,6 +2,9 @@
 
 摘自[CGroup 介绍、应用实例及原理描述](https://www.cnblogs.com/caoxiaojian/p/5633430.html)
 
+[Documentation](https://www.kernel.org/doc/Documentation/cgroup-v1/)
+
+
 Cgroups是control groups的缩写，是Linux内核提供的一种可以限制、记录、隔离进程组（process groups）所使用的物理资源（如：cpu,memory,IO等等）的机制。这个项目最早是由Google的工程师在2006年发起（主要是Paul Menage和Rohit Seth），最早的名称为进程容器（process containers）。在2007年时，因为在Linux内核中，容器（container）这个名词太过广泛，为避免混乱，被重命名为cgroup，并且被合并到2.6.24版的内核中去。
 
 提供的功能如下：
@@ -80,7 +83,7 @@ Cgroups是control groups的缩写，是Linux内核提供的一种可以限制、
 
 - hugetlb
 
-	允许限制CGroup 的HubeTLB使用
+	允许限制CGroup的HubeTLB使用
 
 - memory
 
@@ -96,8 +99,12 @@ Cgroups是control groups的缩写，是Linux内核提供的一种可以限制、
 
 - perf_event
 
-	增加了对没group的检测跟踪的能力，即可以检测属于某个特定的group的所有线程以及运行在特定CPU上的线程。
+	增加了对cgroup的检测跟踪的能力，即可以检测属于某个特定的group的所有线程以及运行在特定CPU上的线程。
 
 - ns
 
-	称空间子系统
+	命名空间子系统
+
+- pids
+
+	限制一个cgroup及其子孙cgroup中的总进程数。
