@@ -1,19 +1,36 @@
 # CGroup子系统--cpu&cpuacct&cpuset #
 
-摘自[Cgroup分析之cpu、cpuacct](https://blog.csdn.net/tanzhe2017/article/details/81001105)
+摘自[资源管理](https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/7/html/resource_management_guide/sec-cpu)
 
 ## cpu子系统 ##
 
-Cpu子系统可以通过一些用户态接口文件来实现对cpu资源访问的控制，每个文件都独立存在在cgroup虚拟文件系统的伪文件中，如下：
+Cpu子系统可以通过一些用户态接口文件来实现对cpu资源访问的控制，每个文件都独立存在在cgroup虚拟文件系统的伪文件中。采用如下两个程序来管理进程对资源的获取：
 
+- 完全公平调度程序（CFS）
+
+	 按比例分配调度程序，可根据任务优先级∕权重或cgroup分得的份额，在任务群组（cgroups）间按比例分配CPU时间（CPU带宽）。
+
+- 实时调度程序（RT）
+
+	任务调度程序，可对实时任务使用CPU的时间进行限定。
+
+
+### 用户态接口 ###
+
+
+**CFS接口**
+
+在CFS中，如果系统有足够的空闲CPU周期，那么cgroup可获得比其自有份额更多的CPU可用量，因为该调度程序有连续工作的特性。此情况通常会在cgroup根据相关共享消耗CPU时间时出现。在需要对cgroup的CPU可用量做出硬性限制时（即任务的CPU时间不能超过一个特定量），可使用强制上限。
+
+相关参数如下：
 
 - cpu.cfs_period_us
 
-	以微秒为单位指定一个period的长度。
+	设定重新分配cgroup可用CPU资源的时间间隔，单位为微秒（µs，这里以 “us” 表示）。如果一个cgroup中的任务在每1秒钟内有0.2秒的时间可存取一个单独的CPU，则可将`cpu.rt_runtime_us`设定为2000000，并将`cpu.rt_period_us`设定为1000000。cpu.cfs_quota_us 参数的上限为 1 秒，下限为 1000 微秒。
 
 - cpu.cfs_quota_us
 
-	以微秒为单位指定一个period中可用运行时间。
+	设定在某一阶段（由`cpu.cfs_period_us`规定）某个cgroup中所有任务可运行的时间总量，单位为微秒。上限为1秒，下限为1000微秒。一旦cgroup中任务用完按配额分得的时间，它们就会被在此阶段的时间提醒限制流量，并在进入下阶段前禁止运行。如将`cpu.cfs_quota_us`的值设定为 -1，这表示cgroup不需要遵循任何CPU时间限制。这也是每个cgroup的默认值（root cgroup除外）。
 
 - cpu.stat
 
@@ -27,16 +44,23 @@ Cpu子系统可以通过一些用户态接口文件来实现对cpu资源访问�
 
 - cpu.shares
 
-	包含用来指定在cgroup中的任务可用的相对共享cpu时间的整数值。
+	用一个整数来设定cgroup中任务CPU可用时间的相对比例，其设定的值必须大于等于2。
 	例如：在两个cgroup中都将cpu.shares设定为1的任务将有相同的cpu时间，但在cgroup中将cpu.shares设定为2的任务可使用的cpu时间是在cgroup中将cpu.shares设定为1的任务可使用的cpu时间的两倍。
+
+	注意：在多核系统中，CPU时间比例是在所有CPU核中分配的。即使在一个多核系统中，某个cgroup受限制而不能100%使用CPU，它仍可以100%使用每个单独的CPU核。
+
+
+**RT接口**
+
+RT调度程序与CFS的强制上限类似，但只限制实时任务对CPU的存取。一个实时任务存取CPU的时间可以通过为每个cgroup分配运行时间和时段来设定。然后，在运行时间的特定时间段，cgroup中的所有任务会被允许存取CPU（例如：可允许cgroup中的任务每秒中运行0.1秒）。
 
 - cpu.rt_period_us
 
-	以微秒（μs，这里以"us"代表）为单位指定在某个时间段中cgroup对cpu资源访问重新分配的频率。如果某个cgroup中的任务应该每5秒钟有4秒时间可访问cpu资源，则将cpu.rt_runtime_us设定为4000000，并将cpu.rt_period_us设定为5000000。
+	此参数可以设定在某个时间段中，每隔多久，cgroup对CPU资源的存取就要重新分配，单位为微秒，只可用于实时调度任务。如果某个cgroup中的任务应该每5秒钟有4秒时间可访问cpu资源，则将cpu.rt_runtime_us设定为4000000，并将cpu.rt_period_us设定为5000000。
 
 - cpu.rt_runtime_us
 
-	以微秒（μs，这里以"us"代表）为单位指定在某个时间段中cgroup中的任务对cpu资源的最长连续访问时间。建立这个限制是为了防止一个cgroup中的任务独占cpu时间。
+	以微秒为单位指定在某个时间段中cgroup中的任务对cpu资源的最长连续访问时间。只可用于实时调度任务。建立这个限制是为了防止一个cgroup中的任务独占cpu时间。
 
 
 ## cpuacct子系统 ##
@@ -45,7 +69,7 @@ cpuacct主要是根据内核现有的一些接口对cpu使用状况做统计，�
 
 - cpuacct.stat
 
-	报告当前cgroup和子组的所有任务使用用户模式和系统模式消耗的CPU周期数（单位由系统中user_hz定义）。
+	报告当前cgroup和子组的所有任务使用用户模式和系统模式消耗的CPU周期数（单位由系统中USR_HZ变量定义）。
 
 - cpuacct.usage
 
