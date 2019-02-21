@@ -26,6 +26,8 @@
 
 Cgroup中的blkio子系统的主要功能是实现对磁盘I/O带宽的可定制化控制。目前支持的控制策略只要有两种：BLKIO_POLICY_PROP和BLKIO_POLICY_THROTL，即基于权重方式和基于流量方式。其相关用户态接口如下：
 
+**权重分配：**
+
 - blkio.weight
 
 	指​​​定​​​cgroup默​​​认​​​可​​​用​​​访​​​问​​​块​​​I/O的​​​相​​​对​​​比​​​例​​​（加​​​权​​​），范​​​围​​​为​​​100到​​​1000。​​​这​​​个​​​值​​​可​​​由​​​具​​​体​​​设​​​备​​​的​​​ `blkio.weight_device`参​​​数​​​覆​​​盖​​​。
@@ -33,6 +35,35 @@ Cgroup中的blkio子系统的主要功能是实现对磁盘I/O带宽的可定制
 - blkio.weight_device
 
 	指​​​定​​​对​​​cgroup中​​​可​​​用​​​的​​​具​​​体​​​设​​​备​​​I/O访​​​问​​​的​​​相​​​对​​​比​​​例​​​（加​​​权​​​），范​​​围​​​是​​​100到​​​1000。​​​这​​​个​​​值​​​可​​​由​​​为​​​设​​​备​​​指​​​定​​​的​​​`blkio.weight`参​​​数​​​覆​​​盖​​​。​​​这​​​个​​​值​​​的​​​格​​​式​​​为​​​major:minor weight，其​​​中​​​major和​​​minor是​​​设​​​备​​​类​​​型​​​和​​​节​​​点​​​数​​​，我​​​们​​​也​​​称​​​之​​​为​​​Linux设​​​备​​​列​​​表​​​。​​​例​​​如​​​运行`echo 8:0 500 > blkio.weight_device`,则表示“为​​​访​​​问​​​/dev/sda的​​​cgroup分​​​配​​​加​​​权​​​500”。
+
+
+**I/O节流：**
+
+- blkio.throttle.read_bps_device
+
+	此参数用于设定设备执行“读”操作字节的上限。“读”的操作率以每秒的字节数来限定。其中有三个字段：major、minor和bytes_per_second。bytes_per_second是“读”操作可被执行的上限率。例如，让/dev/sda设备运行“读”操作的最大速率是10MBps，运行：`echo "8:0 10485760" > /cgroup/blkio/test blkio.throttle.read_bps_device`
+
+- blkio.throttle.read_iops_device
+
+	此参数用于设定设备执行“读”操作次数的上限。“读”的操作率以每秒的操作次数来表示。其中有三个字段：major、minor和operations_per_second。operations_per_second是“读”可被执行的上限率。例如：如要设定/dev/sda设备执行“读”的最大比率为10次/秒，运行：`echo "8:0 10" > /cgroup/blkio/test/blkio.throttle.read_iops_device`
+
+- blkio.throttle.write_bps_device
+
+	此参数用于设定设备执行“写”操作次数的上限。“写”的操作率用“字节/秒”来表示。其中有三个字段：major、minor和bytes_per_second。bytes_per_second是“写”操作可被执行的上限率。例如，让/dev/sda设备执行“写”操作的最大比率为10MBps，运行：`echo "8:0 10485760" > /cgroup/blkio/test/blkio.throttle.write_bps_device`
+
+- blkio.throttle.write_iops_device
+
+	此参数用于设定设备执行 “写” 操作次数的上限。“写”的操作率以每秒的操作次数来表示。其中有三个字段：major、minor和operations_per_second。operations_per_second是“写” 操作可被执行的上限率。例如：如要让/dev/sda设备执行“写”操作的最大比率为10次/秒，运行：`echo "8:0 10" > /cgroup/blkio/test/blkio.throttle.write_iops_device`
+
+- blkio.throttle.io_serviced
+
+	此参数用于报告cgroup根据节流方式在具体设备中执行的I/O操作数。其中有四个字段：major、minor、operation和number。operation代表操作类型（read、write、sync或者async），number代表操作数。
+
+- blkio.throttle.io_service_bytes
+
+	此参数用于报告cgroup传送到具体设备或者由具体设备中传送出的字节数。`blkio.io_service_bytes`和`blkio.throttle.io_service_bytes`之间的唯一区别是：CFQ调度程序在请求队列中操作时前者不会被更新。其中有四个字段：major、minor、operation和bytes。operation代表操作类型（read、write、sync或者async）。bytes是被传送的字节数。
+
+**通用参数：**
  
 - blkio.time
  
