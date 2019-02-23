@@ -1,5 +1,50 @@
 # Cgroup子系统--memory #
 
+## Linux内存回收机制 ##
+
+摘自[docker cgroup 技术之memory（首篇）](https://www.cnblogs.com/charlieroro/p/10180827.html)
+
+用户进程的内存页分为两种：file-backed pages（与文件对应的内存页），和anonymous pages（匿名页），比如进程的代码、映射的文件都是file-backed，而进程的堆、栈都是不与文件相对应的、就属于匿名页。file-backed pages在内存不足的时候可以直接写回对应的硬盘文件里，称为page-out，不需要用到交换区(swap)。/proc/meminfo中有一个dirty字段(所有的drity=Dirty+NFS_Unstable+Writeback)，为了维护数据的一致性，内核在清空内存前会对内存中的数据进行写回操作，此时内存中的数据也被称为脏数据，如果需要清空的内存比较大，可能会消耗大量系统io资源；而anonymous pages在内存不足时就只能写到硬盘上的交换区(swap)里，称为swap-out，匿名页即将被swap-out时会先被放进swap cache，在数据写入硬盘后，swap cache才会被free。
+
+[查看更多](http://linuxperf.com/?cat=7)
+
+
+**回收LRU上内存的三种方式**
+
+- 使用kswapd进行周期性检查，linux的内存被分为不同的zone，每个zone中都有3个字段：page_min,page_low,page_high，kswapd依据这3个值进行内存回收。linux 32位和64位定义的zone是不同的，可以在/proc/zoneinfo中查看zone的具体信息。
+
+- 内存严重不足时触发OOM-killer，当kswapd回收后仍然不满足需求时才会触发该机制。
+
+- 使用/proc/sys/vm/drop_caches手动释放内存。
+
+
+## Memory子系统 ##
+
+
+memory cgroup的主要功能：
+
+- 限制memory(含匿名和文件映射，swap cache)
+
+- 限制swap+memory
+
+- 统计cgroup的内存信息
+
+- 为每个cgroup设置内存软限制
+
+memory子系统中以`memory.kmem.`开头的伪文件用于设置cgroup的内核参数，这些功能被称为内核内存扩展(CONFIG_MEMCG_KMEM)，用于限制cgroup中进程占用的内核内存资源，一般用的比较少。内核内存不会使用swap。系统默认会开启这些功能，可以使用如下命令查看是否打开：
+
+```
+cat /boot/config-`uname -r`|grep CONFIG_MEMCG
+CONFIG_MEMCG=y
+CONFIG_MEMCG_SWAP=y
+CONFIG_MEMCG_SWAP_ENABLED=y
+CONFIG_MEMCG_KMEM=y
+```
+
+cgroup内存的回收与linux系统的内存回收机制类似，每个cgroup都有对应的LRU，当内存cgroup的内存达到限定值时会触发LRU上的内存回收。需要注意的是cgroup无法控制全局LRU的内存回收，因此在系统内存匮乏的时候，会触发全局LRU上内存的swap操作，此时cgroup无法限制这种行为(如cgroup限制了swap的大小为1G，但此时可能会超过1G)。下图可以看出cgoup的LRU控制的内存也在全局LRU所控制的范围内。
+
+![](img/cgroup_memory.png)
+
 
 **memory子系统参数**
 
@@ -16,6 +61,8 @@
 	2、under_oom 0
 	
 		此字段是只读的，用来表示当前的cgroup是不是已经进入了oom状态，如果是，这个值将置为1。
+
+	`cgroup.event_control`用来与`memory.oom_control`配合，在触发oom-kill的时候给出事件通知。事件级别有low，medium和critical三种，事件传递有default，hierarchy，local三种。示例参考[OOM 控制和通知](https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/7/html/resource_management_guide/sec-memory#memory_example-usage)。
 
 - memory.stat
 
