@@ -6,6 +6,8 @@
 
 用户进程的内存页分为两种：file-backed pages（与文件对应的内存页），和anonymous pages（匿名页），比如进程的代码、映射的文件都是file-backed，而进程的堆、栈都是不与文件相对应的、就属于匿名页。file-backed pages在内存不足的时候可以直接写回对应的硬盘文件里，称为page-out，不需要用到交换区(swap)。/proc/meminfo中有一个dirty字段(所有的drity=Dirty+NFS_Unstable+Writeback)，为了维护数据的一致性，内核在清空内存前会对内存中的数据进行写回操作，此时内存中的数据也被称为脏数据，如果需要清空的内存比较大，可能会消耗大量系统io资源；而anonymous pages在内存不足时就只能写到硬盘上的交换区(swap)里，称为swap-out，匿名页即将被swap-out时会先被放进swap cache，在数据写入硬盘后，swap cache才会被free。
 
+linux使用LRU(least recently used)来回收内存页面，LRU维护2个链表，active和inactive，每条链表上维护了2种类型的内存映射：文件映射（file）和匿名映射（anon），所以LRU上的内存也就分为了Active（anon）、Inactive（anon）、Active（file）和Inactive（file）4种类型，对应memory.stat中的inactive_anon，active_anon，inactive_file，active_file。`Active(file)+Inactive(file)+Shmem=Cached+Buffers(如果内存没有指定mlock)`，Buffers主要用于块设备的存储缓存，该值通常比较小，所以Active(file)+Inactive(file)+Shmem通常也可以认为是Cached，Cached表示了当前的文件缓存。Shmem表示share memory和tmpfs+devtmpfs占用内存空间的总和（由于share memory就是tmpfs实现的，实际上shemem就是各种tmpfs实现的内存的总和。可以使用ipcs查看共享内存大小，使用df -k查看挂载的tmpfs文件系统），该值与free命令的shared相同。所有tmpfs类型的文件系统占用的空间都计入共享内存。
+
 [查看更多](http://linuxperf.com/?cat=7)
 
 

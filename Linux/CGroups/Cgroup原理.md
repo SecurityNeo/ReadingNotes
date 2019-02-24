@@ -54,6 +54,24 @@ Cgroups是control groups的缩写，是Linux内核提供的一种可以限制、
 
 ![](img/CGroup.png)
 
+可以创建没有subsystem的hierarchy，默认包含如下文件:
+
+- tasks
+
+	包含了attach到该cgroup的pid。将进程pid写入到该文件会将进程转移到该cgroup。(cgroupv2中移除了该文件，使用cgroup.procs)
+
+- cgroup.procs
+
+	包含了线程的group id。将一个线程的group id写入该文件，会将该group下的所有线程转移到该cgroup。(cgroupv2中该文件的定义与cgroupv1中tasks文件的意义类似)
+
+- notify_on_release
+
+	用来判断是否执行release_agent
+
+- release_agent
+
+	如果cgroup中使能notify_on_release，cgroup中的最后一个进程被移除，最后一个子cgroup也被删除时，cgroup会主动通知kernel。接收到消息的kernel会执行release_agent文件中指定的程序
+
 **子系统的介绍**
 
 
