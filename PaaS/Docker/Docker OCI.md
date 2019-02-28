@@ -161,17 +161,20 @@ Filesystem Bundle是个目录，用于给runtime提供启动容器必备的配�
 	
 	```
 	"mounts": [
-	{
-	"destination": "/tmp",
-	"type": "tmpfs",
-	"source": "tmpfs",
-	"options": ["nosuid","strictatime","mode=755","size=65536k"]
-	},
-	{
-	"destination": "/data",
-	"type": "bind",
-	"source": "/volumes/testing",
-	"options": ["rbind","rw"]
+		{
+			"destination": "/tmp",
+			"type": "tmpfs",
+			"source": "tmpfs",
+			"options": ["nosuid","strictatime","mode=755","size=65536k"]
+		},
+		{
+			"destination": "/data",
+			"type": "bind",
+			"source": "/volumes/testing",
+			"options": ["rbind","rw"]
+		}
+	]
+
 	```
 
 
@@ -179,20 +182,21 @@ Filesystem Bundle是个目录，用于给runtime提供启动容器必备的配�
 	- terminal：默认false，为true时，linux系统会为该进程分配一个pseudoterminal(pts)，并使用标准输入输出流
 	- consoleSize：指定terminal的长宽规格
 		- height
-		– width
+		- width
 	- cwd：执行命令的绝对路径
 	- env：环境变量
 	- args：命令参数，至少需要指定一个参数，首参数即被execvp执行的文件
 	
 	其中根据不同的平台还会有不同的参数。
-	POSIX process：
+
+	**POSIX process：**
 
 	- rlimits：设置进程的资源，如cpu，内存，文件大小等，参见getrlimit。docker里面使用--ulimit来设置单个进程的资源
 		- type：linux或Solaris
 		- soft：内核分配给该进程的资源
 		- hard；可配置的资源的最大值，即soft的最大值。unprivileged进程(没有CAP_SYS_RESOURCE capability)可以将soft设置为0-hard之间的值
 	
-	Linux process：
+	**Linux process：**
 
 	- apparmorProfile：指定进程的apparmor文件
 	- capabilities：指定进程的capabilities
@@ -340,129 +344,253 @@ Filesystem Bundle是个目录，用于给runtime提供启动容器必备的配�
 		]
 		```
 
-	- Control groups
-
-		控制容器的资源以及设备接入等
-
-		- cgroupsPath:cgroup的路径，该路径可以是绝对路径，也可以是相对路径。如果没有设置该值，cgroup会使用默认的cgroup路径
-		- devices：用于配置设备白名单
-			- allow: 设置是否允许接入
-			- type：设备类型: a (all), c (char), or b (block)， 默认为all
-			- major, minor：设备的主次号。默认all
-			- access：设备的cgroup权限,r(read), w(write), 和m(mknod)。
-		
-		**示例：**
-
-		```
-		"devices": [
-			{
-				"allow": false,
-				"access": "rwm"
-			},
-			{
-				"allow": true,
-				"type": "c",
-				"major": 10,
-				"minor": 229,
-				"access": "rw"
-			}
-		]
-		```
-		- memory： 内存限制，参考Linux/CGroups相关笔记
-			- limit:设置内存使用limit
-			- reservation：设置内存的soft limit
-			- swap：设置memory+Swap使用limit
-			- kernel：设置内存的hard limit
-			- kernelTCP：设置内核TCP buffer的hard limit
-			- swapness：设置swap的使用比例
-			- disableOOMKiller：是否开启oomkiller
-		
-		**示例：**
-		```
-		"memory": {
-			"limit": 536870912,
-			"reservation": 536870912,
-			"swap": 536870912,
-			"kernel": -1,
-			"kernelTCP": -1,
-			"swappiness": 0,
-			"disableOOMKiller": false
-		}
-		```
-
-		- cpu: CPU限制，参考Linux/CGroups相关笔记
-			- shares:cgroup中task使用的cpu的相对比例
-			- quota:一个period中使用的cpu时间
-			- period:以毫秒为单位的cpu周期 (CFS scheduler only)
-			- realtimeRuntime:以毫秒为单位的cgroup tasks连续使用cpu资源的最长周期
-			- realtimePeriod:实时调度的period
-			- cpus:CPU列表
-			- mems:memory nodes列表
-
-		**示例：**
-		```
-		"cpu": {
-			"shares": 1024,
-			"quota": 1000000,
-			"period": 500000,
-			"realtimeRuntime": 950000,
-			"realtimePeriod": 1000000,
-			"cpus": "2-3",
-			"mems": "0-7"
-		}
-		```
-
-		- blockIO
-			- weight
-			- leafWeight
-			- weightDevice
-				- major, minor
-				- weight
-				- leafWeight
-			- throttleReadBpsDevice
-				- major, minor
-				- rate
-			- throttleWriteBpsDevice
-			- throttleReadIOPSDevice
-			- throttleWriteIOPSDevice
-
-		**示例：**
-		```
-		"blockIO": {
-			"weight": 10,
-			"leafWeight": 10,
-			"weightDevice": [
+		- Control groups
+	
+			控制容器的资源以及设备接入等
+	
+			- cgroupsPath:cgroup的路径，该路径可以是绝对路径，也可以是相对路径。如果没有设置该值，cgroup会使用默认的cgroup路径
+			- devices：用于配置设备白名单
+				- allow: 设置是否允许接入
+				- type：设备类型: a (all), c (char), or b (block)， 默认为all
+				- major, minor：设备的主次号。默认all
+				- access：设备的cgroup权限,r(read), w(write), 和m(mknod)。
+			
+			**示例：**
+	
+			```
+			"devices": [
 				{
-					"major": 8,
-					"minor": 0,
-					"weight": 500,
-					"leafWeight": 300
+					"allow": false,
+					"access": "rwm"
 				},
 				{
-					"major": 8,
-					"minor": 16,
-					"weight": 500
+					"allow": true,
+					"type": "c",
+					"major": 10,
+					"minor": 229,
+					"access": "rw"
 				}
+			]
+			```
+			- memory： 内存限制，参考Linux/CGroups相关笔记
+				- limit:设置内存使用limit
+				- reservation：设置内存的soft limit
+				- swap：设置memory+Swap使用limit
+				- kernel：设置内存的hard limit
+				- kernelTCP：设置内核TCP buffer的hard limit
+				- swapness：设置swap的使用比例
+				- disableOOMKiller：是否开启oomkiller
+			
+			**示例：**
+			```
+			"memory": {
+				"limit": 536870912,
+				"reservation": 536870912,
+				"swap": 536870912,
+				"kernel": -1,
+				"kernelTCP": -1,
+				"swappiness": 0,
+				"disableOOMKiller": false
+			}
+			```
+	
+			- cpu: CPU限制，参考Linux/CGroups相关笔记
+				- shares:cgroup中task使用的cpu的相对比例
+				- quota:一个period中使用的cpu时间
+				- period:以毫秒为单位的cpu周期 (CFS scheduler only)
+				- realtimeRuntime:以毫秒为单位的cgroup tasks连续使用cpu资源的最长周期
+				- realtimePeriod:实时调度的period
+				- cpus:CPU列表
+				- mems:memory nodes列表
+	
+			**示例：**
+			```
+			"cpu": {
+				"shares": 1024,
+				"quota": 1000000,
+				"period": 500000,
+				"realtimeRuntime": 950000,
+				"realtimePeriod": 1000000,
+				"cpus": "2-3",
+				"mems": "0-7"
+			}
+			```
+	
+			- blockIO
+				- weight
+				- leafWeight
+				- weightDevice
+					- major, minor
+					- weight
+					- leafWeight
+				- throttleReadBpsDevice
+					- major, minor
+					- rate
+				- throttleWriteBpsDevice
+				- throttleReadIOPSDevice
+				- throttleWriteIOPSDevice
+	
+			**示例：**
+			```
+			"blockIO": {
+				"weight": 10,
+				"leafWeight": 10,
+				"weightDevice": [
+					{
+						"major": 8,
+						"minor": 0,
+						"weight": 500,
+						"leafWeight": 300
+					},
+					{
+						"major": 8,
+						"minor": 16,
+						"weight": 500
+					}
+				],
+				"throttleReadBpsDevice": [
+					{
+						"major": 8,
+						"minor": 0,
+						"rate": 600
+					}
+				],
+				"throttleWriteIOPSDevice": [
+					{
+						"major": 8,
+						"minor": 16,
+						"rate": 300
+					}
+				]
+			}
+			```
+	
+			- hugepageLimits
+			
+				- pageSize： 大页大小
+				- limit： 大页的使用上限，单位bytes
+			
+			- Network
+	
+				- classID：cgroup网络报文的标签
+				- priorities
+					- name：网卡名称
+					- priority：网卡优先级
+			
+			**示例：**
+	
+			```
+			"network": {
+				"classID": 1048577,
+				"priorities": [
+					{
+						"name": "eth0",
+						"priority": 500
+					},
+					{
+						"name": "eth1",
+						"priority": 1000
+			        }
+		        ]
+	        }
+			```
+	
+			- pids
+	
+				- limit：cgroup限制的pid的数目
+			
+		- sysctl: 定义容器运行时的内核参数
+			
+		**示例：**
+
+		```
+		"sysctl": {
+			"net.ipv4.ip_forward": "1",
+			"net.core.somaxconn": "256"
+		}
+		```
+
+		- seccomp
+		
+			在linux内核中为应用提供了一种沙盒机制，[参考seccomp](https://www.kernel.org/doc/Documentation/prctl/seccomp_filter.txt)
+		
+			- defaultAction：seccomp的默认动作，允许值类型为syscalls[].action
+
+			- architectures：系统调用的平台，如下：
+
+				```
+				SCMP_ARCH_X86
+				SCMP_ARCH_X86_64
+				SCMP_ARCH_X32
+				SCMP_ARCH_ARM
+				SCMP_ARCH_AARCH64
+				SCMP_ARCH_MIPS
+				SCMP_ARCH_MIPS64
+				SCMP_ARCH_MIPS64N32
+				SCMP_ARCH_MIPSEL
+				SCMP_ARCH_MIPSEL64
+				SCMP_ARCH_MIPSEL64N32
+				SCMP_ARCH_PPC
+				SCMP_ARCH_PPC64
+				SCMP_ARCH_PPC64LE
+				SCMP_ARCH_S390
+				SCMP_ARCH_S390X
+				SCMP_ARCH_PARISC
+				SCMP_ARCH_PARISC6
+				```
+
+		- syscalls：匹配seccomp的系统调用，可选
+
+			- name：系统调用的名称，至少有一个
+			
+			- action：seccomp的动作规则。libseccomp v2.3.2中如下：
+
+				```
+				SCMP_ACT_KILL
+				SCMP_ACT_TRAP
+				SCMP_ACT_ERRNO
+				SCMP_ACT_TRACE
+				SCMP_ACT_ALLOW
+				```
+
+			- args
+				- index: 系统调用的index
+				- value: 系统调用参数的值
+				- valueTwo: 系统调用参数的值
+				- op: 系统调用参数的动作。 libseccomp v2.3.2如下:
+
+					```
+					SCMP_CMP_NE
+					SCMP_CMP_LT
+					SCMP_CMP_LE
+					SCMP_CMP_EQ
+					SCMP_CMP_GE
+					SCMP_CMP_GT
+					SCMP_CMP_MASKED_EQ
+					```
+
+		示例：
+		
+		```
+		"seccomp": {
+			"defaultAction": "SCMP_ACT_ALLOW",
+			"architectures": [
+				"SCMP_ARCH_X86",
+				"SCMP_ARCH_X32"
 			],
-			"throttleReadBpsDevice": [
+			"syscalls": [
 				{
-					"major": 8,
-					"minor": 0,
-					"rate": 600
-				}
-			],
-			"throttleWriteIOPSDevice": [
-				{
-					"major": 8,
-					"minor": 16,
-					"rate": 300
+					"names": [
+						"getcwd",
+						"chmod"
+					],
+					"action": "SCMP_ACT_ERRNO"
 				}
 			]
 		}
 		```
 
-
-
+		- rootfsPropagation： 设置rootfs的mount Propagation类型，slave，private或shared
 			
 	- windows
 	- solaris
