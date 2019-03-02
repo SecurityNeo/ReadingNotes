@@ -595,3 +595,205 @@ Filesystem Bundle是个目录，用于给runtime提供启动容器必备的配�
 	- windows
 	- solaris
 
+
+## 容器镜像标准（image spec） ##
+
+摘自[https://segmentfault.com/a/1190000009309347](https://segmentfault.com/a/1190000009309347)
+
+[https://github.com/opencontainers/image-spec](https://github.com/opencontainers/image-spec)
+
+
+image由manifest、image index(可选)、filesystem layers和configuration四个部分组成，它们之间的关系如下：
+
+![](img/image_spec_relationship.png)
+
+注：
+Image Index和Manifest的关系是"1..*"，表示它们是一对多的关系
+Image Manifest和Config的关系是"1..1"，表示它们是一对一的关系
+Image Manifest和Filesystem Layers是一对多的关系
+
+### Filesystem Layers ###
+
+Filesystem Layer包含了文件系统的信息，即该image包含了哪些文件/目录，以及它们的属性和数据。每个Filesystem Layer都包含了在上一个Layer上的改动情况，主要包含三方面的内容：
+
+- 变化类型：是增加、修改还是删除了文件(Additions,Modifications,Removals)
+ 
+- 文件类型：每个变化发生在哪种文件类型上(regular files,directories,sockets,symbolic links,block devices,character devices,FIFOs)
+
+- 文件属性：文件的修改时间、用户ID、组ID、RWX权限等
+
+最终每个layer都会打包成一个文件，这个文件的格式可以为tar，或者tar+gzip。不同的格式对应不同的Media Types对于Filesystem Layers，有四个Media Types，如下：
+
+`application/vnd.oci.image.layer.v1.tar`
+
+`application/vnd.oci.image.layer.v1.tar+gzip`
+
+`application/vnd.oci.image.layer.nondistributable.v1.tar`
+
+`application/vnd.oci.image.layer.nondistributable.v1.tar+gzip`
+
+名称中有nondistributable的layer，标准要求这种类型的layer不能上传，只能下载。
+
+
+### Image Config ###
+
+Image Config是一个json文件，是对这个image的整体描述信息，它的Media Types是`application/vnd.oci.image.config.v1+json`。
+
+下面介绍几个比较重要的字段：
+
+- architecture
+
+	CPU架构类型，amd64、arm64等
+
+- os
+
+	操作系统
+
+- config
+
+	当根据这个image启动container时，config里面的配置就是运行container时的默认参数
+
+- rootfs
+
+	指定了image所包含的Filesystem Layers，type的值必须是layers，diff_ids包含了layer的列表（顺序排列），每一个sha256就是每层layer对应tar包的sha256码
+
+
+官方提供了一个较完整的例子：
+
+```
+{
+    "created": "2015-10-31T22:22:56.015925234Z",
+    "author": "Alyssa P. Hacker <alyspdev@example.com>",
+    "architecture": "amd64",
+    "os": "linux",
+    "config": {
+        "User": "alice",
+        "ExposedPorts": {
+            "8080/tcp": {}
+        },
+        "Env": [
+            "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+            "FOO=oci_is_a",
+            "BAR=well_written_spec"
+        ],
+        "Entrypoint": [
+            "/bin/my-app-binary"
+        ],
+        "Cmd": [
+            "--foreground",
+            "--config",
+            "/etc/my-app.d/default.cfg"
+        ],
+        "Volumes": {
+            "/var/job-result-data": {},
+            "/var/log/my-app-logs": {}
+        },
+        "WorkingDir": "/home/alice",
+        "Labels": {
+            "com.example.project.git.url": "https://example.com/project.git",
+            "com.example.project.git.commit": "45a939b2999782a3f005621a8d0f29aa387e1d6b"
+        }
+    },
+    "rootfs": {
+      "diff_ids": [
+        "sha256:c6f988f4874bb0add23a778f753c65efe992244e148a1d2ec2a8b664fb66bbd1",
+        "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef"
+      ],
+      "type": "layers"
+    },
+    "history": [
+      {
+        "created": "2015-10-31T22:22:54.690851953Z",
+        "created_by": "/bin/sh -c #(nop) ADD file:a3bc1e842b69636f9df5256c49c5374fb4eef1e281fe3f282c65fb853ee171c5 in /"
+      },
+      {
+        "created": "2015-10-31T22:22:55.613815829Z",
+        "created_by": "/bin/sh -c #(nop) CMD [\"sh\"]",
+        "empty_layer": true
+      }
+    ]
+}
+```
+
+### manifest ###
+
+manifest也是一个json文件，Media Types为`application/vnd.oci.image.manifest.v1+json`，这个文件包含了对前面Filesystem Layers和Image Config的描述信息。
+
+- config
+
+	包含了对image config文件的描述，有media type，文件大小，以及sha256码
+
+- layers
+
+	包含了对每一个layer的描述，和对config文件的描述一样，也包含了media type，文件大小，以及sha256码
+
+```
+{
+  "schemaVersion": 2,
+  "config": {
+    "mediaType": "application/vnd.oci.image.config.v1+json",
+    "size": 7023,
+    "digest": "sha256:b5b2b2c507a0944348e0303114d8d93aaaa081732b86451d9bce1f432a537bc7"
+  },
+  "layers": [
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "size": 32654,
+      "digest": "sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f"
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "size": 16724,
+      "digest": "sha256:3c3a4604a545cdc127456d94e421cd355bca5b528f4a9c1905b15da2eb4a4c6b"
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "size": 73109,
+      "digest": "sha256:ec4b8955958665577945c89419d1af06b5f7636b4ac3da7f12184802ad867736"
+    }
+  ],
+  "annotations": {
+    "com.example.key1": "value1",
+    "com.example.key2": "value2"
+  }
+}
+```
+
+
+### Image Index ###
+
+Image Index也是个json文件，Media Type是`application/vnd.oci.image.index.v1+json`。manifest描述的image只能支持一个平台，也没法支持多个tag，加上index文件的目的就是让这个image能支持多个平台和多tag。
+
+```
+{
+  "schemaVersion": 2,
+  "manifests": [
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "size": 7143,
+      "digest": "sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f",
+      "platform": {
+        "architecture": "ppc64le",
+        "os": "linux"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "size": 7682,
+      "digest": "sha256:5b0bcabd1ed22e9fb1310cf6c2dec7cdef19f0ad69efa1f392e94a4333501270",
+      "platform": {
+        "architecture": "amd64",
+        "os": "linux",
+        "os.features": [
+          "sse4"
+        ]
+      }
+    }
+  ],
+  "annotations": {
+    "com.example.key1": "value1",
+    "com.example.key2": "value2"
+  }
+}
+```
+
