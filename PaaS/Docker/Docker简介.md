@@ -78,3 +78,90 @@ Overlay2文件层级目录结构如下：
 
 ![](img/overlay2.png)
 
+
+## Docker核心组件 ##
+
+Docker的核心组件如下：
+
+![](img/Docker_Component.png)
+
+它们之间的调用关系如下：
+
+![](img/Components_Comunication.png)
+
+- 1. docker daemon 模块通过grpc和containerd模块通信：dockerd由libcontainerd负责和containerd模块进行交换，通信socket文件：docker-containerd.sock 
+- 2. containerd在dockerd启动时被启动，并启动grpc请求监听。containerd处理grpc请求，根据请求做相应动作； 
+- 3. 若是start或是exec容器，containerd会拉起一个container-shim , 并通过exit 、control 文件（每个容器独有）通信； 
+- 4. container-shim别拉起后，start/exec/create拉起runC进程，通过exit、control文件和containerd通信，通过父子进程关系和SIGCHLD监控容器中进程状态； 
+- 5. 若是top等命令，containerd通过runC二级制组件直接和容器交换； 
+- 6. 在整个容器生命周期中，containerd通过 epoll 监控容器文件，监控容器的OOM等事件。
+
+
+**containerd**
+
+containerd是容器技术标准化之后的产物，为了能够兼容OCI标准，将容器运行时及其管理功能从Docker Daemon剥离出来。containerd主要职责是镜像管理（镜像、元信息等）、容器执行（调用最终运行时组件执行）。其架构如下：
+
+![](img/Containerd_Structure.png)
+
+[https://github.com/docker/containerd/blob/master/design/architecture.md](https://github.com/docker/containerd/blob/master/design/architecture.md)
+
+- distribute
+
+	实现Pull镜像功能；
+
+- bundle
+
+	允许用户从磁盘映像中提取镜像和打包成bundle。
+
+- runtime
+
+	该服务实现bundles的执行，包括创建运行时容器。
+
+- Executor
+
+	实际容器运行时的执行器
+
+- Supervisor
+
+	监视和报告容器状态
+
+- Metadata
+
+	将元数据存储在图形数据库中。用于存储对镜像和bundle的任何持久性引用。输入到数据库的数据将具有在组件之间协调的模式，以提供对任意数据的访问。其他功能包括定义了用于磁盘资源的垃圾回收的钩子。
+
+- Content
+
+	提供对content addressable storage （镜像的层文件）的访问，所有不可变的内容将存储在这里，通过内容的hash索引。
+
+- Snapshot
+
+	管理容器映像的文件系统快照。这类似于Docker中的graphdriver。图层被解包到快照中。
+
+- Events
+
+	支持事件的收集和使用，以提供一致的，事件驱动的行为和审计。
+
+- Metrics
+
+	每个组件将导出几个指标，可通过指标API访问。
+
+
+bundle是containerd的核心，创建bundle的数据流如下：
+
+![](img/Containerd_DataFlow.png)
+
+- 指示Distribution组件拉取一个指定的镜像；
+- Distribution组件将镜像的content放入content组件中存储；
+- 将镜像名字和根清单指针向metadata组件存储注册；
+- bundle组件解压镜像为一个bundle；
+- 根据上面content组件中存储，将镜像的层文件解压到snapshot 组件中；
+- 当一个容器的rootfs的snapshot准备好时，bundle组件使用镜像清单指针和配置来准备执行所有的配置；
+- 将准备好的bundle传递给runtime子系统执行；
+- runtime子系统读取bundle配置，创建一个运行容器。
+
+
+摘自：
+
+[https://blog.csdn.net/Jinhua_Wei/article/details/79874592](https://blog.csdn.net/Jinhua_Wei/article/details/79874592)
+
+[https://my.oschina.net/u/2306127/blog/1600270](https://my.oschina.net/u/2306127/blog/1600270)
