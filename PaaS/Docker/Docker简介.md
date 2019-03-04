@@ -105,43 +105,43 @@ containerd是容器技术标准化之后的产物，为了能够兼容OCI标准�
 
 [https://github.com/docker/containerd/blob/master/design/architecture.md](https://github.com/docker/containerd/blob/master/design/architecture.md)
 
-- distribute
+- Distribution子系统
 
 	实现Pull镜像功能；
 
-- bundle
+- Bundle子系统
 
 	允许用户从磁盘映像中提取镜像和打包成bundle。
 
-- runtime
+- runtime子系统
 
 	该服务实现bundles的执行，包括创建运行时容器。
 
-- Executor
+- Executor组件
 
 	实际容器运行时的执行器
 
-- Supervisor
+- Supervisor组件
 
 	监视和报告容器状态
 
-- Metadata
+- Metadata组件
 
 	将元数据存储在图形数据库中。用于存储对镜像和bundle的任何持久性引用。输入到数据库的数据将具有在组件之间协调的模式，以提供对任意数据的访问。其他功能包括定义了用于磁盘资源的垃圾回收的钩子。
 
-- Content
+- Content组件
 
 	提供对content addressable storage （镜像的层文件）的访问，所有不可变的内容将存储在这里，通过内容的hash索引。
 
-- Snapshot
+- Snapshot组件
 
 	管理容器映像的文件系统快照。这类似于Docker中的graphdriver。图层被解包到快照中。
 
-- Events
+- Events组件
 
 	支持事件的收集和使用，以提供一致的，事件驱动的行为和审计。
 
-- Metrics
+- Metrics组件
 
 	每个组件将导出几个指标，可通过指标API访问。
 
@@ -158,6 +158,66 @@ bundle是containerd的核心，创建bundle的数据流如下：
 - 当一个容器的rootfs的snapshot准备好时，bundle组件使用镜像清单指针和配置来准备执行所有的配置；
 - 将准备好的bundle传递给runtime子系统执行；
 - runtime子系统读取bundle配置，创建一个运行容器。
+
+
+**containerd-shim**
+
+containerd-shim是一个真实运行的容器载体，每启动一个容器时docker-containerd都会创建一个或多个新的docker-containerd-shim进程，创建docker-containerd-shim进程时会传入三个参数：容器id，boundle目录（containerd的对应某个容器生成的目录，一般位于：/var/run/docker/libcontainerd/containerID，这个目录包含了容器配置和标准输入、标准输出、标准错误三个管道文件），运行时二进制（默认为runc）。containerd-shim会通过调用runC来管理容器的生命周期。
+
+
+**runC**
+
+[https://github.com/opencontainers/runc](https://github.com/opencontainers/runc)
+
+runC实际上来源于Docker的libcontainer，本质上是在libcontainer之上做了一层封装，实现了容器启停、资源隔离等功能。Docker默认的runtime为`docker-runc`，我们还可以在启动Docker Daemon时增加`--add-runtime`参数来选择其他的runC。例如：
+
+`docker daemon --add-runtime "custom=/usr/local/bin/my-runc-replacement"`
+
+通过runC创建一个容器：
+
+1、下载源码编译
+
+```
+cd github.com/opencontainers
+git clone https://github.com/opencontainers/runc
+cd runc
+make
+sudo make install
+
+```
+
+2、创建容器根文件系统
+
+```
+mkdir /mycontainer
+cd /mycontainer
+
+mkdir rootfs
+
+docker export $(docker create busybox) | tar -C rootfs -xvf -
+
+```
+
+3、通过`runc spec`命令创建默认的配置文件config.json
+
+```
+runc spec
+```
+
+4、运行容器
+
+```
+cd /mycontainer
+runc run mycontainerid
+/ # ls
+bin　　dev　　etc　　home　　proc　　root　　sys　　tmp　　usr　　var
+
+runc list
+ID              PID         STATUS      BUNDLE         CREATED                          OWNER
+mycontainerid   1070        running     /mycontainer   2017-12-20T12:26:30.159978871Z   root
+
+```
+
 
 
 摘自：
