@@ -2,6 +2,8 @@
 
 ## APIServer的认证与授权 ##
 
+**认证**
+
 kubernetes认证主要有五种：CA证书认证、Token认证、Basic认证、Webhook Token认证、Bootstrap Token认证（也是一种Token认证）、OpenID Connect Tokens认证。可以同时配置多种认证方式，只要其中任意一个方式认证通过即可。
 
 - CA证书认证
@@ -58,3 +60,33 @@ kubernetes认证主要有五种：CA证书认证、Token认证、Basic认证、W
 	- 确保user被授权
 	- 当被授权API Server会返回对kubectl响应
 	- kubectl向user反馈
+	
+
+**授权**
+
+Kubernetes中的认证与授权是分开的，授权发生在认证完成之后，认证过程是检验发起API请求的用户是否合法。授权是判断此用户是否有执行该API请求的权限。当配置多个授权模块时，会按顺序检查每个模块，如果有任何模块授权通过，则继续执行下一步的请求。如果所有模块拒绝，则该请求授权失败（返回HTTP 403）。
+
+Kubernetes目前提供以下几种授权模块：
+
+- AlwaysDeny： 表示拒绝所有的请求，仅用作测试。
+- AlwaysAllow：允许接收所有请求，如果集群不需要授权流程，则可以采用该策略，这也是Kubernetes的默认配置。
+- ABAC： 基于属性的访问控制，表示使用用户配置的授权规则对用户请求进行匹配和控制。
+- RBAC：  基于角色的访问控制，允许管理员通过api动态配置授权策略
+- Webhook：通过调用外部REST服务对用户进行授权。
+- Node：节点授权是一种特殊用途的授权模式，专门授权由kubelet发出的API请求。
+- Custom Modules：自定义授权模块。
+
+Kubernetes审查的API请求属性：
+
+- user：身份验证期间提供的user字符串。
+- group：经过身份验证的用户所属的组名列表。
+- extra：由身份验证层提供的任意字符串键到字符串值的映射。
+- API：指示请求是否针对API资源。
+- Request path：各种非资源端点的路径，如/api或/healthz。
+- API request verb：API动词get，list，create，update，patch，watch，proxy，redirect，delete和deletecollection，用于资源请求。
+- HTTP request verb：HTTP动词get，post，put和delete用于非资源请求。
+- Resource：正在访问的资源的ID或名称（仅限资源请求） 对于使用get，update，patch和delete动词的资源请求，必须提供资源名称。
+- Subresource：正在访问的子资源（仅限资源请求）。
+- Namespace：正在访问的对象的名称空间（仅适用于命名空间资源请求）。
+- API group：正在访问的API组（仅限资源请求）。空字符串表示核心API组。
+
