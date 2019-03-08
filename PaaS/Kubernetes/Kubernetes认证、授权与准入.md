@@ -112,3 +112,44 @@ Kubernetes审查的API请求属性：
 - Namespace：正在访问的对象的名称空间（仅适用于命名空间资源请求）。
 - API group：正在访问的API组（仅限资源请求）。空字符串表示核心API组。
 
+
+## 准入控制 ##
+
+摘自[kubernetes API Server 权限管理实践](https://www.cnblogs.com/fengjian2016/p/8134068.html)
+
+准入控制admission controller本质上为一段准入代码，在对Kubernetes API的请求过程中，顺序为先经过认证、授权，然后进入准入流程，再对目标对象进行操作。这个准入代码在apiserver中，而且必须被编译到二进制文件中才能被执行。
+在对集群进行请求时，每个准入控制代码都按照一定顺序执行。如果有一个准入控制拒绝了此次请求，那么整个请求的结果将会立即返回，并提示用户相应的error信息。
+
+APIerver中的参数`admission_control`可以进行准入控制的配置，它的值为一串用逗号连接的、有序的准入模块列表。它的模块如下：
+
+- AlwaysAdmit：允许所有请求
+ 
+- AlwaysDeny：禁止所有请求，多用于测试环境。
+ 
+- DenyExecOnPrivileged：它会拦截所有想在privileged container上执行命令的请求。如果自己的集群支持privileged container，自己又希望限制用户在这些privileged container上执行命令，那么强烈推荐使用它。
+ 
+- ServiceAccount：这个plug-in将serviceAccounts实现了自动化，如果想要使用ServiceAccount对象，那么强烈推荐使用它。
+
+	一个serviceAccount为运行在pod内的进程添加了相应的认证信息。当准入模块中开启了此插件（默认开启），那么当pod创建或修改时他会做一下事情：
+
+	  -	如果pod没有serviceAccount属性，将这个pod的serviceAccount属性设为“default”；
+
+      - 确保pod使用的serviceAccount始终存在；
+
+      - 如果LimitSecretReferences 设置为true，当这个pod引用了Secret对象却没引用ServiceAccount对象，弃置这个pod；
+
+      - 如果这个pod没有包含任何ImagePullSecrets，则serviceAccount的ImagePullSecrets被添加给这个pod；
+
+      - 如果MountServiceAccountToken为true，则将pod中的container添加一个VolumeMount 。
+
+- SecurityContextDeny：这个插件将会将使用了SecurityContext的pod中定义的选项全部失效。SecurityContext在container中定义了操作系统级别的安全设定（uid, gid, capabilities, SELinux等等）。
+
+- ResourceQuota：它会观察所有的请求，确保在namespace中ResourceQuota对象处列举的container没有任何异常。 如果在kubernetes中使用了ResourceQuota对象，就必须使用这个插件来约束container。推荐在admission control参数列表中，这个插件排最后一个。
+
+- LimitRanger：他会观察所有的请求，确保没有违反已经定义好的约束条件，这些条件定义在namespace中LimitRange对象中。如果在kubernetes中使用LimitRange对象，则必须使用这个插件。
+
+- NamespaceExists：它会观察所有的请求，如果请求尝试创建一个不存在的namespace，则这个请求被拒绝。
+
+推荐的插件配置：
+
+`--admission_control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ServiceAccount, ResourceQuota`
