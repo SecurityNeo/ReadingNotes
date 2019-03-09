@@ -125,8 +125,31 @@ APIerver中的参数`admission_control`可以进行准入控制的配置，它�
 - AlwaysAdmit：允许所有请求
  
 - AlwaysDeny：禁止所有请求，多用于测试环境。
+
+- AlwaysPullImages: 该插件修改每个新的Pod，强制pull最新镜像，这在多租户群集中非常有用，以便私有镜像只能由拥有授权凭据的用户使用。
  
-- DenyExecOnPrivileged：它会拦截所有想在privileged container上执行命令的请求。如果自己的集群支持privileged container，自己又希望限制用户在这些privileged container上执行命令，那么强烈推荐使用它。
+- DenyExecOnPrivileged(已弃用)：它会拦截所有想在privileged container上执行命令的请求。如果自己的集群支持privileged container，自己又希望限制用户在这些privileged container上执行命令，那么强烈推荐使用它。此功能已合并到`DenyEscalatingExec`中。
+
+- DenyEscalatingExec: 禁止privileged container的exec和attach操作。
+
+- ImagePolicyWebhook: 通过webhook决定image策略，需要同时配置`--admission-control=ImagePolicyWebhook`。
+
+	**配置文件格式**
+	
+	ImagePolicyWebhook使用admission配置文件`--admission-control-config-file`为Backend Behavior设置配置选项。该文件可以是json或yaml并具有以下格式:
+
+	```
+	{
+	  "imagePolicy": {
+	     "kubeConfigFile": "path/to/kubeconfig/for/backend",
+	     "allowTTL": 50,           // time in s to cache approval
+	     "denyTTL": 50,            // time in s to cache denial
+	     "retryBackoff": 500,      // time in ms to wait between retries
+	     "defaultAllow": true      // determines behavior if the webhook backend fails
+	  }
+	}
+	```
+
  
 - ServiceAccount：这个plug-in将serviceAccounts实现了自动化，如果想要使用ServiceAccount对象，那么强烈推荐使用它。
 
