@@ -169,10 +169,39 @@ APIerver中的参数`admission_control`可以进行准入控制的配置，它�
 
 - ResourceQuota：它会观察所有的请求，确保在namespace中ResourceQuota对象处列举的container没有任何异常。 如果在kubernetes中使用了ResourceQuota对象，就必须使用这个插件来约束container。推荐在admission control参数列表中，这个插件排最后一个。
 
-- LimitRanger：他会观察所有的请求，确保没有违反已经定义好的约束条件，这些条件定义在namespace中LimitRange对象中。如果在kubernetes中使用LimitRange对象，则必须使用这个插件。
+- LimitRanger：它会观察所有的请求，确保没有违反LimitRanger对象中枚举的任何限制Namespace，如果在Kubernetes Deployment中使用了LimitRanger对象，则必须使用此插件
+
+- InitialResources： 根据镜像的历史使用记录，为容器设置默认资源请求和limits。
+
+- NamespaceLifecycle： 该插件确保处于Termination状态的Namespace不再接收新的对象创建请求，并拒绝请求不存在的Namespace。该插件还可以防止删除系统保留的Namespace:`default，kube-system，kube-public`。
+
+- DefaultStorageClass: 该插件将观察PersistentVolumeClaim，并自动设置默认的Storage Class。当没有配置默认Storage Class时，此插件不会执行任何操作。当有多个Storage Class被标记为默认值时，它也将拒绝任何创建，管理员必须重新访问StorageClass对象，并且只标记一个作为默认值。此插件不用于PersistentVolumeClaim的更新，仅用于创建。
+
+- DefaultTolerationSeconds: 该插件设置Pod的默认forgiveness toleration为5分钟。
+
+- PodSecurityPolicy: 该插件用于创建和修改pod，使用Pod Security Policies时需要开启。
+
+- NodeRestriction: 此插件限制kubelet修改Node和Pod对象，这样的kubelets只允许修改绑定到Node的Pod API对象，以后版本可能会增加额外的限制。
 
 - NamespaceExists：它会观察所有的请求，如果请求尝试创建一个不存在的namespace，则这个请求被拒绝。
 
-推荐的插件配置：
 
-`--admission_control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ServiceAccount, ResourceQuota`
+
+**推荐的插件配置：**
+
+- Kubernetes > = 1.6.0
+
+	`--admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,ResourceQuota,DefaultTolerationSeconds`
+
+- Kubernetes > = 1.4.0
+
+	`--admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota`
+
+- Kubernetes > = 1.2.0
+
+	`--admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,ResourceQuota`
+
+- Kubernetes > = 1.0.0
+
+	`--admission-control=NamespaceLifecycle,LimitRanger,SecurityContextDeny,ServiceAccount,PersistentVolumeLabel,ResourceQuota`
+	
