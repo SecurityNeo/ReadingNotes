@@ -14,17 +14,18 @@ ResourceQuota对象用来定义某个命名空间下所有资源的使用限额�
 
 **资源配额的启用**
 
-许多Kubernetes发行版本默认开启了资源配额的支持。当在apiserver的`–admission-control`配置中添加`ResourceQuota`参数后，便启用了资源配额功能。 当一个命名空间中含有ResourceQuota对象时，资源配额将强制执行。 一个namespace中最多只应存在一个ResourceQuota对象。
+许多Kubernetes发行版本默认开启了资源配额的支持。当在apiserver的`–admission-control`配置中添加`ResourceQuota`参数后，便启用了资源配额功能。当一个命名空间中含有ResourceQuota对象时，资源配额将强制执行。 一个namespace中最多只应存在一个ResourceQuota对象。
 
 有关admission-control参考[Kubernetes认证、授权和准入](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Kubernetes/Kubernetes%E8%AE%A4%E8%AF%81%E3%80%81%E6%8E%88%E6%9D%83%E4%B8%8E%E5%87%86%E5%85%A5.md)
 
 - **计算资源配额**
 
-	限制某个Namespace中总的[计算资源](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/)
+	限制某个Namespace中总的[计算资源](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/)。开启计算资源配额后，创建容器时必须配置计算资源请求或限制。
 
 	配置如下：
 
 	![](img/resource_quotas_compute.png)
+
 
 - **存储资源配额**
 
