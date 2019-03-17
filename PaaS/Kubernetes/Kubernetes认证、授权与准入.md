@@ -120,7 +120,29 @@ Kubernetes审查的API请求属性：
 准入控制admission controller本质上为一段准入代码，在对Kubernetes API的请求过程中，顺序为先经过认证、授权，然后进入准入流程，再对目标对象进行操作。这个准入代码在apiserver中，而且必须被编译到二进制文件中才能被执行。
 在对集群进行请求时，每个准入控制代码都按照一定顺序执行。如果有一个准入控制拒绝了此次请求，那么整个请求的结果将会立即返回，并提示用户相应的error信息。
 
-APIerver中的参数`admission_control`可以进行准入控制的配置，它的值为一串用逗号连接的、有序的准入模块列表。它的模块如下：
+**Admission Controller工作流**
+
+摘自[Kubernetes准入控制Admission Controller介绍](https://mp.weixin.qq.com/s?__biz=MzIzNzU5NTYzMA==&mid=2247484645&idx=1&sn=87b20f0bf94922cca0d0817d4be8281d&chksm=e8c77a64dfb0f37227134ec8da685f9198d814b6a223a668e55c8bb592d4ab65203742e4acfd&token=1308536270&lang=zh_CN#rd)
+
+![](img/admission_controller.png)
+
+API Server接收到客户端请求后首先进行认证鉴权，认证鉴权通过后才会进行后续的endpoint handler处理。
+
+- 1)当API Server接收到对象后首先根据http的路径可以知道对象的版本号，然后将request body反序列化成versioned object.
+ 
+- 2)versioned object转化为internal object，即没有版本的内部类型，这种资源类型是所有versioned类型的超集。只有转化为internal后才能适配所有的客户端versioned object的校验。
+
+- 3)Admission Controller具体的admit操作，可以通过这里修改资源对象，例如为Pod挂载一个默认的Service Account等。
+ 
+- 4)API Server internal object validation，校验某个资源对象数据和格式是否合法，例如：Service Name的字符个数不能超过63等。
+ 
+- 5)Admission Controller validate，可以自定义任何的对象校验规则。
+ 
+- 6)internal object转化为versioned object，并且持久化存储到etcd。
+
+Kubernetes 1.10之前版本在APIerver中配置`--admission_control`参数可以进行准入控制的配置，它的值为一串用逗号连接的、有序的准入模块列表。Kubernetes 1.10之后的版本，`--admission-control`已经废弃，建议使用`--enable-admission-plugins` `--disable-admission-plugins`指定需要打开或者关闭的Admission Controller。 同时用户指定的顺序并不影响实际Admission Controllers的执行顺序，对用户来讲非常友好。
+
+它的模块如下：
 
 - AlwaysAdmit：允许所有请求
  
