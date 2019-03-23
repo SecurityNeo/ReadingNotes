@@ -226,4 +226,18 @@ Kubernetes 1.10之前版本在APIerver中配置`--admission_control`参数可以
 - Kubernetes > = 1.0.0
 
 	`--admission-control=NamespaceLifecycle,LimitRanger,SecurityContextDeny,ServiceAccount,PersistentVolumeLabel,ResourceQuota`
-	
+
+
+## RBAC ##
+
+RBAC（Role-Based Access Control），允许通过Kubernetes API动态配置授权策略。
+
+RBAC被映射为四种Kubernetes顶级资源对象：
+
+- 角色（Role）：Role和ClusterRole
+	- 角色表示一组权限的规则，累积规则
+	- Role适用带namespace的资源，ClusterRole适用集群资源或非资源API
+
+- 建立用户与角色的绑定关系：RoleBinding和ClusterRoleBinding
+	- RoleBinding和ClusterRoleBinding的区别在于是否是namespace的资源
+	- 角色绑定包含了一组相关主体（即subject，包括用户、用户组或者serviceAccount）以及对呗授予角色的引用	
