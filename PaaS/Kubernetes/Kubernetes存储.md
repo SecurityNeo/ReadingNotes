@@ -83,6 +83,91 @@ A volume plugin with support for Virtuozzo Storage distributed cloud file system
 Docker Volume Driver for vSphere enables customers to address persistent storage requirements for Docker containers in vSphere environments.
 
 
+## Kubernetes存储 ##
+
+**In-Tree Volume Plugins**
+
+Kubernetes的VolumePlugin提供了插件化扩展存储的机制，分为内置插件（In-Tree Plugins）和外置插件（Out-of-Tree）两种。
+
+- awsElasticBlockStore 
+mounts an Amazon Web Services (AWS) EBS Volume (Elastic Block Store)
+
+- azureDisk 
+is used to mount a Microsoft Azure Data Disk into a Pod.
+
+- azureFile
+is used to mount a Microsoft Azure File Volume (SMB 2.1 and 3.0) into a Pod.
+
+- cephfs 
+allows an existing CephFS volume to be mounted into your pod. 
+
+- cinder 
+is used to mount OpenStack Block Storage into a pod.
+
+- configMap 
+The data stored in a ConfigMap object can be referenced in a volume of type configMap and then consumed by containerized applications running in a Pod.
+
+- downwardAPI 
+is used to make downward API data available to applications. It mounts a directory and writes the requested data in plain text files
+
+- emptyDir 
+is first created when a Pod is assigned to a Node, and exists as long as that Pod is running on that node. When a Pod is removed from a node for any reason, the data in the emptyDir is deleted forever.
+
+- fc (fibre channel) 
+allows an existing fibre channel volume to be mounted in a pod
+
+- flocker 
+allows a Flocker dataset to be mounted into a pod. 
+
+- gcePersistentDisk 
+mounts a Google Compute Engine (GCE) Persistent Disk into your pod. 
+
+- gitRepo 
+mounts an empty directory and clones a git repository into it for your pod to use.
+
+- glusterfs 
+allows a Glusterfs (an open source networked filesystem) volume to be mounted into your pod
+
+- hostPath 
+mounts a file or directory from the host node’s filesystem into your pod. 
+
+- iscsi 
+allows an existing iSCSI (SCSI over IP) volume to be mounted into your pod
+
+- local 
+represents a mounted local storage device such as a disk, partition or directory.  can only be used as a statically created PersistentVolume.
+
+- nfs 
+allows an existing NFS (Network File System) share to be mounted into your pod
+
+- persistentVolumeClaim 
+is used to mount a PersistentVolume into a pod. 
+
+- projected 
+maps several existing volume sources into the same directory.
+
+- portworxVolume 
+can be dynamically created through Kubernetes or it can also be pre-provisioned and referenced inside a Kubernetes pod. 
+
+- quobyte 
+allows an existing Quobyte volume to be mounted into your pod. 
+
+- rbd 
+allows a Rados Block Device volume to be mounted into your pod.
+
+- scaleIO 
+ScaleIO is a software-based storage platform that can use existing hardware to create clusters of scalable shared block networked storage. The ScaleIO volume plugin allows deployed pods to access existing ScaleIO volumes
+
+- secret 
+is used to pass sensitive information, such as passwords, to pods
+
+- storageos 
+allows an existing StorageOS volume to be mounted into your pod. StorageOS provides block storage to containers, accessible via a file system.
+
+- vsphereVolume 
+used to mount a vSphere VMDK Volume into your Pod.
+
+
 
 
 
