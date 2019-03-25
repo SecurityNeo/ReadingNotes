@@ -254,5 +254,85 @@ used to mount a vSphere VMDK Volume into your Pod.
 	- Recycled：删除数据并允许PV被绑定到其它PVC。 
 	- Deleted： 将删除PV和外部关联的存储资源。
 
+**PV状态**
+
+- Available：未被任何PVC使用
+- Bound：绑定到了PVC上
+- Released：PVC被删掉，资源未被使用
+- Failed：自动回收失败
 
 
+### Storage Classes ###
+[https://kubernetes.io/docs/concepts/storage/storage-classes/](https://kubernetes.io/docs/concepts/storage/storage-classes/)
+
+StorageClass为管理员提供了一种描述存储类型的方法。通常情况下，管理员需要手工创建所需的存储资源。利用动态容量供给的功能，就可以实现动态创建PV的能力。动态容量供给（Dynamic Volume Provisioning）主要依靠StorageClass。
+
+部分参数：
+
+- Provisioner
+	存储类有一个供应商，它确定用于配置PV的卷插件。 必须指定此字段。
+- Parameters
+	存储类具有描述属于存储类的卷的参数。 取决于供应商，可以接受不同的参数。 例如，参数类型的值io1和参数iopsPerGB特定于EBS。 当省略参数时，使用一些默认值。
+
+示例：
+
+**Ceph RBD**
+```
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: fast
+provisioner: kubernetes.io/rbd
+parameters:
+  monitors: 10.16.153.105:6789
+  adminId: kube
+  adminSecretName: ceph-secret
+  adminSecretNamespace: kube-system
+  pool: kube
+  userId: kube
+  userSecretName: ceph-secret-user
+  userSecretNamespace: default
+  fsType: ext4
+  imageFormat: "2"
+  imageFeatures: "layering"
+```
+
+**Glusterfs**
+```
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: slow
+provisioner: kubernetes.io/glusterfs
+parameters:
+  resturl: "http://127.0.0.1:8081"
+  clusterid: "630372ccdc720a92c681fb928f27b53f"
+  restauthenabled: "true"
+  restuser: "admin"
+  secretNamespace: "default"
+  secretName: "heketi-secret"
+  gidMin: "40000"
+  gidMax: "50000"
+  volumetype: "replicate:3"
+```
+
+**Local**
+```
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: local-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+```
+
+**OpenStack Cinder**
+```
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: gold
+provisioner: kubernetes.io/cinder
+parameters:
+  availability: nova
+```
