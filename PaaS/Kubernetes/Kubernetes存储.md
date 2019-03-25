@@ -227,6 +227,32 @@ used to mount a vSphere VMDK Volume into your Pod.
 
 
 
+### PV和PVC ###
+
+- PersistentVolume（一些简称PV）：由管理员添加的的一个存储的描述，是一个全局资源，包含存储的类型，存储的大小和访问模式等。它的生命周期独立于Pod，例如当使用它的Pod销毁时对PV没有影响。 
+
+- PersistentVolumeClaim（一些简称PVC）：是Namespace里的资源，描述对PV的一个请求。请求信息包含存储大小，访问模式等。
+
+**PV和PVC的生命周期**
+
+- Provisioning
+	即PV的创建，可以直接创建PV（静态方式），也可以使用StorageClass动态创建
+
+- Binding
+	当集群中新添加一个PVC时，k8s里的PVController会试图查找最合适（存储大小和访问模式）的PV并建立绑定关系。 最合适的意思是PVC一定满足PV的要求，单也可能比PVC要求的要多，例如PVC请求5G存储，但当前最小的PV是10G，那么这个PV也会被分配给PVC。 注意一个PV只能绑定给一个PVC。
+
+- Using
+	Pod通过PVC使用该Volume
+
+- Releasing
+	当用户使用完PVC可以把它删除，绑定在其上的PV会变成“released”并准备被回收。
+
+- Reclaiming
+	回收PV，可以保留PV以便下次使用，也可以直接从云存储中删除
+	有三种回收策略： 
+	- Retained：PV会保持原有数据并允许用户手动回收数据。 
+	- Recycled：删除数据并允许PV被绑定到其它PVC。 
+	- Deleted： 将删除PV和外部关联的存储资源。
 
 
 
