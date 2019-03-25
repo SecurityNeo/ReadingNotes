@@ -16,7 +16,7 @@ An open source volume plugin to create persistent volumes in a BeeGFS parallel f
 - [Blockbridge plugin](https://github.com/blockbridge/blockbridge-docker-volume) 
 A volume plugin that provides access to an extensible set of container-based persistent storage options. It supports single and multi-host Docker environments with features that include tenant isolation, automated provisioning, encryption, secure deletion, snapshots and QoS.
 
--[Contiv Volume Plugin](https://github.com/rancher/convoy)
+- [Contiv Volume Plugin](https://github.com/rancher/convoy)
 An open source volume plugin that provides multi-tenant, persistent, distributed storage with intent based consumption. It has support for Ceph and NFS.
 
 - [DigitalOcean Block Storage plugin](https://github.com/omallo/dockervolume-plugin-dostorage)
@@ -85,7 +85,22 @@ Docker Volume Driver for vSphere enables customers to address persistent storage
 
 ## Kubernetes存储 ##
 
-**In-Tree Volume Plugins**
+## Kubernetes存储架构 ###
+摘自[https://www.kubernetes.org.cn/3462.html](https://www.kubernetes.org.cn/3462.html)
+
+![](img/kubernetes_plugin.png)
+
+Kubernetes挂载PV的过程：
+
+- 用户通过API创建一个包含PVC的Pod；
+- Scheduler把这个Pod分配到某个节点，比如Node1；
+- Node1上的Kubelet开始等待Volume Manager准备device；
+- PV controller调用相应Volume Plugin（in-tree或者out-of-tree），创建PV，并在系统中与对应的PVC绑定；
+- Attach/Detach controller或者Volume Manager通过Volume Plugin实现device挂载（Attach）；
+- Volume Manager等待device挂载完成后，将卷挂载到节点指定目录（mount），比如/var/lib/kubelet/pods/xxxxxxxxxxx/volumes/aws-ebs/vol-xxxxxxxxxxxxxxxxx；
+- Node1上的Kubelet此时被告知volume已经准备好后，开始启动Pod，通过volume mapping将PV已经挂载到相应的容器中去。
+
+### In-Tree Volume Plugins ###
 
 Kubernetes的VolumePlugin提供了插件化扩展存储的机制，分为内置插件（In-Tree Plugins）和外置插件（Out-of-Tree）两种。
 
@@ -166,6 +181,50 @@ allows an existing StorageOS volume to be mounted into your pod. StorageOS provi
 
 - vsphereVolume 
 used to mount a vSphere VMDK Volume into your Pod.
+
+
+### K8S FlexVolume ###
+
+此Volume Driver允许不同厂商去开发他们自己的驱动来挂载卷到计算节点。
+
+**Flex Volume架构**：
+
+![](img/flex_volume.png)
+
+特点：
+- driver以二进制命令行形式实现FlexVolume API，以供Controller-Manager和Kubelet调用，对外接口实现容易；
+- DaemonSet方式部署确保Master和Node上都会将driver安装到插件目录；
+- Docker镜像+yaml配置的交付形式
+
+**Flex Volume CLI API**
+
+- Init (`<driver executable> init`)
+初始化驱动。在Kubelet和Controller-Manager初始化时被调用。若调用成功则需要返回一个展示对应驱动所支持的FlexVolume能力的map，现在只包含一个必填字段attach，用于表明本驱动是否需要attach和detach操作。为向后兼容该字段一般默认值设为true。
+
+- Attach(`<driver executable> attach <json options> <node name>`)
+将给定规格的卷添加到给定的主机上。若调用成功则返回存储设备添加到该主机的路径。Kubelet和Controller-Manager都需要调用该方法。
+
+- Detach(`<driver executable> detach <mount device> <node name>`)
+卸载给定主机上的指定卷。Kubelet和Controller-Manager都需要调用该方法。
+
+- Wait for attach(`<driver executable> waitforattach <mount device> <json options>`)
+等待卷被添加到远程节点。若调用成功则将返回设备路径。Kubelet和Controller-Manager都需要调用该方法。
+
+- Volume is Attached(`<driver executable> isattached <json options> <node name>`)
+检查卷是否已被添加到节点上。Kubelet和Controller-Manager都需要调用该方法。
+
+- Mount device(`<driver executable> mountdevice <mount dir> <mount device> <json options>`)
+将存储设备挂载到一个将被pod使用的全局路径上。Kubelet需要调用该方法。
+
+- Unmount device(`<driver executable> unmountdevice <mount device>`)
+将存储设备卸载。This is called once all bind mounts have been unmounted.Kubelet需要调用该方法。
+
+- Mount(`<driver executable> mount <mount dir> <json options>`)
+将卷挂载到指定目录。Kubelet需要调用该方法。
+
+- Unmount(`<driver executable> unmount <mount dir>`)
+将卷进行卸载。Kubelet需要调用该方法。
+
 
 
 
