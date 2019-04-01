@@ -2,6 +2,7 @@
 
 
 - 常量计数器iota
+
 	iota是常量计数器,只能在常量的表达式中使用。iota在const关键字出现时将被重置为0(const内部的第一行之前)，const中每新增一行常量声明将使iota计数一次(即其值自动加1)。使用iota能简化定义，在定义枚举时很有用。
 	
 	例：
@@ -49,6 +50,7 @@
 	```
 	
 - JSON Tag
+
 	在定义struct的时候，可以在字段后面添加tag，来控制encode/decode：是否要decode/encode某个字段，JSON中的字段名称是什么。可以选择的控制字段有三种：
 	`-`：不要解析这个字段
 	`omitempty`：当字段为空（默认值）时，不要解析这个字段。比如false;0;nil;长度为0的array、map、slice、string
@@ -79,3 +81,34 @@
 	`{"name":"Apple","price":8999,"is_on_sale":"true"}`
 
 	2、在某些特殊场景下，结构体中包括一个布尔类型，需要实现当有传递值时进行序列化，没有传递时不进行序列化。
+	
+	例：需要实现当布尔类型值“is_boot”有赋值时序列化，没有赋值时忽略。
+	```
+	package main
+
+	import (
+		"encoding/json"
+	    "fmt"
+	)
+	
+	type JsonType struct {
+		UUID	string 	`json:"uuid"`
+		IsBoot	*bool	`json:"is_boot,omitempty"`
+	}
+	
+	func main() {
+		jsonData := &JsonType{}
+		jsonData.UUID = "12345qwer"
+		data, _ := json.Marshal(jsonData)
+		fmt.Println(string(data))
+		Boot := false
+		jsonData.IsBoot = &Boot
+		data2, _ := json.Marshal(jsonData)
+		fmt.Println(string(data2))
+	}
+	```
+	序列化之后的结果为：
+	```
+	{"uuid":"12345qwer"}
+	{"uuid":"12345qwer","is_boot":false}
+	```
