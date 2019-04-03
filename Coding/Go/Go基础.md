@@ -206,4 +206,67 @@
 
 			`strconv.Atoi(s string) (i int, err error)`将字符串转换为in 型。
 			`strconv.ParseFloat(s string, bitSize int) (f float64, err error)`将字符串转换为float64型。
+
+- 指针
+
+	一个指针变量可以指向任何一个值的内存地址，它指向那个值的内存地址，在32位机器上占用4个字节，在64位机器上占用8个字节，并且与它所指向的值的大小无关。当一个指针被定义后没有分配到任何变量时，它的值为nil。不能获取一个文字或常量的地址，这是非法的。
+
+	指针的一个高级应用是你可以传递一个变量的引用（如函数的参数），这样不会传递变量的拷贝。指针传递是很廉价的，只占用 4 个或 8 个字节。当程序在工作中需要占用大量的内存，或很多变量，或者两者都有，使用指针会减少内存占用和提高效率。被指向的变量也保存在内存中，直到没有任何指针指向它们，所以从它们被创建开始就具有相互独立的生命周期。
+
+	```
+	package main
+	import "fmt"
+	func main() {
+		var i1 = 5
+		fmt.Printf("An integer: %d, its location in memory: %p\n", i1, &i1)
+		var intP *int
+		intP = &i1
+		fmt.Printf("The value at memory location %p is %d\n", intP, *intP)
+	}
+	```
+
+- 标签与goto
+
+	for、switch或select语句都可以配合标签（label）形式的标识符使用，即某一行第一个以冒号（:）结尾的单词（gofmt会将后续代码自动移至下一行）。标签的名称是大小写敏感的，一般建议使用全部大写字母。
+	注意：不建议使用标签和goto语句。
+	
+	例1：
+
+	```
+	package main
+
+	import "fmt"
+	
+	func main() {
+	
+	LABEL1:
+		for i := 0; i <= 5; i++ {
+			for j := 0; j <= 5; j++ {
+				if j == 4 {
+					continue LABEL1
+				}
+				fmt.Printf("i is: %d, and j is: %d\n", i, j)
+			}
+		}
+	
+	}
+	```
+	
+	例2：
+
+	```
+	package main
+	
+	func main() {
+		i:=0
+		HERE:
+			print(i)
+			i++
+			if i==5 {
+				return
+			}
+			goto HERE
+	}
+	```
+
 	
