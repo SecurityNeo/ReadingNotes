@@ -341,3 +341,41 @@
 		
 			用于创建和操作复数
 	
+	- 将函数作为参数
+
+		函数可以作为其它函数的参数进行传递，然后在其它函数内调用执行，一般称之为回调。
+
+		```
+		package main
+
+		import (
+			"fmt"
+		)
+		
+		func main() {
+			callback(1, Add)
+		}
+		
+		func Add(a, b int) {
+			fmt.Printf("The sum of %d and %d is: %d\n", a, b, a+b)
+		}
+		
+		func callback(y int, f func(int, int)) {
+			f(y, 2) // this becomes Add(1, 2)
+		}
+		```
+
+	- 闭包
+	
+		当不希望给函数起名字的时候，可以使用匿名函数，这样的函数不能够独立存在（编译器会返回错误：`non-declaration statement outside function body`），但可以被赋值于某个变量，即保存函数的地址到变量中：`fplus := func(x, y int) int { return x + y }`，然后通过变量名对函数进行调用：`fplus(3,4)`。也可以直接对匿名函数进行调用：`func(x, y int) int { return x + y } (3, 4)`
+
+		```
+		func() {
+			sum := 0
+			for i := 1; i <= 1e6; i++ {
+				sum += i
+			}
+		}()
+		```
+			
+		表示参数列表的第一对括号必须紧挨着关键字func。花括号{}涵盖着函数体，最后的一对括号表示对该匿名函数的调用。
