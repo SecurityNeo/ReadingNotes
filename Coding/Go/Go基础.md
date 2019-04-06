@@ -324,7 +324,7 @@
 
 		- new、make
 		
-			new和make均是用于分配内存。new用于值类型和用户定义的类型，如自定义结构，make用于内置引用类型（切片、map和管道）。它们的用法就像是函数，但是将类型作为参数：new(type)、make(type)。new(T) 分配类型 T 的零值并返回其地址，也就是指向类型 T 的指针。它也可以被用于基本类型：v := new(int)。make(T) 返回类型 T 的初始化之后的值，因此它比 new 进行更多的工作，new()是一个函数，不要忘记它的括号
+			new和make均是用于分配内存。new用于值类型和用户定义的类型，如自定义结构，make用于内置引用类型（切片、map和管道）。它们的用法就像是函数，但是将类型作为参数：new(type)、make(type)。new(T) 分配类型T的零值并返回其地址，也就是指向类型 T 的指针。它也可以被用于基本类型：v := new(int)。make(T) 返回类型T的初始化之后的值，因此它比new进行更多的工作，new()是一个函数，不要忘记它的括号
 
 		- copy、append
 		
@@ -497,5 +497,24 @@
 			return
 		}
 		```
+
+- map
+
+	map是引用类型：内存用make方法来分配，不要使用new，永远用make来构造map。map可以根据新增的key-value对动态的伸缩，因此它不存在固定长度或者最大限制。当map增长到容量上限的时候，如果再增加新的key-value对，map的大小会自动加1。所以出于性能的考虑，对于大的map或者会快速扩张的map，即使只是大概知道容量，也最好先标明。
+
+	```
+	package main
+	import "fmt"
+	
+	func main() {
+		mf := map[int]func() int{
+			1: func() int { return 10 },
+			2: func() int { return 20 },
+			5: func() int { return 50 },
+		}
+		fmt.Println(mf)
+	}
+	```
+	输出结果：`map[1:0x10903be0 5:0x10903ba0 2:0x10903bc0]`
 
 		
