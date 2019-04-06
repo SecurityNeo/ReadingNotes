@@ -517,4 +517,42 @@
 	```
 	输出结果：`map[1:0x10903be0 5:0x10903ba0 2:0x10903bc0]`
 
+- 标准库
+
+	[gowalker](https://gowalker.org/search?q=gorepos)
+
+	- 锁和sync包
+	
+		在Go语言中通过sync包中Mutex来实现锁的机制。`sync.Mutex`是一个互斥锁，它的作用是守护在临界区入口来确保同一时间只能有一个线程进入临界区。
+
+		例1：
+		```
+		import  "sync"
+
+		type Info struct {
+			mu sync.Mutex
+			// ... other fields, e.g.: Str string
+		}
+		```
+		当有变量需要更新Info时，可以采用如下写法：
+		```
+		func Update(info *Info) {
+			info.mu.Lock()
+		    // critical section:
+		    info.Str = // new value
+		    // end critical section
+		    info.mu.Unlock()
+		}
+		```
+	
+		例2
+		通过Mutex来实现一个可以上锁的共享缓冲器:
+		```
+		type SyncedBuffer struct {
+			lock 	sync.Mutex
+			buffer  bytes.Buffer
+		}
+		```
+	
+		在sync包中还有一个RWMutex锁：他能通过RLock()来允许同一时间多个线程对变量进行读操作，但是只能一个线程进行写操作。如果使用 Lock()将和普通的Mutex作用相同。包中还有一个方便的Once类型变量的方法`once.Do(call)`，这个方法确保被调用函数只能被调用一次。
 		
