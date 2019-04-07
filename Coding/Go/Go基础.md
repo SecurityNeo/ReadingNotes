@@ -556,3 +556,11 @@
 	
 		在sync包中还有一个RWMutex锁：他能通过RLock()来允许同一时间多个线程对变量进行读操作，但是只能一个线程进行写操作。如果使用 Lock()将和普通的Mutex作用相同。包中还有一个方便的Once类型变量的方法`once.Do(call)`，这个方法确保被调用函数只能被调用一次。
 		
+- Go的一些外部库
+	
+	- MySQL(GoMySQL), PostgreSQL(go-pgsql), MongoDB (mgo, gomongo), CouchDB (couch-go), ODBC (godbcl), Redis (redis.go) and SQLite3 (gosqlite) database drivers
+	- SDL bindings
+	- Google's Protocal Buffers(goprotobuf)
+	- XML-RPC(go-xmlrpc)
+	- Twitter(twitterstream)
+	- OAuth libraries(GoAuth)
