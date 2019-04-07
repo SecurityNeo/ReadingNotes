@@ -564,3 +564,35 @@
 	- XML-RPC(go-xmlrpc)
 	- Twitter(twitterstream)
 	- OAuth libraries(GoAuth)
+
+
+- 结构体
+
+	- 结构体工厂
+
+		Go语言不支持面向对象编程语言中那样的构造子方法，但是可以很容易的在Go中实现 “构造子工厂”方法。按惯例，工厂的名字以new或New开头。假设定义了如下的File结构体类型：
+
+		```
+		type File struct {
+		    fd      int     // 文件描述符
+		    name    string  // 文件名
+		}
+		```
+
+		下面是这个结构体类型对应的工厂方法，它返回一个指向结构体实例的指针：
+
+		```
+		func NewFile(fd int, name string) *File {
+		    if fd < 0 {
+		        return nil
+		    }
+		
+		    return &File{fd, name}
+		}	
+		```
+
+		调用：
+
+		```
+		f := NewFile(10, "./test.txt")
+		```
