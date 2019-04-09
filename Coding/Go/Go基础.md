@@ -671,4 +671,79 @@
 	Add them to the param: 42
 	The sum is: 7
 	```
+	
+	**函数和方法的区别**
+	
+	函数将变量作为参数：`Function1(recv)`，方法在变量上被调用：`recv.Method1()`；
+	在接收者是指针时，方法可以改变接收者的值（或状态），这点函数也可以做到（当参数作为指针传递，即通过引用调用时，函数也可以改变参数的状态）；
+	方法没有和数据定义（结构体）混在一起：它们是正交的类型；表示（数据）和行为（方法）是独立的。
 
+	**指针或值作为接收者**
+
+	鉴于性能的原因，recv最常见的是一个指向`receiver_type`的指针，跟函数中的引用传递类似。如果想要方法改变接收者的数据，就在接收者的指针类型上定义该方法。否则，就在普通的值类型上定义方法。
+	对于类型T，如果在`*T`上存在方法`Meth()`，并且t是这个类型的变量，那么`t.Meth()`会被自动转换为`(&t).Meth()`。
+	指针方法和值方法都可以在指针或非指针上被调用。
+	示例：
+	```
+	package main
+
+	import (
+		"fmt"
+	)
+	
+	type List []int
+	
+	func (l List) Len() int        { return len(l) }
+	func (l *List) Append(val int) { *l = append(*l, val) }
+	
+	func main() {
+		// 值
+		var lst List
+		lst.Append(1)
+		fmt.Printf("%v (len: %d)", lst, lst.Len()) // [1] (len: 1)
+	
+		// 指针
+		plst := new(List)
+		plst.Append(2)
+		fmt.Printf("%v (len: %d)", plst, plst.Len()) // &[2] (len: 1)
+	}
+	```
+
+	**方法和未导出字段**
+
+	示例：
+	```
+	ackage person
+	
+	type Person struct {
+		firstName string
+		lastName  string
+	}
+	
+	func (p *Person) FirstName() string {
+		return p.firstName
+	}
+	
+	func (p *Person) SetFirstName(newName string) {
+		p.firstName = newName
+	}
+	```
+	```
+	package main
+
+	import (
+		"./person"
+		"fmt"
+	)
+	
+	func main() {
+		p := new(person.Person)
+		// p.firstName undefined
+		// (cannot refer to unexported field or method firstName)
+		// p.firstName = "Eric"
+		p.SetFirstName("Eric")
+		fmt.Println(p.FirstName()) // Output: Eric
+	}
+	```
+
+	
