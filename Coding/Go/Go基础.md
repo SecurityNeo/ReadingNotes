@@ -621,3 +621,54 @@
 
 			- 外层名字会覆盖内层名字（但是两者的内存空间都保留），这提供了一种重载字段或方法的方式；
 			- 如果相同的名字在同一级别出现了两次，如果这个名字被程序使用了，将会引发一个错误（不使用没关系）。没有办法来解决这种问题引起的二义性，必须由程序员自己修正。
+
+
+- 方法
+
+	Go语言中方法是作用在接收者（receiver）上的一个函数，接收者是某种类型的变量。因此方法是一种特殊类型的函数。任何类型都可以有方法，甚至可以是函数类型，可以是 int、bool、string 或数组的别名类型。但是接收者不能是一个接口类型，因为接口是一个抽象定义，但是方法却是具体实现，接收者也不能是一个指针类型，但是它可以是任何其他允许类型的指针。类型T（或 *T）上的所有方法的集合叫做类型T（或 *T）的方法集。因为方法是函数，所以同样的，不允许方法重载，即对于一个类型只能有一个给定名称的方法。
+	
+	定义方法的一般格式：
+	`func (recv receiver_type) methodName(parameter_list) (return_value_list) { ... }`
+
+	如果recv是receiver的实例，Method1是它的方法名，那么方法调用遵循传统的object.name选择器符号`recv.Method1()`。
+
+	示例：
+	
+	```
+	package main
+
+	import "fmt"
+	
+	type TwoInts struct {
+		a int
+		b int
+	}
+	
+	func main() {
+		two1 := new(TwoInts)
+		two1.a = 12
+		two1.b = 10
+	
+		fmt.Printf("The sum is: %d\n", two1.AddThem())
+		fmt.Printf("Add them to the param: %d\n", two1.AddToParam(20))
+	
+		two2 := TwoInts{3, 4}
+		fmt.Printf("The sum is: %d\n", two2.AddThem())
+	}
+	
+	func (tn *TwoInts) AddThem() int {
+		return tn.a + tn.b
+	}
+	
+	func (tn *TwoInts) AddToParam(param int) int {
+		return tn.a + tn.b + param
+	}
+	```
+	
+	输出结果：
+	```
+	The sum is: 22
+	Add them to the param: 42
+	The sum is: 7
+	```
+
