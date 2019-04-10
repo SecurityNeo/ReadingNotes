@@ -746,4 +746,141 @@
 	}
 	```
 
+	**内嵌类型的方法和继承**
+
+	当一个匿名类型被内嵌在结构体中时，匿名类型的可见方法也同样被内嵌，这在效果上等同于外层类型继承了这些方法：将父类型放在子类型中来实现亚型。
+
+	示例(内嵌结构体上的方法可以直接在外层类型的实例上调用)：
+	```
+	package main
+
+	import (
+		"fmt"
+		"math"
+	)
+	
+	type Point struct {
+		x, y float64
+	}
+	
+	func (p *Point) Abs() float64 {
+		return math.Sqrt(p.x*p.x + p.y*p.y)
+	}
+	
+	type NamedPoint struct {
+		Point
+		name string
+	}
+	
+	func main() {
+		n := &NamedPoint{Point{3, 4}, "Pythagoras"}
+		fmt.Println(n.Abs()) // 打印5
+	}
+	```
+
+	和内嵌类型方法具有同样名字的外层类型的方法会覆写内嵌类型对应的方法。结构体内嵌和自己在同一个包中的结构体时，可以彼此访问对方所有的字段和方法。
+
+	**在类型中嵌入功能**
+
+	实现在类型中嵌入功能：
+
+		- 聚合（或组合）：包含一个所需功能类型的具名字段。
+		
+		- 内嵌：内嵌（匿名地）所需功能类型。
+
+	示例1（聚合）：
+
+	```
+	package main
+
+	import (
+		"fmt"
+	)
+	
+	type Log struct {
+		msg string
+	}
+	
+	type Customer struct {
+		Name string
+		log  *Log
+	}
+	
+	func main() {
+		c := new(Customer)
+		c.Name = "Barak Obama"
+		c.log = new(Log)
+		c.log.msg = "1 - Yes we can!"
+		// shorter
+		c = &Customer{"Barak Obama", &Log{"1 - Yes we can!"}}
+		// fmt.Println(c) &{Barak Obama 1 - Yes we can!}
+		c.Log().Add("2 - After me the world will be a better place!")
+		//fmt.Println(c.log)
+		fmt.Println(c.Log())
+	
+	}
+	
+	func (l *Log) Add(s string) {
+		l.msg += "\n" + s
+	}
+	
+	func (l *Log) String() string {
+		return l.msg
+	}
+	
+	func (c *Customer) Log() *Log {
+		return c.log
+	}
+	```
+	
+	输出结果：
+	```
+	1 - Yes we can!
+	2 - After me the world will be a better place!
+	```
+
+	示例2（内嵌）：
+
+	```
+	package main
+
+	import (
+		"fmt"
+	)
+	
+	type Log struct {
+		msg string
+	}
+	
+	type Customer struct {
+		Name string
+		Log
+	}
+	
+	func main() {
+		c := &Customer{"Barak Obama", Log{"1 - Yes we can!"}}
+		c.Add("2 - After me the world will be a better place!")
+		fmt.Println(c)
+	
+	}
+	
+	func (l *Log) Add(s string) {
+		l.msg += "\n" + s
+	}
+	
+	func (l *Log) String() string {
+		return l.msg
+	}
+	
+	func (c *Customer) String() string {
+		return c.Name + "\nLog:" + fmt.Sprintln(c.Log)
+	}
+	```
+
+	输出结果：
+	```
+	Barak Obama
+	Log:{1 - Yes we can!
+	2 - After me the world will be a better place!}
+	```
 	
