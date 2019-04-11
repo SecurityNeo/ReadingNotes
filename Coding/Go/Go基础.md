@@ -926,5 +926,37 @@
 	在Go中，类型就是类（数据和关联的方法）。Go不知道类似面向对象语言的类继承的概念。继承有两个好处：代码复用和多态。在Go中，代码复用通过组合和委托实现，多态通过接口的使用来实现：有时这也叫组件编程（Component Programming）。
 
 
+	- 类型的 String() 方法和格式化描述符
+	
+	```
+	package main
+
+	import (
+		"fmt"
+		"strconv"
+	)
+	
+	type TwoInts struct {
+		a int
+		b int
+	}
+	
+	func main() {
+		two1 := new(TwoInts)
+		two1.a = 12
+		two1.b = 10
+		fmt.Printf("two1 is: %v\n", two1)
+		fmt.Println("two1 is:", two1)
+		fmt.Printf("two1 is: %T\n", two1)
+		fmt.Printf("two1 is: %#v\n", two1)
+	}
+	
+	func (tn *TwoInts) String() string {
+		return "(" + strconv.Itoa(tn.a) + "/" + strconv.Itoa(tn.b) + ")"
+	}
+	```
+	不要在`String()`方法里面调用涉及`String()`方法的方法，它会导致意料之外的错误。
+
+	
 
 	
