@@ -883,4 +883,48 @@
 	Log:{1 - Yes we can!
 	2 - After me the world will be a better place!}
 	```
+
+	内嵌的类型不需要指针，Customer也不需要Add方法，它使用Log的Add方法，Customer有自己的String方法，并且在它里面调用了Log的String方法。
+
+	**多重继承**
+
+	多重继承指的是类型获得多个父类型行为的能力，它在传统的面向对象语言中通常是不被实现的（C++和Python例外）。因为在类继承层次中，多重继承会给编译器引入额外的复杂度。但是在Go语言中，通过在类型中嵌入所有必要的父类型，可以很简单的实现多重继承。
+
+	示例：
+	```
+	package main
+
+	import (
+		"fmt"
+	)
+	
+	type Camera struct{}
+	
+	func (c *Camera) TakeAPicture() string {
+		return "Click"
+	}
+	
+	type Phone struct{}
+	
+	func (p *Phone) Call() string {
+		return "Ring Ring"
+	}
+	
+	type CameraPhone struct {
+		Camera
+		Phone
+	}
+	
+	func main() {
+		cp := new(CameraPhone)
+		fmt.Println("Our new CameraPhone exhibits multiple behaviors...")
+		fmt.Println("It exhibits behavior of a Camera: ", cp.TakeAPicture())
+		fmt.Println("It works like a Phone too: ", cp.Call())
+	}
+	```
+
+	在Go中，类型就是类（数据和关联的方法）。Go不知道类似面向对象语言的类继承的概念。继承有两个好处：代码复用和多态。在Go中，代码复用通过组合和委托实现，多态通过接口的使用来实现：有时这也叫组件编程（Component Programming）。
+
+
+
 	
