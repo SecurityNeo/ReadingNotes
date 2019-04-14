@@ -1191,4 +1191,29 @@
 	areaIntf does not contain a variable of type Circle
 	```
 
+	- 类型判断：type-switch
+
+	所有case语句中列举的类型（nil 除外）都必须实现对应的接口，如果被检测类型没有在case语句列举的类型中，就会执行default语句。
+	
+	示例：
+	```
+	func classifier(items ...interface{}) {
+		for i, x := range items {
+			switch x.(type) {
+			case bool:
+				fmt.Printf("Param #%d is a bool\n", i)
+			case float64:
+				fmt.Printf("Param #%d is a float64\n", i)
+			case int, int64:
+				fmt.Printf("Param #%d is a int\n", i)
+			case nil:
+				fmt.Printf("Param #%d is a nil\n", i)
+			case string:
+				fmt.Printf("Param #%d is a string\n", i)
+			default:
+				fmt.Printf("Param #%d is unknown\n", i)
+			}
+		}
+	}
+	```
 	
