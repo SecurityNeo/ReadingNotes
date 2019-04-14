@@ -1282,3 +1282,100 @@
 	}
 	```
 	只要类型实现了读写接口，提供Read()和Write方法，就可以从它读取数据，或向它写入数据。一个对象要是可读的，它必须实现io.Reader接口，这个接口只有一个签名是`Read(p []byte) (n int, err error)`的方法，它从调用它的对象上读取数据，并把读到的数据放入参数中的字节切片中，然后返回读取的字节数和一个 error 对象，如果没有错误发生返回 nil，如果已经到达输入的尾端，会返回`io.EOF("EOF")`，如果读取的过程中发生了错误，就会返回具体的错误信息。类似地，一个对象要是可写的，它必须实现io.Writer接口，这个接口也只有一个签名是`Write(p []byte) (n int, err error)`的方法，它将指定字节切片中的数据写入调用它的对象里，然后返回实际写入的字节数和一个 error 对象（如果没有错误发生就是 nil）。io 包里的Readers和Writers都是不带缓冲的，bufio包里提供了对应的带缓冲的操作，在读写UTF-8编码的文本文件时它们尤其有用。
+
+	- 空接口
+	
+	空接口或者最小接口 不包含任何方法，它对实现不做任何要求：`type Any interface {}`。
+	示例：
+	```
+	package main
+
+	import "fmt"
+	
+	type specialString string
+	
+	var whatIsThis specialString = "hello"
+	
+	func TypeSwitch() {
+		testFunc := func(any interface{}) {
+			switch v := any.(type) {
+			case bool:
+				fmt.Printf("any %v is a bool type", v)
+			case int:
+				fmt.Printf("any %v is an int type", v)
+			case float32:
+				fmt.Printf("any %v is a float32 type", v)
+			case string:
+				fmt.Printf("any %v is a string type", v)
+			case specialString:
+				fmt.Printf("any %v is a special String!", v)
+			default:
+				fmt.Println("unknown type!")
+			}
+		}
+		testFunc(whatIsThis)
+	}
+	
+	func main() {
+		TypeSwitch()
+	}
+	```
+	输出：`any hello is a special String!`。
+
+	- 使用空接口构建通用类型或包含不同类型变量的数组
+
+	```
+	type Element interface{}
+	type Vector struct {
+		a []Element
+	}
+	```
+
+	Vector里能放任何类型的变量，因为任何类型都实现了空接口，实际上Vector里放的每个元素可以是不同类型的变量。
+
+	- 复制数据切片至空接口切片
+
+	```
+	var dataSlice []myType = FuncReturnSlice()
+	var interfaceSlice []interface{} = make([]interface{}, len(dataSlice))
+	for i, d := range dataSlice {
+	    interfaceSlice[i] = d
+	}
+	```
+	注意：不能直接赋值，必须一个一个显式地复制。
+
+	- 通用类型的节点数据结构
+
+	示例（实现二叉树的部分代码）：
+	```
+	package main
+
+	import "fmt"
+	
+	type Node struct {
+		le   *Node
+		data interface{}
+		ri   *Node
+	}
+	
+	func NewNode(left, right *Node) *Node {
+		return &Node{left, nil, right}
+	}
+	
+	func (n *Node) SetData(data interface{}) {
+		n.data = data
+	}
+	
+	func main() {
+		root := NewNode(nil, nil)
+		root.SetData("root node")
+		// make child (leaf) nodes:
+		a := NewNode(nil, nil)
+		a.SetData("left node")
+		b := NewNode(nil, nil)
+		b.SetData("right node")
+		root.le = a
+		root.ri = b
+		fmt.Printf("%v\n", root) // Output: &{0x125275f0 root node 0x125275e0}
+	}
+	```
