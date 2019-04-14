@@ -1271,4 +1271,14 @@
 	func (p IntArray) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 	```
 
+	示例2（io.Reader和io.Writer）
+	```
+	type Reader interface {
+	    Read(p []byte) (n int, err error)
+	}
 	
+	type Writer interface {
+	    Write(p []byte) (n int, err error)
+	}
+	```
+	只要类型实现了读写接口，提供Read()和Write方法，就可以从它读取数据，或向它写入数据。一个对象要是可读的，它必须实现io.Reader接口，这个接口只有一个签名是`Read(p []byte) (n int, err error)`的方法，它从调用它的对象上读取数据，并把读到的数据放入参数中的字节切片中，然后返回读取的字节数和一个 error 对象，如果没有错误发生返回 nil，如果已经到达输入的尾端，会返回`io.EOF("EOF")`，如果读取的过程中发生了错误，就会返回具体的错误信息。类似地，一个对象要是可写的，它必须实现io.Writer接口，这个接口也只有一个签名是`Write(p []byte) (n int, err error)`的方法，它将指定字节切片中的数据写入调用它的对象里，然后返回实际写入的字节数和一个 error 对象（如果没有错误发生就是 nil）。io 包里的Readers和Writers都是不带缓冲的，bufio包里提供了对应的带缓冲的操作，在读写UTF-8编码的文本文件时它们尤其有用。
