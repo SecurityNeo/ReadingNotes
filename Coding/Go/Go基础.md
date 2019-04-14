@@ -1216,4 +1216,59 @@
 		}
 	}
 	```
+	测试一个值是否实现了某个接口:
+	```
+	type Stringer interface {
+	    String() string
+	}
+	
+	if sv, ok := v.(Stringer); ok {
+	    fmt.Printf("v implements String(): %s\n", sv.String()) // note: sv, not v
+	}
+	```
+
+	- 使用方法集与接口
+
+	在接口上调用方法时，必须有和方法定义时相同的接收者类型或者是可以从具体类型P直接可以辨识的：
+	
+		- 指针方法可以通过指针调用
+		- 值方法可以通过值调用
+		- 接收者是值的方法可以通过指针调用，因为指针会首先被解引用
+		- 接收者是指针的方法不可以通过值调用，因为存储在接口中的值没有地址
+
+	Go语言规范定义了接口方法集的调用规则：
+
+		- 类型 *T 的可调用方法集包含接受者为 *T 或 T 的所有方法集
+		- 类型 T 的可调用方法集包含接受者为 T 的所有方法
+		- 类型 T 的可调用方法集不包含接受者为 *T 的方法
+
+	示例1（使用Sorter接口排序）
+	```
+	//冒泡算法
+	func Sort(data Sorter) {
+	    for pass := 1; pass < data.Len(); pass++ {
+	        for i := 0;i < data.Len() - pass; i++ {
+	            if data.Less(i+1, i) {
+	                data.Swap(i, i + 1)
+	            }
+	        }
+	    }
+	}
+	```
+	Sort 函数接收一个接口类型的参数：Sorter ，它声明了这些方法：
+	```
+	type Sorter interface {
+	    Len() int
+	    Less(i, j int) bool
+	    Swap(i, j int)
+	}
+	```
+	为数组定一个类型并在它上面实现 Sorter 接口的方法：
+	```
+	type IntArray []int
+	func (p IntArray) Len() int           { return len(p) }
+	func (p IntArray) Less(i, j int) bool { return p[i] < p[j] }
+	func (p IntArray) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+	```
+
 	
