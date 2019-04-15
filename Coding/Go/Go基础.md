@@ -1379,3 +1379,106 @@
 		fmt.Printf("%v\n", root) // Output: &{0x125275f0 root node 0x125275e0}
 	}
 	```
+
+	- 反射包
+
+		- 方法和类型的反射
+
+		变量的最基本信息就是类型和值：反射包的Type用来表示一个Go类型，反射包的Value为Go值提供了反射接口。`reflect.TypeOf`和`reflect.ValueOf`，返回被检查对象的类型和值。反射可以从接口值反射到对象，也可以从对象反射回接口值。
+
+		- 通过反射修改(设置)值
+		
+		反射中有些内容是需要用地址去改变它的状态的。
+		示例：
+		```
+		package main
+
+		import (
+			"fmt"
+			"reflect"
+		)
+		
+		func main() {
+			var x float64 = 3.4
+			v := reflect.ValueOf(x)
+			// setting a value:
+			// v.SetFloat(3.1415) // Error: will panic: reflect.Value.SetFloat using unaddressable value
+			fmt.Println("settability of v:", v.CanSet())
+			v = reflect.ValueOf(&x) // Note: take the address of x.
+			fmt.Println("type of v:", v.Type())
+			fmt.Println("settability of v:", v.CanSet())
+			v = v.Elem()
+			fmt.Println("The Elem of v is: ", v)
+			fmt.Println("settability of v:", v.CanSet())
+			v.SetFloat(3.1415) // this works!
+			fmt.Println(v.Interface())
+			fmt.Println(v)
+		}
+		```
+		输出：
+		
+		```
+		settability of v: false
+		type of v: *float64
+		settability of v: false
+		The Elem of v is:  <float64 Value>
+		settability of v: true
+		3.1415
+		<float64 Value>
+		```
+
+		- 反射结构
+
+		`NumField()`方法返回结构内的字段数量；通过一个for循环用索引取得每个字段的值`Field(i)`。
+		示例：
+		```
+		package main
+
+		import (
+			"fmt"
+			"reflect"
+		)
+		
+		type NotknownType struct {
+			s1, s2, s3 string
+		}
+		
+		func (n NotknownType) String() string {
+			return n.s1 + " - " + n.s2 + " - " + n.s3
+		}
+		
+		// variable to investigate:
+		var secret interface{} = NotknownType{"Ada", "Go", "Oberon"}
+		
+		func main() {
+			value := reflect.ValueOf(secret) // <main.NotknownType Value>
+			typ := reflect.TypeOf(secret)    // main.NotknownType
+			// alternative:
+			//typ := value.Type()  // main.NotknownType
+			fmt.Println(typ)
+			knd := value.Kind() // struct
+			fmt.Println(knd)
+		
+			// iterate through the fields of the struct:
+			for i := 0; i < value.NumField(); i++ {
+				fmt.Printf("Field %d: %v\n", i, value.Field(i))
+				// error: panic: reflect.Value.SetString using value obtained using unexported field
+				// 因为结构中只有被导出字段（首字母大写）才是可设置的
+				//value.Field(i).SetString("C#")
+			}
+		
+			// call the first method, which is String():
+			results := value.Method(0).Call(nil)
+			fmt.Println(results) // [Ada - Go - Oberon]
+		}
+		```
+		输出：
+		
+		```
+		main.NotknownType
+		struct
+		Field 0: Ada
+		Field 1: Go
+		Field 2: Oberon
+		[Ada - Go - Oberon]
+		```
