@@ -1482,3 +1482,43 @@
 		Field 2: Oberon
 		[Ada - Go - Oberon]
 		```
+
+	- 接口与动态类型
+	
+		- 动态方法调用
+
+		当变量被赋值给一个接口类型的变量时，编译器会检查其是否实现了该接口的所有函数。如果方法调用作用于像 interface{} 这样的“泛型”上，可以通过类型断言来检查变量是否实现了相应接口。
+		```
+		// Exported XML streaming function.
+		func StreamXML(v interface{}, w io.Writer) error {
+			if xw, ok := v.(xmlWriter); ok {
+				// It’s an  xmlWriter, use method of asserted type.
+				return xw.WriteXML(w)
+			}
+			// No implementation, so we have to use our own function (with perhaps reflection):
+			return encodeToXML(v, w)
+		}
+		
+		// Internal XML encoding function.
+		func encodeToXML(v interface{}, w io.Writer) error {
+			// ...
+		}
+		```
+
+		- 接口的提取
+
+		提取接口是非常有用的设计模式，可以减少需要的类型和方法数量，而且不需要像传统的基于类的面向对象语言那样维护整个的类层次结构。
+
+		- 空接口和函数重载
+
+		在Go语言中函数重载可以用可变参数`...T`作为函数最后一个参数来实现。如果把T换为空接口，那么可以知道任何类型的变量都是满足T(空接口）类型的，这样就允许我们传递任何数量任何类型的参数给函数，即重载的实际含义。
+
+		-  接口的继承
+
+		当一个类型包含（内嵌）另一个类型（实现了一个或多个接口）的指针时，这个类型就可以使用（另一个类型）所有的接口方法。
+		```
+		type Task struct {
+			Command string
+			*log.Logger
+		}
+		```
