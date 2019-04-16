@@ -1534,4 +1534,122 @@
 		**继承**：用组合实现：内嵌一个（或多个）包含想要的行为（字段和方法）的类型；多重继承可以通过内嵌多个类型实现
 	
 		**多态**：用接口实现：某个类型的实例可以赋给它所实现的任意接口类型的变量。类型和接口是松耦合的，并且多重继承可以通过实现多个接口实现。Go接口不是Java和C#接口的变体，而且接口间是不相关的，并且是大规模编程和可适应的演进型设计的关键。
+
+
+- 读写数据
+
+	- 读取标准输入
+
+		```
+		package main
+		import (
+		    "fmt"
+		    "os"
+		    "bufio"
+		)
+		
+		func main() {
+		    inputReader := bufio.NewReader(os.Stdin)
+		    fmt.Println("Please enter your name:")
+		    input, err := inputReader.ReadString('\n')
+		
+		    if err != nil {
+		        fmt.Println("There were errors reading, exiting program.")
+		        return
+		    }
+		
+		    fmt.Printf("Your name is %s", input)
+		    // For Unix: test with delimiter "\n", for Windows: test with "\r\n"
+		    switch input {
+		    case "Philip\r\n":  fmt.Println("Welcome Philip!")
+		    case "Chris\r\n":   fmt.Println("Welcome Chris!")
+		    case "Ivo\r\n":     fmt.Println("Welcome Ivo!")
+		    default: fmt.Printf("You are not welcome here! Goodbye!")
+		    }
+		
+		    // version 2:   
+		    switch input {
+		    case "Philip\r\n":  fallthrough
+		    case "Ivo\r\n":     fallthrough
+		    case "Chris\r\n":   fmt.Printf("Welcome %s\n", input)
+		    default: fmt.Printf("You are not welcome here! Goodbye!\n")
+		    }
+		
+		    // version 3:
+		    switch input {
+		    case "Philip\r\n", "Ivo\r\n":   fmt.Printf("Welcome %s\n", input)
+		    default: fmt.Printf("You are not welcome here! Goodbye!\n")
+		    }
+		}
+		```
+
+	- 文件读写
+
+		- 读文件
+		
+			文件使用指向`os.File`类型的指针来表示的，也叫做文件句柄。
+
+			```
+			package main
 	
+			import (
+			    "bufio"
+			    "fmt"
+			    "io"
+			    "os"
+			)
+			
+			func main() {
+			    inputFile, inputError := os.Open("input.dat")
+			    if inputError != nil {
+			        fmt.Printf("An error occurred on opening the inputfile\n" +
+			            "Does the file exist?\n" +
+			            "Have you got acces to it?\n")
+			        return // exit the function on error
+			    }
+			    defer inputFile.Close()
+			
+			    inputReader := bufio.NewReader(inputFile)
+			    for {
+			        inputString, readerError := inputReader.ReadString('\n')
+			        fmt.Printf("The input was: %s", inputString)
+			        if readerError == io.EOF {
+			            return
+			        }      
+			    }
+			}
+			```
+
+			- 将整个文件的内容读到一个字符串里
+		
+				使用`io/ioutil`包里的`ioutil.ReadFile()`方法可以将整个文件读取到一个字符串里，该方法第一个返回值的类型是`[]byte`，里面存放读取到的内容，第二个返回值是错误，如果没有错误发生，第二个返回值为nil。
+
+			- 带缓冲的读取
+
+				```
+				buf := make([]byte, 1024)
+				...
+				// 变量n的值表示读取到的字节数
+				n, err := inputReader.Read(buf)  
+				if (n == 0) { break}
+				```
+			- 按列读取文件中的数据
+
+				如果数据是按列排列并用空格分隔的，可以使用fmt包提供的以FScan开头的一系列函数来读取他们。
+
+			- 读取压缩文件
+	
+			compress包提供了读取压缩文件的功能，支持的压缩文件格式为：bzip2、flate、gzip、lzw和zlib。
+	
+		- 写文件
+
+			以只写模式打开文件output.dat，如果文件不存在则自动创建： `outputFile, outputError := os.OpenFile("output.dat", os.O_WRONLY|os.O_CREATE, 0666)`，`OpenFile`函数有三个参数：文件名、一个或多个标志（使用逻辑运算符“|”连接），使用的文件权限。常用标志如下：
+
+				os.O_RDONLY：只读
+				os.O_WRONLY：只写
+				os.O_CREATE：创建：如果指定文件不存在，就创建该文件。
+				os.O_TRUNC：截断：如果指定文件已存在，就将该文件的长度截为0。
+
+			
+
+
