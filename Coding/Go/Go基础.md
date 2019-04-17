@@ -1660,4 +1660,85 @@
 
 			`flag.Parse()`扫描参数列表（或者常量列表）并设置flag,`flag.Arg(i)`表示第i个参数。`Parse()`之后`flag.Arg(i)`全部可用，`flag.Arg(0)`就是第一个真实的flag，而不是像`os.Args(0)`放置程序的名字。
 
+	- 用切片读写文件
+
+		切片提供了Go中处理I/O缓冲的标准方式，下面cat函数的第二版中，在一个切片缓冲内使用无限for循环（直到文件尾部EOF）读取文件，并写入到标准输出（os.Stdout）
+		```
+		func cat(f *os.File) {
+			const NBUF = 512
+			var buf [NBUF]byte
+			for {
+				switch nr, err := f.Read(buf[:]); true {
+				case nr < 0:
+					fmt.Fprintf(os.Stderr, "cat: error reading: %s\n", err.Error())
+					os.Exit(1)
+				case nr == 0: // EOF
+					return
+				case nr > 0:
+					if nw, ew := os.Stdout.Write(buf[0:nr]); nw != nr {
+						fmt.Fprintf(os.Stderr, "cat: error writing: %s\n", ew.Error())
+					}
+				}
+			}
+		}
+		```
+		
+		```
+		package main
+
+		import (
+			"bufio"
+			"fmt"
+			"os"
+		)
+		
+		func main() {
+			// unbuffered
+			fmt.Fprintf(os.Stdout, "%s\n", "hello world! - unbuffered")
+			// buffered: os.Stdout implements io.Writer
+			buf := bufio.NewWriter(os.Stdout)
+			// and now so does buf.
+			fmt.Fprintf(buf, "%s\n", "hello world! - buffered")
+			buf.Flush()
+			// 在缓冲写入的最后千万不要忘了使用Flush()，否则最后的输出不会被写入。
+		}
+		```
+
+		输出：
+		```
+		hello world! - unbuffered
+		hello world! - buffered
+		```
+		
+	- JSON数据格式
+
+		数据结构 --> 指定格式 = 序列化或编码（传输之前）
+		指定格式 --> 数据格式 = 反序列化或解码（传输之后）
+		JSON 与 Go 类型对应如下：
+
+			bool 对应JSON的booleans
+			float64 对应JSON的numbers
+			string 对应JSON的strings
+			nil 对应JSON的null
+
+		不是所有的数据都可以编码为JSON类型：只有验证通过的数据结构才能被编码：
+
+			JSON 对象只支持字符串类型的 key；要编码一个 Go map 类型，map 必须是 map[string]T（T是 json 包中支持的任何类型）
+			Channel，复杂类型和函数类型不能被编码
+			不支持循环数据结构；它将引起序列化进入一个无限循环
+			指针可以被编码，实际上是对指针指向的值进行编码（或者指针是 nil）
+
+		**解码任意的数据**
+
+		json包使用`map[string]interface{}`和`[]interface{}`储存任意的JSON对象和数组；其可以被反序列化为任何的JSON blob存储到接口值中。
+
+		**解码数据到结构**
+
+		如果我们事先知道JSON数据，我们可以定义一个适当的结构并对JSON数据反序列化。
+
+		**编码和解码流**
+		
+		json包提供Decoder和Encoder类型来支持常用JSON数据流读写。NewDecoder和NewEncoder函数分别封装了`io.Reader`和`io.Writer`接口。
+		要想把JSON直接写入文件，可以使用`json.NewEncoder`初始化文件（或者任何实现 io.Writer 的类型），并调用Encode()；反过来与其对应的是使用`json.Decoder`和`Decode()`函数
+
 
