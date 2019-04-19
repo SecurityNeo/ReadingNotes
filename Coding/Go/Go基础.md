@@ -1741,4 +1741,39 @@
 		json包提供Decoder和Encoder类型来支持常用JSON数据流读写。NewDecoder和NewEncoder函数分别封装了`io.Reader`和`io.Writer`接口。
 		要想把JSON直接写入文件，可以使用`json.NewEncoder`初始化文件（或者任何实现 io.Writer 的类型），并调用Encode()；反过来与其对应的是使用`json.Decoder`和`Decode()`函数
 
+	- Go中的密码学
+
+		- hash包：实现了 adler32、crc32、crc64 和 fnv 校验；
+		- crypto包：实现了其它的hash算法，比如md4、md5、sha1等。以及完整地实现了aes、blowfish、rc4、rsa、xtea等加密算法。
+
+		示例：
+		```
+		package main
+
+		import (
+			"fmt"
+			"crypto/sha1"
+			"io"
+			"log"
+		)
+		
+		func main() {
+			hasher := sha1.New()
+			io.WriteString(hasher, "test")
+			b := []byte{}
+			fmt.Printf("Result: %x\n", hasher.Sum(b))
+			fmt.Printf("Result: %d\n", hasher.Sum(b))
+			//
+			hasher.Reset()
+			data := []byte("We shall overcome!")
+			n, err := hasher.Write(data)
+			if n!=len(data) || err!=nil {
+				log.Printf("Hash write error: %v / %v", n, err)
+			}
+			checksum := hasher.Sum(b)
+			fmt.Printf("Result: %x\n", checksum)
+		}
+		```
+		
+
 
