@@ -1774,6 +1774,14 @@
 			fmt.Printf("Result: %x\n", checksum)
 		}
 		```
+
+- 错误处理与测试
+
+	- 运行时异常和panic
+
+		当发生像数组下标越界或类型断言失败这样的运行错误时，Go 运行时会触发运行时 panic，伴随着程序的崩溃抛出一个`runtime.Error`接口类型的值。这个错误值有个`RuntimeError()`方法用于区别普通错误。
+		在多层嵌套的函数调用中调用panic，可以马上中止当前函数的执行，所有的defer语句都会保证执行并把控制权交还给接收到panic的函数调用者。这样向上冒泡直到最顶层，并执行（每层的）defer，在栈顶处程序崩溃，并在命令行中用传给panic的值报告错误情况：这个终止过程就是panicking。
+		`recover`内建函数被用于从panic或错误场景中恢复：让程序可以从panicking重新获得控制权，停止终止过程进而恢复正常执行。`recover`只能在defer修饰的函数中使用：用于取得panic调用中传递过来的错误值，如果是正常执行，调用recover会返回nil，且没有其它效果。`defer-panic-recover`在某种意义上也是一种像if，for这样的控制流机制。
 		
 
 
