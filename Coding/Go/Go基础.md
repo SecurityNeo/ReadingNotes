@@ -1885,4 +1885,42 @@
 			3、如果没有通道操作可以处理并且写了 default 语句，它就会执行：default 永远是可运行的（这就是准备好了，可以执行）
 
 		
+	- 通道、超时和计时器（Ticker）
 
+		`time.Ticker`:
+
+		这个对象以指定的时间间隔重复的向通道发送时间值。时间间隔的单位是 ns（纳秒，int64），在工厂函数`time.NewTicker`中以Duration类型的参数传入：`func Newticker(dur) *Ticker`。
+		```
+		ticker := time.NewTicker(updateInterval)
+		defer ticker.Stop()
+		...
+		select {
+		case u:= <-ch1:
+		    ...
+		case v:= <-ch2:
+		    ...
+		case <-ticker.C:
+		    logState(status) // call some logging function logState
+		default: // no value ready to be received
+		    ...
+		}
+		```
+
+		`time.Tick()`:
+
+		函数声明为`Tick(d Duration) <-chan Time`,以d为周期给返回的通道发送时间，d是纳秒数。
+
+		示例：
+		```
+		import "time"
+
+		rate_per_sec := 10
+		var dur Duration = 1e9 / rate_per_sec
+		chRate := time.Tick(dur) // a tick every 1/10th of a second
+		for req := range requests {
+		    <- chRate // rate limit our Service.Method RPC calls
+		    go client.Call("Service.Method", req, ...)
+		}
+		```
+
+		按照指定频率处理请求：chRate阻塞了更高的频率。每秒处理的频率可以根据机器负载（和/或）资源的情况而增加或减少。
