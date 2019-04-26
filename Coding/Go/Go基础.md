@@ -1946,3 +1946,70 @@
 		```
 
 		recover总是返回nil，除非直接在defer修饰的函数中调用，defer修饰的代码可以调用那些自身可以使用panic和recover避免失败的库例程（库函数）。
+
+	- 两种多任务处理模式
+
+		**使用锁（使用共享内存进行同步）**
+
+		示例：
+
+		```
+		type Task struct {
+		    // some state
+		}
+
+		 type Pool struct {
+	        Mu      sync.Mutex
+	        Tasks   []Task
+	    }
+
+		func Worker(pool *Pool) {
+		    for {
+		        pool.Mu.lock()
+		        // begin critical section:
+		        task := pool.Task[0]        // take the first task
+		        pool.Tasks = pool.Task[1:]  // update the pool of tasks
+		        // end critical section
+		        pool.Mu.Unlock()
+		        process(task)
+		    }
+		}
+		```
+
+		**使用通道**
+
+		示例：
+	
+		```
+		func main() {
+	        pending, done := make(chan *Task), make(chan *Task)
+	        go sendWork(pending)       // put tasks with work on the channel
+	        for i := 0; i < N; i++ {   // start N goroutines to do work
+	            go Worker(pending, done)
+	        }
+	        consumeWork(done)          // continue with the processed tasks
+	    }
+
+		func Worker(in, out chan *Task) {
+	        for {
+	            t := <-in
+	            process(t)
+	            out <- t
+	        }
+	    }
+		```
+
+		使用锁的情景：
+
+			访问共享数据结构中的缓存信息
+			保存应用程序上下文和状态信息数据
+		
+		使用通道的情景：
+			
+			与异步操作的结果进行交互
+			分发任务
+			传递数据所有权
+
+
+
+		
