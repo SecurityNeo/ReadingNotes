@@ -1924,3 +1924,25 @@
 		```
 
 		按照指定频率处理请求：chRate阻塞了更高的频率。每秒处理的频率可以根据机器负载（和/或）资源的情况而增加或减少。
+
+	- 协程和恢复（recover）
+
+		示例：
+		```
+		func server(workChan <-chan *Work) {
+		    for work := range workChan {
+		        go safelyDo(work)   // start the goroutine for that work
+		    }
+		}
+		
+		func safelyDo(work *Work) {
+		    defer func() {
+		        if err := recover(); err != nil {
+		            log.Printf("Work failed with %s in %v", err, work)
+		        }
+		    }()
+		    do(work)
+		}
+		```
+
+		recover总是返回nil，除非直接在defer修饰的函数中调用，defer修饰的代码可以调用那些自身可以使用panic和recover避免失败的库例程（库函数）。
