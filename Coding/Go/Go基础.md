@@ -2011,5 +2011,40 @@
 			传递数据所有权
 
 
+- 网页应用
+
+	- 简单的网页服务器
+
+		```
+		package main
+	
+		import (
+			"fmt"
+			"log"
+			"net/http"
+		)
+		
+		func HelloServer(w http.ResponseWriter, req *http.Request) {
+			fmt.Println("Inside HelloServer handler")
+			fmt.Fprintf(w, "Hello,"+req.URL.Path[1:])
+		}
+		
+		func main() {
+			http.HandleFunc("/", HelloServer)
+			err := http.ListenAndServe("localhost:8080", nil)
+			if err != nil {
+				log.Fatal("ListenAndServe: ", err.Error())
+			}
+		}
+		```
+
+		HTTP包的几个重要函数：
+
+			`http.Redirect(w ResponseWriter, r *Request, url string, code int)`：这个函数会让浏览器重定向到url（是请求的url的相对路径）以及状态码。
+			`http.NotFound(w ResponseWriter, r *Request)`：这个函数将返回网页没有找到，HTTP 404错误。
+			`http.Error(w ResponseWriter, error string, code int)`：这个函数返回特定的错误信息和HTTP代码。
+			`http.Request`对象的一个重要属性`req：req.Method`，这是一个包含GET或POST字符串，用来描述网页是以何种方式被请求的。
+
+	
 
 		
