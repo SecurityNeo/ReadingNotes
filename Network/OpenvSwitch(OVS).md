@@ -18,13 +18,19 @@ OVS官方的定位是要做一个产品级质量的多层虚拟交换机，通�
 
 ![](img/ovs_component.png)
 
+[https://opengers.github.io/openstack/openstack-base-use-openvswitch/](https://opengers.github.io/openstack/openstack-base-use-openvswitch/)
+
+- Controller
+
+	Controller指OpenFlow控制器。OpenFlow控制器可以通过OpenFlow协议连接到任何支持OpenFlow的交换机，比如OVS。控制器通过向交换机下发流表规则来控制数据流向。除了可以通过OpenFlow控制器配置OVS中flows，也可以使用OVS提供的ovs-ofctl命令通过OpenFlow协议去连接OVS，从而配置flows，命令也能够对OVS的运行状况进行动态监控。
+
 - ovsdb-sever 
 
 	OVS的数据库服务器，用来存储虚拟交换机的配置信息。它与manager和ovs-vswitchd交换信息使用了OVSDB(JSON-RPC)的方式。
  
 - ovs-vswitchd
 
-	OVS的核心部件，它和上层controller通信遵从openflow协议，它与ovsdb-server通信使用OVSDB协议，它和内核模块通过netlink通信，它支持多个独立的datapath（网桥），它通过更改flow table实现了绑定，和VLAN等功能。
+	ovs-vswitchd守护进程是OVS的核心部件，它和datapath内核模块一起实现OVS基于流的数据交换。作为核心组件，它使用openflow协议与上层OpenFlow控制器通信，使用OVSDB协议与ovsdb-server通信，使用netlink和datapath内核模块通信。ovs-vswitchd在启动时会读取ovsdb-server中配置信息，然后配置内核中的datapaths和所有OVS switches，当ovsdb中的配置信息改变时(例如使用ovs-vsctl工具)，ovs-vswitchd也会自动更新其配置以保持与数据库同步。在OVS中，ovs-vswitchd从OpenFlow控制器获取流表规则，然后把从datapath中收到的数据包在流表中进行匹配，找到匹配的flows并把所需应用的actions返回给datapath，同时作为处理的一部分，ovs-vswitchd会在datapath中设置一条datapath flows用于后续相同类型的数据包可以直接在内核中执行动作，此datapath flows相当于OpenFlow flows的缓存。
  
 - ovs kernel module
 
@@ -48,4 +54,11 @@ OVS官方的定位是要做一个产品级质量的多层虚拟交换机，通�
 - ovs-bugtool：管理openvswitch的bug信息。
 
 ![](img/ovs_inside.png)
+
+数据库结构：
+
+![](img/ovs_db.png)
+
+通过ovs-vsctl创建的所有的网桥，网卡，都保存在数据库里面，ovs-vswitchd会根据数据库里面的配置创建真正的网桥，网卡。
+
 
