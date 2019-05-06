@@ -2,7 +2,7 @@
 
 摘自[https://www.2cto.com/net/201707/655718.html](https://www.2cto.com/net/201707/655718.html)
 
-## 1、什么是Open vSwitch ##
+## Open vSwitch简介 ##
 
 OpenvSwitch简称OVS，正如其官网(http://openvswitch.org/)所述，OVS是一个高质量、多层的虚拟交换软件。它的目的是通过编程扩展支持大规模网络自动化，同时还支持标准的管理接口和协议。
 
@@ -14,7 +14,7 @@ OVS官方的定位是要做一个产品级质量的多层虚拟交换机，通�
 
 ![](img/ovs_structure.png)
 
-组件：
+架构：
 
 ![](img/openvswitch-arch.png)
 
@@ -66,5 +66,71 @@ OpenFlow flow的流表项存放于用户空间主进程ovs-vswitchd中，OVS除�
 ![](img/ovs_db.png)
 
 通过ovs-vsctl创建的所有的网桥，网卡，都保存在数据库里面，ovs-vswitchd会根据数据库里面的配置创建真正的网桥，网卡。
+
+## OVS相关概念 ##
+
+- Bridge
+
+	Bridge代表一个以太网交换机(Switch)，一个主机中可以创建一个或者多个Bridge。Bridge的功能是根据一定规则，把从端口收到的数据包转发到另一个或多个端口。
+	使用`ovs-vsctl`命令创建一个名为br0的Bridge：
+	
+	`ovs-vsctl add-br br0  `
+
+- Port
+
+	端口Port与物理交换机的端口概念类似，Port是OVS Bridge上创建的一个虚拟端口，每个Port都隶属于一个Bridge。Port有以下几种类型：
+
+	- Normal
+
+		可以把操作系统中已有的网卡(物理网卡em1/eth0,或虚拟机的虚拟网卡tapxxx)挂载到ovs上，ovs会生成一个同名Port处理这块网卡进出的数据包。此时端口类型为Normal。
+		把物理网卡eth1挂载到OVS网桥br-ext上，OVS会自动创建同名Port eth1：
+		
+		`ovs-vsctl add-port br-ext eth1`
+		
+		注意： 挂载到OVS上的网卡设备不支持分配IP地址，因此若之前eth1配置有IP地址，挂载到OVS之后IP地址将不可访问。这里的网卡设备不只包括物理网卡，也包括主机上创建的虚拟网卡。
+
+	- Internal
+
+		Internal类型是OVS内部创建的虚拟网卡接口，每创建一个Port，OVS会自动创建一个同名接口(Interface)挂载到新创建的Port上。
+		例：创建一个网桥br0，并创建一个Internal类型的Port p0
+
+		```
+		ovs-vsctl add-br br0   
+		ovs-vsctl add-port br0 p0 -- set Interface p0 type=internal
+		  
+		ovs-vsctl show br0
+		    Bridge "br0"
+		        fail_mode: secure
+		        Port "p0"
+		            Interface "p0"
+		                type: internal
+		        Port "br0"
+		            Interface "br0"
+		                type: internal
+		```
+		
+		当ovs创建一个新网桥时，默认会创建一个与网桥同名的Internal Port。在OVS中，只有”internal”类型的设备才支持配置IP地址信息。
+		
+		```
+		ip addr add 192.168.10.11/24 dev br0
+		ip link set br0 up
+		ip route add default via 192.168.10.1 dev br0
+		```
+
+		Normal与Internal类型区别： Internal类型会自动创建接口(Interface)，而Normal类型是把主机中已有的网卡接口添加到OVS中。
+
+	- Patch
+
+		当主机中有多个ovs网桥时，可以使用Patch Port把两个网桥连起来。Patch Port总是成对出现，分别连接在两个网桥上，从一个Patch Port收到的数据包会被转发到另一个Patch Port，类似于Linux系统中的veth。
+
+	- Tunnel
+
+		OVS中支持添加隧道(Tunnel)端口，常见隧道技术有两种gre或vxlan。隧道技术是在现有的物理网络之上构建一层虚拟网络，上层应用只与虚拟网络相关，以此实现的虚拟网络比物理网络配置更加灵活，并能够实现跨主机的L2通信以及必要的租户隔离。不同隧道技术其大体思路均是将以太网报文使用隧道协议封装，然后使用底层IP网络转发封装后的数据包，其差异性在于选择和构造隧道的协议不同。Tunnel在OpenStack中用作实现大二层网络以及租户隔离，以应对公有云大规模，多租户的复杂网络环境。
+
+- Interface
+
+	Interface是连接到Port的网络接口设备，是OVS与外部交换数据包的组件，在通常情况下，Port和Interface是一对一的关系，只有在配置Port为 bond模式后，Port和Interface是一对多的关系。这个网络接口设备可能是创建Internal类型Port时OVS自动生成的虚拟网卡，也可能是系统的物理网卡或虚拟网卡(TUN/TAP)挂载在ovs上。 OVS中只有”Internal”类型的网卡接口才支持配置IP地址。
+	Interface是一块网络接口设备，负责接收或发送数据包，Port是OVS网桥上建立的一个虚拟端口，Interface挂载在Port上。
+
 
 
