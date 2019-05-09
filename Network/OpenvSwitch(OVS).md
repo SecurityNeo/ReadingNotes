@@ -131,6 +131,19 @@ OpenFlow flow的流表项存放于用户空间主进程ovs-vswitchd中，OVS除�
 
 	Interface是连接到Port的网络接口设备，是OVS与外部交换数据包的组件，在通常情况下，Port和Interface是一对一的关系，只有在配置Port为 bond模式后，Port和Interface是一对多的关系。这个网络接口设备可能是创建Internal类型Port时OVS自动生成的虚拟网卡，也可能是系统的物理网卡或虚拟网卡(TUN/TAP)挂载在ovs上。 OVS中只有”Internal”类型的网卡接口才支持配置IP地址。
 	Interface是一块网络接口设备，负责接收或发送数据包，Port是OVS网桥上建立的一个虚拟端口，Interface挂载在Port上。
+	
+- OpenFlow flows
+
+	OVS中最重要的一种flows，Controller控制器下发的就是这种flows。
+	
+- “hidden” flows
+
+	OVS在使用OpenFlow flow时，需要与OpenFlow控制器建立TCP连接，若此TCP连接不依赖OVS，即没有OVS依然可以建立连接，此时就是`out-of-band control`模式，这种模式下不需要”hidden” flows。但是在`in-band control`模式下，TCP连接的建立依赖OVS控制的网络，但此时OVS依赖OpenFLow控制器下发的flows才能正常工作，没法建立TCP连接也就无法下发flows，这就产生矛盾了，因此需要存在一些”hidden” flows，这些”hidden” flows保证了TCP连接能够正常建立。“hidden” flows优先级高于OpenFlow flows，它们不需要手动设置。可以使用ovs-appctl查看这些flows，下面命令输出内容包括OpenFlow flows,"hidden" flows:
+	`ovs-appctl bridge/dump-flows <br>`
+	
+- datapath flows
+
+	datapath flows是datapath内核模块维护的flows，由内核模块维护意味着我们并不需要去修改管理它。与OpenFlow flows不同的是，它不支持优先级，并且只有一个表，这些特点使它非常适合做缓存。与OpenFlow一样的是它支持通配符，也支持指令集(多个action)。datapath flows可以来自用户空间ovs-vswitchd缓存，也可以是datapath内核模块进行MAC地址学习到的flows，这取决与OVS是作为SDN交换机，还是像Linux Bridge那样只是一个简单基于MAC地址学习的二层交换机
 
 
 
