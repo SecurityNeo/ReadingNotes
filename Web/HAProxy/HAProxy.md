@@ -171,3 +171,8 @@ HAProxy会在客户端请求中没有cookie时，在响应报文中插入一个c
 [http://www.ttlsa.com/linux/haproxy-study-tutorial/](http://www.ttlsa.com/linux/haproxy-study-tutorial/)
 
 感谢“田飞雨”分享了如此精彩的文章，这篇文章写得非常全，作为参考文档的话非常合适
+
+##  HAProxy Runtime API ###
+
+[https://www.haproxy.com/blog/dynamic-configuration-haproxy-runtime-api/](https://www.haproxy.com/blog/dynamic-configuration-haproxy-runtime-api/)
+HAProxy支持一些运行时API，这也一定程度上解决了每次更新配置后都需要reload服务的诟病。
