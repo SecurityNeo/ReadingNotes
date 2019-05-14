@@ -6,7 +6,7 @@
 
 *istio-init容器*
 
-该容器就是通过修改iptables规则让Envoy代理可以拦截所有的进出Pod的流量，即将入站流量重定向到Sidecar，再拦截应用容器的出站流量经过Sidecar处理后再出站。该容器的入口脚本为[istio-iptables.sh](https://github.com/istio/istio/blob/master/tools/packaging/common/istio-iptables.sh)，脚本的使用方法：
+该容器就是通过修改iptables规则让Envoy代理可以拦截所有的进出Pod的流量，即将入站流量重定向到Sidecar，再拦截应用容器的出站流量经过Sidecar处理后再出站。该容器的入口脚本为[istio-iptables.sh](https://github.com/istio/istio/blob/master/tools/packaging/common/istio-iptables.sh)，脚本的使用方法(部分，摘自[https://jimmysong.io/posts/envoy-sidecar-injection-in-istio-service-mesh-deep-dive/](https://jimmysong.io/posts/envoy-sidecar-injection-in-istio-service-mesh-deep-dive/),完整使用方法可阅读脚本)：
 
 ```
 $ istio-iptables.sh -p PORT -u UID -g GID [-m mode] [-b ports] [-d ports] [-i CIDR] [-x CIDR] [-h]
@@ -21,5 +21,6 @@ $ istio-iptables.sh -p PORT -u UID -g GID [-m mode] [-b ports] [-d ports] [-i CI
 
 环境变量位于 $ISTIO_SIDECAR_CONFIG（默认在：/var/lib/istio/envoy/sidecar.env）
 ```
+
 
 
