@@ -37,6 +37,8 @@ Istio 服务网格逻辑上分为数据平面和控制平面。
 
 [istio源码解析系列(三)-Mixer工作流程浅析](https://www.jianshu.com/p/312b9b9a7e01?from=groupmessage)
 
+[https://istio.io/zh/docs/concepts/policies-and-telemetry/](https://istio.io/zh/docs/concepts/policies-and-telemetry/)
+
 **Mixer主要功能：**
 
 - 前置条件检查（Precondition Checking）
@@ -51,12 +53,21 @@ Istio 服务网格逻辑上分为数据平面和控制平面。
 
 	该服务处理完请求后，通过Envoy向Mixer上报日志、监控等数据。
 
+无缓存拓扑：
+![](img/Mixer_Topology_WithoutCache.svg)
+
+有缓存拓扑：
+![](img/Mixer_Topology_WithCache.svg)
+
 
 **相关概念**
 
 - Attribute（属性）
 
-	大部分attributes由Envoy提供。Istio用attributes来控制服务在Service Mesh中运行时行为。attributes是有名称和类型的元数据，用来描述入口和出口流量和流量产生时的环境。attributes携带了一些具体信息，比如：API请求状态码、请求响应时间、TCP连接的原始地址等。
+	大部分attributes由Envoy提供。Istio用attributes来控制服务在Service Mesh中运行时行为。attributes是有名称和类型的元数据，用来描述入口和出口流量和流量产生时的环境。attributes携带了一些具体信息，比如：API请求状态码、请求响应时间、TCP连接的原始地址等。Mixer本质上是一个属性处理机。每个经过Envoy sidecar的请求都会调用Mixer，为Mixer提供一组描述请求和请求周围环境的属性。基于Envoy sidecar的配置和给定的特定属性集，Mixer会调用各种基础设施后端。
+
+	![](img/Mixer_Machine.svg)
+	
 
 - RefrencedAttributes（被引用的属性）
 
