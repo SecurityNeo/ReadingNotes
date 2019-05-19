@@ -83,6 +83,96 @@ Istio 服务网格逻辑上分为数据平面和控制平面。
 
 	![](img/Mixer_Request_Stream.png)
 
+- Template（模板）
+
+	对于一个网络请求，Mixer通常会调用两个rpc：Check和Report。不同的adapter需要不同的attributes，template定义了attributes到adapter输入数据映射的schema，一个适配器可以支持多个template。一个上报metric数据的模板如下所示：
+
+	```
+	apiVersion: "config.istio.io/v1alpha2"
+	kind: metric
+	metadata:
+	  name: requestsize
+	  namespace: istio-system
+	spec:
+	  value: request.size | 0
+	  dimensions:
+	    source_service: source.service | "unknown"
+	    source_version: source.labels["version"] | "unknown"
+	    destination_service: destination.service | "unknown"
+	    destination_version: destination.labels["version"] | "unknown"
+	    response_code: response.code | 200
+	  monitored_resource_type: '"UNSPECIFIED"'
+	```
+
+**Mixer的配置模型**
+
+	Mixer的yaml配置可以抽象成三种模型：`Handler、Instance、Rule`。这三种模型主要通过yaml中的kind字段做区分，kind值有如下几种：
+
+		- adapter kind：表示此配置为Handler。 
+		- template kind：表示此配置为Template。
+		- "rule"：表示此配置为Rule。
+
+	**Handler**
+
+		一个Handler是配置好的Adpater的实例。Handler从yaml配置文件中取出adapter需要的配置数据。一个典型的Promethues Handler配置如下所示：
+
+		```
+		apiVersion: config.istio.io/v1alpha2
+		kind: prometheus
+		metadata:
+		  name: handler
+		  namespace: istio-system
+		spec:
+		  metrics:
+		  - name: request_count
+		    instance_name: requestcount.metric.istio-system
+		    kind: COUNTER
+		    label_names:
+		    - destination_service
+		    - destination_version
+		    - response_code
+		```
+
+		对于Handler而言，{metadata.name}.{kind}.{metadata.namespace}是其完全限定名（Fully Qualified name），上述Handler的完全限定名是handler.prometheus.istio-system，完全限定名是全局唯一的。
+
+	**Instance**
+
+		Instance定义了attributes到adapter输入的映射，一个处理requestduration metric数据的Instance配置如下所示：
+
+		```
+		apiVersion: config.istio.io/v1alpha2
+		kind: metric
+		metadata:
+		  name: requestduration
+		  namespace: istio-system
+		spec:
+		  value: response.duration | "0ms"
+		  dimensions:
+		    destination_service: destination.service | "unknown"
+		    destination_version: destination.labels["version"] | "unknown"
+		    response_code: response.code | 200
+		  monitored_resource_type: '"UNSPECIFIED"'
+		```
+
+	**Rule**
+
+		Rule定义了一个特定的Instance何时调用一个特定的Handler，一个典型的Rule配置如下所示：
+		```
+		apiVersion: config.istio.io/v1alpha2
+		kind: rule
+		metadata:
+		  name: promhttp
+		  namespace: istio-system
+		spec:
+		  match: destination.service == "service1.ns.svc.cluster.local" && request.headers["x-user"] == "user1"
+		  actions:
+		  - handler: handler.prometheus
+		    instances:
+		    - requestduration.metric.istio-system
+		```
+
+		上述例子中，定义的Rule为：对目标服务为`service1.ns.svc.cluster.local`且`request.headers["x-user"]`为user1的请求，`Instance: requestduration.metric.istio-system`才调用Handler: `handler.prometheus`。
+
 
 
 	
