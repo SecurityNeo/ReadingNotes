@@ -39,6 +39,8 @@ Istio 服务网格逻辑上分为数据平面和控制平面。
 
 [https://istio.io/zh/docs/concepts/policies-and-telemetry/](https://istio.io/zh/docs/concepts/policies-and-telemetry/)
 
+![](img/Mixer.png)
+
 **Mixer主要功能：**
 
 - 前置条件检查（Precondition Checking）
@@ -58,6 +60,8 @@ Istio 服务网格逻辑上分为数据平面和控制平面。
 
 有缓存拓扑：
 ![](img/Mixer_Topology_WithCache.svg)
+
+关于Mixer性能相关问题，阅读一下[敖小剑--Istio Mixer Cache工作原理与源码分析part1－基本概念](http://www.servicemesher.com/blog/istio-mixer-cache-part1-concepts/)
 
 
 **相关概念**
