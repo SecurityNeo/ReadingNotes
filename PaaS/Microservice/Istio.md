@@ -22,7 +22,7 @@ Istio 服务网格逻辑上分为数据平面和控制平面。
 
 - Pilot
 
-	Pilot为Envoy sidecar提供服务发现功能，为智能路由（例如 A/B 测试、金丝雀部署等）和弹性（超时、重试、熔断器等）提供流量管理功能。它将控制流量行为的高级路由规则转换为特定于 Envoy 的配置，并在运行时将它们传播到sidecar。Pilot将平台特定的服务发现机制抽象化并将其合成为符合Envoy数据平面API的任何sidecar都可以使用的标准格式。这种松散耦合使得Istio能够在多种环境下运行（例如，Kubernetes、Consul、Nomad），同时保持用于流量管理的相同操作界面。
+	Pilot为Envoy sidecar提供服务发现功能，为智能路由（例如A/B测试、金丝雀部署等）和弹性（超时、重试、熔断器等）提供流量管理功能。它将控制流量行为的高级路由规则转换为特定于 Envoy 的配置，并在运行时将它们传播到sidecar。Pilot将平台特定的服务发现机制抽象化并将其合成为符合Envoy数据平面API的任何sidecar都可以使用的标准格式。这种松散耦合使得Istio能够在多种环境下运行（例如，Kubernetes、Consul、Nomad），同时保持用于流量管理的相同操作界面。
 
 - Citadel
 
@@ -189,8 +189,26 @@ Istio 服务网格逻辑上分为数据平面和控制平面。
 		上述例子中，定义的Rule为：对目标服务为`service1.ns.svc.cluster.local`且`request.headers["x-user"]`为user1的请求，`Instance: requestduration.metric.istio-system`才调用Handler: `handler.prometheus`。
 
 
+## Pilot ##
 
-	
+[http://www.sel.zju.edu.cn/?p=825](http://www.sel.zju.edu.cn/?p=825)
+
+[https://www.codercto.com/a/78040.html](https://www.codercto.com/a/78040.html)
+
+[https://github.com/istio/istio/tree/master/pilot](https://github.com/istio/istio/tree/master/pilot)
+
+![](img/Pilot_Arch.png)
+
+Pilot架构的最下面一层是Envoy的API，提供Discovery Service的API，这个API的规则由Envoy约定，Pilot实现Envoy API Server，Envoy和Pilot之间通过gRPC实现双向数据同步。Pilot最上面一层称为Platform Adapter，这一层不是Kubernetes调用Pilot，而是Pilot通过调用Kubernetes来发现服务之间的关系，Pilot通过在Kubernetes里面注册一个Controller来监听事件，从而获取Service和Kubernetes的Endpoint以及Pod的关系。Istio通过Kubernets CRD来定义自己的领域模型，使大家可以无缝的从Kubernets的资源定义过度到Pilot的资源定义。
+
+![](img/Pilot_Arch2.png)	
+
+- discovery service：从Kubernetes apiserver list/watch service、endpoint、pod、node等资源信息，监听istio控制平面配置信息（如VirtualService、DestinationRule等）， 翻译为Envoy可以直接理解的配置格式。
+- proxy：也就是Envoy，直接连接discovery service，间接地从Kubernetes等服务注册中心获取集群中微服务的注册情况。
+- agent：生成Envoy配置文件，监控并管理envoy的运行状况，比如envoy出错时pilot-agent负责重启envoy，或者envoy配置变更后reload envoy。。
+- service A/B：使用了istio的应用(如Service A/B)的进出网络流量会被proxy接管。
+
+
 
 ## istio-init容器 ##
 
