@@ -1,5 +1,7 @@
 # Istio #
 
+[https://blog.gmem.cc/istio-study-note](https://blog.gmem.cc/istio-study-note)
+
 ## 架构 ##
 
 ![](img/Istio_arch.svg)
@@ -208,6 +210,12 @@ Pilot架构的最下面一层是Envoy的API，提供Discovery Service的API，�
 - agent：生成Envoy配置文件，监控并管理envoy的运行状况，比如envoy出错时pilot-agent负责重启envoy，或者envoy配置变更后reload envoy。。
 - service A/B：使用了istio的应用(如Service A/B)的进出网络流量会被proxy接管。
 
+
+## Citadel ##
+
+Istio的安全架构：
+
+![](img/Istio_SecArch.svg)
 
 
 ## istio-init容器 ##
