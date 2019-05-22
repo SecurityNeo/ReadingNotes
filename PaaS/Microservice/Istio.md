@@ -31,6 +31,7 @@ Istio 服务网格逻辑上分为数据平面和控制平面。
 	Citadel通过内置身份和凭证管理赋能强大的服务间和最终用户身份验证。可用于升级服务网格中未加密的流量，并为运维人员提供基于服务标识而不是网络控制的强制执行策略的能力。从0.5版本开始，Istio支持基于角色的访问控制，以控制谁可以访问您的服务，而不是基于不稳定的三层或四层网络标识。
 
 - Galley
+	[https://cloud.tencent.com/developer/article/1409159](https://cloud.tencent.com/developer/article/1409159)
 
 	Galley代表其他的Istio控制平面组件，用来验证用户编写的Istio API配置。随着时间的推移，Galley将接管Istio获取配置、 处理和分配组件的顶级责任。它将负责将其他的Istio组件与从底层平台（例如 Kubernetes）获取用户配置的细节中隔离开来。
 
