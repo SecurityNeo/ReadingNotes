@@ -122,3 +122,40 @@ dev                                 12464423   []
 ```
 
 表80会检查报的来源VNI ID（REG0）和目的端口的VNI ID（REG1），将相符的合法的包转发到表70设置的出口，以完成转发。
+
+**不同节点上的两个pod之间的互访**
+
+![](img/OpenShift_Network4.png)
+
+发送端（node1）的OVS流表：
+
+```
+table=0, n_packets=14703186, n_bytes=1612904326, priority=100,ip actions=goto_table:20
+table=20, n_packets=167428, n_bytes=12428845, priority=100,ip,in_port=96,nw_src=10.131.1.152 actions=load:0xbe3127->NXM_NX_REG0[],goto_table:21
+table=21, n_packets=14736461, n_bytes=1613954556, priority=0 actions=goto_table:30
+table=30, n_packets=1143761, n_bytes=1424533777, priority=100,ip,nw_dst=10.128.0.0/14 actions=goto_table:90
+table=90, n_packets=0, n_bytes=0, priority=100,ip,nw_dst=10.128.2.0/23 actions=move:NXM_NX_REG0[]->NXM_NX_TUN_ID[0..31],set_field:172.22.122.9->tun_dst,output:1
+```
+
+- tabel 21：将源pod的VNI ID保存在REG0中。
+- tabel 30：会判断目的地址是不是集群的大的pod的IP CIDR。
+- tabel 90：会设置VNI ID为之前保存在REG0中的值，然后根据目的地址的网段（这里是 10.128.2.0/23），计算出其所在的节点的IP地址（这里是 172.22.122.9）并设置为tun_dst，然后发到vxlan0，它会负责根据提供的信息来做VXLAN UDP包封装。
+
+
+接收端（node2）的OVS流表： 
+
+```
+table=0, n_packets=1980863, n_bytes=1369174876, priority=200,ip,in_port=1,nw_src=10.128.0.0/14 actions=move:NXM_NX_TUN_ID[0..31]->NXM_NX_REG0[],goto_table:10
+table=10, n_packets=0, n_bytes=0, priority=100,tun_src=172.22.122.8 actions=goto_table:30
+table=30, n_packets=16055284, n_bytes=1616511267, priority=200,ip,nw_dst=10.128.2.0/23 actions=goto_table:70
+table=70, n_packets=248860, n_bytes=16158751, priority=100,ip,nw_dst=10.128.2.128 actions=load:0xbe3127->NXM_NX_REG1[],load:0x32->NXM_NX_REG2[],goto_table:80
+table=80, n_packets=0, n_bytes=0, priority=100,reg0=0xbe3127,reg1=0xbe3127 actions=output:NXM_NX_REG2[]
+```
+
+- tabel 0：将发送到保存在`NXM_NX_TUN_ID[0..31]`中的源VNI ID取出来保存到REG0.
+- tabel 10：检查包的来源节点的地址。
+- tabel 30：检查包的目的地址是不是本机上pod的网段。
+- tabel 70：根据目的地址，将目的VNI ID保存到REG1，将目的端口ID保存到REG2
+- tabel 80：检查目的VNI ID和源VNI ID，如果相符的话，则将包转发到保存在REG2中的目的端口ID指定的端口。然后包就会通过veth管道进入目的pod。
+
+
