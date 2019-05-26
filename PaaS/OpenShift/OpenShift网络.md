@@ -138,7 +138,7 @@ table=90, n_packets=0, n_bytes=0, priority=100,ip,nw_dst=10.128.2.0/23 actions=m
 ```
 
 - tabel 21：将源pod的VNI ID保存在REG0中。
-- tabel 30：会判断目的地址是不是集群的大的pod的IP CIDR。
+- tabel 30：会判断目的地址是不是集群内pod的IP CIDR。
 - tabel 90：会设置VNI ID为之前保存在REG0中的值，然后根据目的地址的网段（这里是 10.128.2.0/23），计算出其所在的节点的IP地址（这里是 172.22.122.9）并设置为tun_dst，然后发到vxlan0，它会负责根据提供的信息来做VXLAN UDP包封装。
 
 
@@ -158,4 +158,48 @@ table=80, n_packets=0, n_bytes=0, priority=100,reg0=0xbe3127,reg1=0xbe3127 actio
 - tabel 70：根据目的地址，将目的VNI ID保存到REG1，将目的端口ID保存到REG2
 - tabel 80：检查目的VNI ID和源VNI ID，如果相符的话，则将包转发到保存在REG2中的目的端口ID指定的端口。然后包就会通过veth管道进入目的pod。
 
+**pod访问外网**
 
+![](img/OpenShift_NetWork5.png)
+
+OVS流表：
+
+```
+table=0, n_packets=14618128, n_bytes=1603472372, priority=100,ip actions=goto_table:20
+table=20, n_packets=0, n_bytes=0, priority=100,ip,in_port=17,nw_src=10.131.1.73 actions=load:0xfa9a3->NXM_NX_REG0[],goto_table:21
+table=21, n_packets=14656675, n_bytes=1605262241, priority=0 actions=goto_table:30
+table=30, n_packets=73508, n_bytes=6820206, priority=0,ip actions=goto_table:100
+table=100, n_packets=44056, n_bytes=3938540, priority=0 actions=goto_table:101
+table=101, n_packets=44056, n_bytes=3938540, priority=0 actions=output:2
+```
+
+- tabel 20：检查IP包的来源端口和IP地址，并将源项目的VNI ID保存到REG0.
+- tabel 101：将包发送到端口2即tun0. 然后被iptables做NAT然后发送到eth0.
+- SNAT：将容器发出的IP包的源IP地址修改为宿主机的eth0网卡的IP地址。
+
+** 外网访问pod**
+
+![](img/OpenShift_NetWork6.png)
+
+Infra节点上的HAproxy容器采用`host-network`模式，因此它是直接使用宿主机的eth0网卡的。
+
+宿主机路由表：
+
+```
+[root@infra-node1 /]# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         172.22.122.1    0.0.0.0         UG    100    0        0 eth0
+10.128.0.0      0.0.0.0         255.252.0.0     U     0      0        0 tun0
+169.254.169.254 172.22.122.1    255.255.255.255 UGH   100    0        0 eth0
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 docker0
+172.22.122.0    0.0.0.0         255.255.255.0   U     100    0        0 eth0
+172.30.0.0      0.0.0.0         255.255.0.0     U     0      0        0 tun0
+```
+
+从HAProxy容器内出来目的地址为业务pod（ip：10.128.2.128）的网络包，根据上面的路由表，其下一跳是tun0，也就是说它又进入了OVS网桥br0. 对应的OVS流表规则为：
+```
+ip,in_port=2 actions=goto_table:30
+ip,nw_dst=10.128.0.0/14 actions=goto_table:90
+ip,nw_dst=10.128.2.0/23 actions=move:NXM_NX_REG0[]->NXM_NX_TUN_ID[0..31],set_field:172.22.122.9->tun_dst,output:1
+```
