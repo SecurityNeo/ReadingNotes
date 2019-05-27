@@ -203,3 +203,33 @@ ip,in_port=2 actions=goto_table:30
 ip,nw_dst=10.128.0.0/14 actions=goto_table:90
 ip,nw_dst=10.128.2.0/23 actions=move:NXM_NX_REG0[]->NXM_NX_TUN_ID[0..31],set_field:172.22.122.9->tun_dst,output:1
 ```
+
+**总结**
+
+![](img/OpenShift_NetWork7.png)
+
+总体来说，OVS中的OpenFlow流表根据网络包的目的地址将其分为四类来处理：
+
+- 到本地pod的，直接在br0中转发。
+- 到本集群pod的，经过br0后发到vxlan0，封装为vxlan udp包经物理网卡发到对方节点。
+- 到集群外的，经过br0后发到tun0，经过iptables做SNAT，然后经物理网卡发出。
+
+## 项目（project）级别的网络隔离 ##
+
+OpenShift 中的网络隔离是在项目（project）级别实现的。OpenShfit默认的项目 『default』的VNID （Virtual Network ID）为0，表明它是一个特权项目，因为它可以发网络包到其它所有项目，也能接受其它所有项目的pod发来的网络包。这从table 80的规则上可以看出来，如果来源项目的VNID（reg0）或目标项目的VNID（reg1）为0，都会允许包转发到pod的端口：
+
+```
+table=80, n_packets=8244506, n_bytes=870316191, priority=200,reg0=0 actions=output:NXM_NX_REG2[]
+table=80, n_packets=13576848, n_bytes=1164951315, priority=200,reg1=0 actions=output:NXM_NX_REG2[]
+```
+
+其它所有项目都会有一个非0的 VNID。在 OpenShift ovs-multitenant 实现中，非0 VNID 的项目之间的网络是不通的。
+
+从一个本地pod发出的所有网络流量，在它进入OVS网桥时，都会被打上它所通过的OVS端口ID相对应的VNID。port:VNID映射会在pod创建时通过查询master上的etcd来确定。从其它节点通过VXLAN发过来的网络包都会带有发出它的pod 所在项目的 VNID。
+
+根据上面的分析，OVS网桥中的OpenFlow规则会阻止带有与目标端口上的VNID不同的网络包的投递（VNID 0除外）。这就保证了项目之间的网络流量是互相隔离的。
+
+可以使用下面的命令查看namespace的NETID也就是VNID：
+```
+oc get namespaces
+```
