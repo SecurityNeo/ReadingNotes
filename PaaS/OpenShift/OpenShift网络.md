@@ -233,3 +233,10 @@ table=80, n_packets=13576848, n_bytes=1164951315, priority=200,reg1=0 actions=ou
 ```
 oc get namespaces
 ```
+
+## CluserIP类型的Service ##
+
+OpenShift Serivce有多种类型，默认的和最常用的是ClusterIP类型。每个这种类型的Service，创建时都会被从一个子网中分配一个IP地址，在集群内部可以使用该IP地址来访问该服务，进而访问到它后端的pod。因此，Service实际上是用于OpenShift集群内部的四层负载均衡器，它是基于 iptables实现的。
+
+
+
