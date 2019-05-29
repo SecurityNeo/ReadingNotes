@@ -64,7 +64,7 @@ OpenShift使用SDN（软件定义网络）提供集群网络，实现集群POD�
 - 在容器中运行命令：nsenter -t <容器的PiD> -n ip a
 - 查询 iptables NAT表：iptables -t nat -S
 
-** 同一个节点上的两个pod之间的互访**
+**同一个节点上的两个pod之间的互访**
 
 ![](img/OpenShift_NetWork_3.png)
 
