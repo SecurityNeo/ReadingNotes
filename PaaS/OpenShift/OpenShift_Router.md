@@ -63,4 +63,11 @@ OpenShift中HAProxy全局配置两种修改方式：
 
 - 通过设置`dc/<dc router名>`的环境变量来设置router的全局配置。在官方文档 https://docs.openshift.com/container-platform/3.4/architecture/core_concepts/routes.html#haproxy-template-router中有完整的环境变量列表。比如运行以下命令后，
 `oc set env dc/router3 ROUTER_SERVICE_HTTPS_PORT=444 ROUTER_SERVICE_HTTP_PORT=81 STATS_PORT=1937`
-router3会重新部署，新部署的HAProxy的https监听端口是444，http监听端口是80，统计端口是1937.
+router3会重新部署，新部署的HAProxy的https监听端口是444，http监听端口是80，统计端口是1937。
+
+背景知识：
+
+- SNI：TLS Server Name Indication (SNI) ，这是TLS网络协议的一种扩展，会在TLS握手前由客户端（client）告知服务器端（server）它将会连接的域名（hostname），使得服务器端可以根据该hostname向客户端段返回指定的证书，从而使得服务器端能够支持多个hostname需要的多个证书。[参考](https://en.wikipedia.org/wiki/Server_Name_Indication)
+- OpenShift passthrough route：这种route的SSL连接不会在router上被TLS终止（termination），而是router会将TLS链接透传到后端。
+- HAProxy对SNI的支持：HAProxy会根据SNI信息中的hostname去选择特定的backend。[参考](https://www.haproxy.com/blog/enhanced-ssl-load-balancing-with-server-name-indication-sni-tls-extension/)
+- [HAProxy ACL](https://www.haproxy.com/documentation/aloha/10-0/traffic-management/lb-layer7/acls/)
