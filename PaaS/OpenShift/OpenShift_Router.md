@@ -38,3 +38,29 @@ info: password for stats user admin has been set to J3YyPjlbqf
     service "router2" created
 --> Success
 ```
+
+## HAProxy ##
+
+在Router服务的每个pod之中，openshift-router进程启动了一个haproy进程：
+
+```
+UID        PID  PPID  C STIME TTY          TIME CMD
+1000000+     1     0  0 Nov21 ?        00:14:27 /usr/bin/openshift-router
+1000000+ 16011     1  0 12:42 ?        00:00:00 /usr/sbin/haproxy -f /var/lib/haproxy/conf/haproxy.config -p /var/lib/haproxy/run/haproxy.pid -x /var/lib/haproxy/run/haproxy.sock -sf 16004
+```
+
+Haproxy配置分以下两部分：
+
+- 全局配置，比如最大连接数 maxconn，超时时间 timeout 等；以及front部分，即前端配置，HAProxy 默认会在 443 和 80 两个端口上分别监听外部 https 和 http 请求。
+- backend，即每个服务的后端配置，里面有很多关键内容，比如后端协议（mode）、负载均衡方法（balance）、后端列表（server，这里是pod，包括其IP 地址和端口）、证书等。
+
+OpenShift中HAProxy全局配置两种修改方式：
+
+
+- 使用`oc adm router`命令在创建router时候指定各种参数，比如`--max-connections`用于设置最大连接数。比如：
+`oc adm router --max-connections=200000 --ports='81:80,444:443' router3`
+创建出来的HAProxy的maxconn将是20000，router3 这个服务对外暴露出来的端口是81和444，但是HAProxy pod的端口依然是80和443.
+
+- 通过设置`dc/<dc router名>`的环境变量来设置router的全局配置。在官方文档 https://docs.openshift.com/container-platform/3.4/architecture/core_concepts/routes.html#haproxy-template-router中有完整的环境变量列表。比如运行以下命令后，
+`oc set env dc/router3 ROUTER_SERVICE_HTTPS_PORT=444 ROUTER_SERVICE_HTTP_PORT=81 STATS_PORT=1937`
+router3会重新部署，新部署的HAProxy的https监听端口是444，http监听端口是80，统计端口是1937.
