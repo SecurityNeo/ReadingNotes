@@ -71,3 +71,35 @@ router3会重新部署，新部署的HAProxy的https监听端口是444，http监
 - OpenShift passthrough route：这种route的SSL连接不会在router上被TLS终止（termination），而是router会将TLS链接透传到后端。
 - HAProxy对SNI的支持：HAProxy会根据SNI信息中的hostname去选择特定的backend。[参考](https://www.haproxy.com/blog/enhanced-ssl-load-balancing-with-server-name-indication-sni-tls-extension/)
 - [HAProxy ACL](https://www.haproxy.com/documentation/aloha/10-0/traffic-management/lb-layer7/acls/)
+
+SSL三种终结方式：
+
+[配置方式](https://docs.okd.io/latest/architecture/networking/routes.html#edge-termination)
+
+- edge：TLS在router上被终结，然后非SSL网络包被转发给后端pod。因此需要在router上安装TLS证书。不安装的话，会使用router的默认证书。
+- passthrough：加密网络包直接被发给pod，router上不做TLS终结，因为不需要在router上配置证书或密钥。
+- Re-encryption：是edge的一种变种。首先router上会使用一个证书做TSL终结，然后使用另外的证书再进行加密，然后发给后端pod。因此，整个网络路径都是加密的。
+
+三种负载均衡策略：
+
+- roundrobin：根据权重轮流使用所有后端。
+- leastconn：选择最少连接的后端接收请求。
+- source：将源IP进行哈希，确保来自同一个源IP的请求发给同一个后端。
+
+要修改整个router的负载均衡策略，可使用`ROUTER_TCP_BALANCE_SCHEME`环境变量，为该router的所有passthrough类型的route设置负载均衡策略，使用`ROUTER_LOAD_BALANCE_ALGORITHM`为其它类型的route设置策略。
+可以使用`haproxy.router.openshift.io/balance`为某个route设置负载均衡策略。
+
+## OpenShift router高可用 ##
+
+**单router服务多副本，并利用和DNS/LB实现高可用**
+
+![](img/OpenShift_Router02.png)
+
+因为router/pod中的HAProxy要实现本地配置文件，因此实际上它们是有状态容器。OpenShift采用etcd作为配置的统一存储，openshift-router 进程应该是采取某种机制（被通知或定时拉取）从etcd中获取router和route的配置，然后再修改本地的配置文件，再重启HAPorxy进程来应用新修改了的配置文件。(？？？？？？？？？？？)
+
+**多router服务通过分片（sharding）实现高可用**
+
+![](img/OpenShift_Routerr03.png)
+
+管理员需要创建和部署多个router服务，每个router服务支持一个或几个project/namespace。router和project/namespace之间的映射使用标签（label）来实现。![参考配置](https://docs.openshift.com/container-platform/3.11/install_config/router/default_haproxy_router.html)
+
