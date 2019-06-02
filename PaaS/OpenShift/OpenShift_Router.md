@@ -101,5 +101,5 @@ SSL三种终结方式：
 
 ![](img/OpenShift_Routerr03.png)
 
-管理员需要创建和部署多个router服务，每个router服务支持一个或几个project/namespace。router和project/namespace之间的映射使用标签（label）来实现。![参考配置](https://docs.openshift.com/container-platform/3.11/install_config/router/default_haproxy_router.html)
+管理员需要创建和部署多个router服务，每个router服务支持一个或几个project/namespace。router和project/namespace之间的映射使用标签（label）来实现。[参考配置](https://docs.openshift.com/container-platform/3.11/install_config/router/default_haproxy_router.html)
 
