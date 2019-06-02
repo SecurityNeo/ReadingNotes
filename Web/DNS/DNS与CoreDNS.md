@@ -73,6 +73,19 @@ CAA记录可以控制单域名SSL证书的发行，也可以控制通配符证�
 服务位置记录，用于定义提供特定服务的服务器的位置，如主机(hostname)，端口(port number)等。
 
 
+### DNS配置文件 ###
+
+```
+sh-4.2$ cat /etc/resolv.conf 
+nameserver 172.22.122.9
+search dev.svc.cluster.local svc.cluster.local cluster.local exampleos.com
+options ndots:5
+```
+
+- nameserver: 指定DNS server地址
+- search： 指定当解析一个非FQDN域名时被附加的搜索域（search domain）列表。域名（Domain Name）分为两种，一种是绝对域名（Absolute Domain Name，也称为`Fully-Qualified Domain Name`，简称 FQDN），另一种是相对域名（Relative Domain Name，也称为`Partially Qualified Domain Name`，简称PQDN）。FQDN是完整域名，它能够唯一地在DNS名字空间中确定一个记录。比如最高级别的域名A包括子域名B它又包括子域名C，那么FQDN是 C.B.A.，比如cs.widgetopia.edu.。 有时候我们也会使用PQDN，它是不完全的、模糊的。FQDN能被直接到DNS名字服务器中查询；而PQDN需要先转化为FQDN再进行查询。其做法是将PQDN附加一个搜索域名（search domain）来生成一个FQDN。在域名系统中，域名结尾是否是『.』被用来区分FQDN和PQDN。比如`apple.com.`表示一个Apple公司的FQDN，而apple则表示一个PQDN，它的FQDN可能是 `apple.cs.widgetopia.edu.`；`apple.com`仍然是一个PQDN，它的FQDN可能是`apple.com.cs.widgetopia.edu.`。
+- options ndots:5 默认地，许多DNS解析器如果发现被解析的域名中有任何的点（.）就把它当做一个FQDN来解析；如果域名中没有任何点，就把它当做PQDN来处理，并且会加上系统的默认domain name和最后的点，来组成FQDN。如果没有指定默认的domain name（通过domain字段）或查询失败，则会将search字段的第一个值当做默认domain name，如果解析不成功，则依次往下试，直到有一个成功或者全部失败为止。这个行为是通过options ndots来指定的，其默认值为1，这意味着只要被解析域名中有任何一个点（.），那么它就会被当做FQDN，而不会附加任何search domain，直接用来查询。
+
 ## CoreDNS ##
 
 [https://coredns.io/](https://coredns.io/)
