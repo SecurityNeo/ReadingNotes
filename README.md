@@ -144,6 +144,7 @@
 	- [Envoy](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/Envoy.md)
 	- [GraphQL](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/GraphQL.md)
 	- [Istio](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/Istio.md)
+	- [KrakenD](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md)
 
 - OpenShift
 
