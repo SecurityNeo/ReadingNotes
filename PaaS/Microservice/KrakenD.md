@@ -1,0 +1,322 @@
+# KrakenD #
+
+[https://www.krakend.io/](https://www.krakend.io/)
+
+[https://github.com/devopsfaith](https://github.com/devopsfaith)
+
+KrakenD是一个收费的API网关生成器和代理生成器，位于客户端和所有源服务器之间，添加了一个新层，可以消除客户机的所有复杂性，为客户机只提供UI需要的信息。 KrakenD充当了许多源的集合，可以将许多源集成到单个端点中，并允许对响应进行分组、包装。 另外它支持大量middelwares和插件，允许扩展功能，比如添加Oauth授权或者安全层。
+
+## 配置解析 ##
+
+### TLS Endpoint ###
+
+KrakenD需要在全局配置中开启TLS，一旦开启了TLS，KrakenD将不会响应任何HTTP请求。
+
+示例：
+
+```
+{
+  "version": 2,
+  "tls": {
+    "public_key": "/path/to/cert.pem",
+    "private_key": "/path/to/key.pem"
+  }
+}
+```
+
+- public_key: 公钥文件，绝对或相对路径（相对工作目录）
+- private_key：私钥文件，绝对或相对路径（相对工作目录）
+
+可选配置：
+
+- disabled (boolean): 临时关闭TLS，用户开发测试环境
+- min_version (string): 最低TLS版本 (SSL3.0, TLS10, TLS11 或者 TLS12)
+- max_version (string): 最高TLS版本 (SSL3.0, TLS10, TLS11 或者 TLS12)
+- curve_preferences (integer array): 椭圆数字签名算法签名长度(23表示CurveP256, 24表示CurveP384，25表示CurveP521)
+- prefer_server_cipher_suites (boolean): 强制使用服务器提供的密码套件，而不是使用客户端建议的套件。
+- cipher_suites (integer array): 加密算法，可选算法如下：
+	- 5: TLS_RSA_WITH_RC4_128_SHA
+	- 10: TLS_RSA_WITH_3DES_EDE_CBC_SHA
+	- 47: TLS_RSA_WITH_AES_128_CBC_SHA
+	- 53: TLS_RSA_WITH_AES_256_CBC_SHA
+	- 60: TLS_RSA_WITH_AES_128_CBC_SHA256
+	- 156: TLS_RSA_WITH_AES_128_GCM_SHA256
+	- 157: TLS_RSA_WITH_AES_256_GCM_SHA384
+	- 49159: TLS_ECDHE_ECDSA_WITH_RC4_128_SHA
+	- 49161: TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA
+	- 49162: TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
+	- 49169: TLS_ECDHE_RSA_WITH_RC4_128_SHA
+	- 49170: TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA
+	- 49171: TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
+	- 49172: TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
+	- 49187: TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+	- 49191: TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+	- 49199: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+	- 49195: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+	- 49200: TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+	- 49196: TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+	- 52392: TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+	- 52393: TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+
+
+### Endpoint Rate Limiting ###
+
+可以限制Endpoint的速率，有两种限制方法，一种为限制每个Endpoint的速率，一种为限制每个Endpoint可接受单个客户端的速率。
+注意： 开始针对每个客户端的速率限制将在很大程度上影响API网关的性能！
+
+示例：
+
+```
+{
+    "version": 2,
+    "endpoints": [
+      {
+          "endpoint": "/happy-hour",
+          "extra_config": {
+              "github.com/devopsfaith/krakend-ratelimit/juju/router": {
+                  "maxRate": 0,
+                  "clientMaxRate": 0
+              }
+          }
+          ...
+      },
+      {
+          "endpoint": "/limited-endpoint",
+          "extra_config": {
+            "github.com/devopsfaith/krakend-ratelimit/juju/router": {
+                "maxRate": 50,
+                "clientMaxRate": 5,
+                "strategy": "ip"
+              }
+          },
+          ...
+      },
+      {
+          "endpoint": "/user-limited-endpoint",
+          "extra_config": {
+            "github.com/devopsfaith/krakend-ratelimit/juju/router": {
+                "clientMaxRate": 10,
+                "strategy": "header",
+                "key": "X-Auth-Token"
+              }
+          },
+          ...
+      }
+```
+
+- maxRate: 不配置或配置`"maxRate": 0 `表示不进行限速。当达到Endpoint的限速配置后，客户端将收到`503 Service Unavailable`。
+- clientMaxRate：不配置或配置`"clientMaxRate": 0`表示不进行限速。当达到Endpoint的限速配置后，客户端将收到`429 Too Many Requests`。
+	- "strategy": "ip"：通过客户端IP地址识别是否为同一个客户端。
+	- "strategy": "header"： 通过请求包对应的头部来识别是否为同一个客户端。
+
+
+### Response Manipulation ###
+
+KrakenD可以修改Backend返回的数据，主要包含以下几类：Merging（数据聚合）、Filtering（数据过滤）、Grouping（数据分组）、Mapping (key修改)、Target（数据截取）、Collection（数据组合）。
+
+**Merging**
+
+将所有Backend返回的数据聚合到一个字典中，如果多个Backend中有key冲突，则对应key的值将取返回数据最慢的那个Backend的值。
+
+示例：
+```
+"endpoints": [
+    {
+      "endpoint": "/abc",
+      "timeout": "800ms",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/a",
+          "encoding": "json",
+          "host": [
+            "http://service-a.company.com"
+          ]
+        },
+        {
+          "url_pattern": "/b",
+          "encoding": "xml",
+          "host": [
+            "http://service-b.company.com"
+          ]
+        }
+      ]
+    }
+```
+
+- timeout: KrakenD不会一直等待Backend返回数据，需要为其配置一个超时时间，此配置可以为全局配置，也可以为某个具体的Backend配置超时时间，如果都有配置，则以对应Backend中的超时时间为准。如果达到超时时间，部分Backend仍然没有返回数据，KrakenD会返回达到超时时间前获取到的部分数据，在头部字段中不会返回cache头部，并且新增一个头部：`x-krakend-completed: false`，反之该头部为`x-krakend-completed: true`。
+
+**Filtering**
+
+KrakenD可以过滤Backend返回的数据，这样可以极大地降低客户端带宽的占用，实现方式有两种：`Blacklist`和`Whitelist`。
+注意：`Blacklist`和`Whitelist`只能取其中之一，因为它们本身就是两个冲突的行为，另外从性能上来讲，`Blacklist`要比`Whitelist`快。
+
+- Blacklist： 指定哪些字段内容不转发到客户端，可以支持嵌套，但不支持数组，关于数组可以参考`flatmap_filter`。
+
+	示例：
+	```
+	{
+	  "endpoint": "/posts/{user}",
+	  "method": "GET",
+	  "backend": [
+	    {
+	      "url_pattern": "/posts/{user}",
+	      "host": [
+	        "https://jsonplaceholder.typicode.com"
+	      ],
+	      "blacklist": [
+	        "body",
+	        "user.userId"
+	      ]
+	    }
+	  ]
+	}
+	```
+
+- Whitelist： 指定只转发这部分字段内容到客户端，可以支持嵌套，但不支持数组，关于数组可以参考`flatmap_filter`。
+
+	示例：
+	
+	```
+	{
+	  "endpoint": "/posts/{user}",
+	  "method": "GET",
+	  "backend": [
+	    {
+	      "url_pattern": "/posts/{user}",
+	      "host": [
+	        "https://jsonplaceholder.typicode.com"
+	      ],
+	      "whitelist": [
+	        "id",
+	        "title"
+	      ]
+	    }
+	  ]
+	}
+	```
+
+**Grouping**
+
+KrakenD可以为Backend返回的数据分组，简单来说，可以为某个Backend指定gourp，转发给客户端时，此Backend的Response将嵌套到指定的group中，这在一定程度上解决多个Backend返回了相同的key，但key的含义不一样，都是客户端需要的这种情况。
+注意：同一个Endpoint的每个Backend中group应该是不同的，如果相同，那最终转发到客户端的数据中对应group的值为最慢的那个Backend返回的数据。
+
+示例：
+
+```
+{
+  "endpoint": "/users/{user}",
+  "method": "GET",
+  "backend": [
+    {
+      "url_pattern": "/users/{user}",
+      "host": [
+        "https://jsonplaceholder.typicode.com"
+      ]
+    },
+    {
+      "url_pattern": "/posts/{user}",
+      "host": [
+        "https://jsonplaceholder.typicode.com"
+      ],
+      "group": "last_post"
+    }
+  ]
+}
+```
+返回数据：
+```
+{
+  "id": 1,
+  "phone": "1-770-736-8031 x56442",
+  "website": "hildegard.org"
+  ...
+  "last_post": {
+    "id": 1,
+    "userId": 1,
+    "title": "sunt aut facere repellat provident occaecati excepturi optio reprehenderit"
+  }
+}
+```
+
+**Mapping**
+
+KrakenD可以对Backend返回的字段进行重命名。目前貌似只修改支持最外层的key。
+
+示例：
+
+```
+{
+  "endpoint": "/users/{user}",
+  "method": "GET",
+  "backend": [
+    {
+      "url_pattern": "/users/{user}",
+      "host": [
+        "https://jsonplaceholder.typicode.com"
+      ],
+      "mapping": {
+        "email": "personal_email"
+      }
+    }
+  ]
+}
+```
+返回数据：
+```
+{
+  "id": 1,
+  "name": "Leanne Graham",
+  "username": "Bret",
+  "personal_email": "Sincere@april.biz",
+  ...
+}
+```
+
+**Target**
+
+KrakenD能获取Backend某个字段的内容，并只将这个字段的内容转发给客户端。
+注意，`Target`跟`Whitelist`不一样。`Target`可以与`whitelist`、`mapping`等混用，`Target`发生在这些动作之后。
+
+示例：
+	原始数据:
+	```
+	{
+	  "apiVersion":"2.0",
+	  "data": {
+	    "updated":"2010-01-07T19:58:42.949Z",
+	    "totalItems":800,
+	    "startIndex":1,
+	    "itemsPerPage":1,
+	    "items":[]
+	  }
+	}
+	```
+
+	配置：
+	```
+	{
+	  "endpoint": "/foo",
+	  "method": "GET",
+	  "backend": [
+	    {
+	      "url_pattern": "/bar",
+	      "target": "data"
+	    }
+	  ]
+	}
+	```
+
+	转发的数据内容：
+	```
+	{
+	    "updated":"2010-01-07T19:58:42.949Z",
+	    "totalItems":800,
+	    "startIndex":1,
+	    "itemsPerPage":1,
+	    "items":[]
+	}
+	```
+
+**Collection**
+
