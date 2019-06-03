@@ -320,3 +320,112 @@ KrakenD能获取Backend某个字段的内容，并只将这个字段的内容转
 
 **Collection**
 
+KrakenD期望Backend返回的数据都是一个字典，当Backend返回的数据是一个数组时，添加配置`"is_collection": true`，KrakenD会将返回的字段转换为一个字典，默认的key为`collection`，可以通过`mapping`自定义key值。
+示例：
+```
+"endpoints": [
+    {
+      "endpoint": "/posts",
+      "backend": [
+        {
+          "url_pattern": "/posts",
+          "host": ["http://jsonplaceholder.typicode.com"],
+          "sd": "static",
+          "is_collection": true,
+          "mapping": {
+            "collection": "myposts"
+          }
+        }
+      ]
+    }
+]
+```
+
+
+### 参数与头部转发 ###
+
+默认情况下，为了安全考虑，KrakenD不转发客户端发送的任何参数和头部字段，如果有类似需求，需要做相关配置。
+
+- 参数转发
+
+	在Endpoint的`querystring_params`中可指定允许转发的参数key，相当于一个白名单。
+	示例，KrakenD只会转发参数a和b，其它的都会被忽略：
+	```
+	{
+	  "version": 2,
+	  "endpoints": [
+	    {
+	      "endpoint": "/v1/foo",
+	      "querystring_params": [
+	        "a",
+	        "b"
+	      ],
+	      "backend": [
+	        {
+	          "url_pattern": "/catalog",
+	          "host": [
+	            "http://some.api.com:9000"
+	          ]
+	        }
+	      ]
+	    }
+	  ]
+	}
+	```
+	如果需要配置所有参数转发，可使用通配符`*`，如下(不建议这样做，有可能会造成注入漏洞风险)：
+	```
+	"querystring_params":[  
+	      "*"
+	]
+	```
+
+	另外，可以通过配置变量的方式来强制客户端传递一些参数，如下：
+	```
+	{
+	        "endpoint": "/v3/{channel}/foo",
+	        "backend": [
+	                {
+	                        "host": ["http://backend"],
+	                        "url_pattern": "/foo?channel={channel}"
+	                }
+	        ]
+	}
+	```
+	注意：变量配置和`querystring_params`结合使用的情况，看下边的例子。
+
+	配置文件：
+	```
+	{
+	        "endpoint": "/v3/{channel}/foo",
+	        "querystring_params": [
+	                "page",
+	                "limit"
+	        ],
+	        "backend": [
+	                {
+	                        "host": ["http://backend"],
+	                        "url_pattern": "/foo?channel={channel}"
+	                }
+	        ]
+	}
+	```
+	客户端请求： `http://krakend/v3/iOS/foo?limit=10&evil=here`，Backend收到的请求是`/foo?limit=10`;
+	客户端请求： `http://krakend/v3/iOS/foo?evil=here`，Backend收到的请求是`/foo?channel=foo`。
+
+- 头部转发
+
+	KrakenD会向Backend发送一些基本的头部字段，如下：
+	```
+	Accept-Encoding: gzip
+	Host: localhost:8080
+	User-Agent: KrakenD Version 0.9.0
+	X-Forwarded-For: ::1
+	```
+	同样的，可以通过`headers_to_pass`来配置KrakenD转发哪些客户端的头部。也可以使用通配符`*`来配置其转发所有头部字段。
+	```
+	"headers_to_pass":[  
+	      "*"
+	]
+	```
+
+
