@@ -4,6 +4,22 @@
 
 [https://github.com/devopsfaith](https://github.com/devopsfaith)
 
+- 配置解析
+	- Service
+		- [TLS Endpoint](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#tls-endpoint)
+
+	- Endpoint
+		- [Endpoint Rate Limiting](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#endpoint-rate-limiting)
+		- [Response Manipulation](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#response-manipulation)
+		- [参数与头部转发](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#%E5%8F%82%E6%95%B0%E4%B8%8E%E5%A4%B4%E9%83%A8%E8%BD%AC%E5%8F%91)
+		- [Content Types](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#content-types)
+		- [Backend的顺序调用](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#backend%E7%9A%84%E9%A1%BA%E5%BA%8F%E8%B0%83%E7%94%A8)
+		- [Static Proxy](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#static-proxy)
+
+	- Backend
+		- [断路器](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#%E6%96%AD%E8%B7%AF%E5%99%A8)
+		- [并发请求](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#%E5%B9%B6%E5%8F%91%E8%AF%B7%E6%B1%82)
+
 KrakenD是一个收费的API网关生成器和代理生成器，位于客户端和所有源服务器之间，添加了一个新层，可以消除客户机的所有复杂性，为客户机只提供UI需要的信息。 KrakenD充当了许多源的集合，可以将许多源集成到单个端点中，并允许对响应进行分组、包装。 另外它支持大量middelwares和插件，允许扩展功能，比如添加Oauth授权或者安全层。
 
 ## 配置解析 ##
@@ -571,6 +587,8 @@ KrakenD中有一个组件可以实现当Backend超限返回错误时中断到其
 ```
 注意：`concurrent_calls`与`host`的数量没有必然的关系。
 
+
+#### 数据缓存 ####
 
 
 
