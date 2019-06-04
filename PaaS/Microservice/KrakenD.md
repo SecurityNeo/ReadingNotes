@@ -547,6 +547,29 @@ KrakenD中有一个组件可以实现当Backend超限返回错误时中断到其
     ]
 ```
 
+#### 并发请求 ####
+
+如果有多个Backend提供相同的服务，但是各个Backend的性能并不相同，这时可以为一个Endpoint的Backend配置多个主机，并且指定并发访问量，KrakenD会同时向这些主机发送所配置并发数量的API请求，并且在收到第一个主机返回的数据时就转发给客户端，然后KrakenD会忽略剩下的返回数据。所有的请求都Error之后，客户端将收到Error返回。
+官方有一个示例来验证并发请求特性对整个API请求性能的影响，[点击我查看](https://www.krakend.io/docs/backends/concurrent-requests/)。
+
+注意：需要确保这种API请求都是幂等的。
+
+示例：
+```
+"endpoints": [
+{
+  "endpoint": "/products",
+  "method": "GET",
+  "concurrent_calls": 3,
+  "backend": [
+    {
+        "host": [
+            "http://server-01.api.com:8000",
+            "http://server-02.api.com:8000"
+        ],
+        "url_pattern": "/foo",
+```
+注意：`concurrent_calls`与`host`的数量没有必然的关系。
 
 
 
