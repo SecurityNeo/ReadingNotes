@@ -482,4 +482,26 @@ KrakenD可以通过配置`output_encoding`来指定返回给客户端的数据�
 }
 ```
 
+#### Static Proxy ####
+
+KrakenD可以根据Backend返回数据成功与否、数据是否完成聚合来为转发到客户端的数据增加一些静态内容。此过程是在所有Backend数据聚合之后，所以请注意添加的数据不要与实际数据产生冲突，否则会被重写。支持的策略如下：
+- always: 不管何种情况都在返回的数据中添加静态内容。
+- success: 当所有Backend都正常返回数据的情况下在返回的数据中添加静态内容。
+- complete: 当所有Backend都正常返回数据，并且数据正常聚合的情况下在返回的数据中添加静态内容。
+- errored: 当Backend出现异常并返回明确的错误时在返回的数据中添加静态内容。
+- incomplete: 当部分Backend没有返回数据（超时或者其它原因引起的）时在返回的数据中添加静态内容。
+
+示例：
+```
+"extra_config": {
+    "github.com/devopsfaith/krakend/proxy": {
+        "static": {
+            "strategy": "errored",
+            "data": {
+                // YOUR STATIC JSON OBJECT GOES HERE
+            }
+        }
+    }
+}
+```
 
