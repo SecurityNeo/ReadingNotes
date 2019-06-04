@@ -8,7 +8,9 @@ KrakenD是一个收费的API网关生成器和代理生成器，位于客户端�
 
 ## 配置解析 ##
 
-### TLS Endpoint ###
+### Service ###
+
+#### TLS Endpoint ####
 
 KrakenD需要在全局配置中开启TLS，一旦开启了TLS，KrakenD将不会响应任何HTTP请求。
 
@@ -59,7 +61,9 @@ KrakenD需要在全局配置中开启TLS，一旦开启了TLS，KrakenD将不会
 	- 52393: TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
 
 
-### Endpoint Rate Limiting ###
+### Endpoint ###
+
+#### Endpoint Rate Limiting ####
 
 可以限制Endpoint的速率，有两种限制方法，一种为限制每个Endpoint的速率，一种为限制每个Endpoint可接受单个客户端的速率。
 注意： 开始针对每个客户端的速率限制将在很大程度上影响API网关的性能！
@@ -110,7 +114,7 @@ KrakenD需要在全局配置中开启TLS，一旦开启了TLS，KrakenD将不会
 	- "strategy": "header"： 通过请求包对应的头部来识别是否为同一个客户端。
 
 
-### Response Manipulation ###
+#### Response Manipulation ####
 
 KrakenD可以修改Backend返回的数据，主要包含以下几类：Merging（数据聚合）、Filtering（数据过滤）、Grouping（数据分组）、Mapping (key修改)、Target（数据截取）、Collection（数据组合）。
 
@@ -342,7 +346,7 @@ KrakenD期望Backend返回的数据都是一个字典，当Backend返回的数�
 ```
 
 
-### 参数与头部转发 ###
+#### 参数与头部转发 ####
 
 默认情况下，为了安全考虑，KrakenD不转发客户端发送的任何参数和头部字段，如果有类似需求，需要做相关配置。
 
@@ -427,5 +431,55 @@ KrakenD期望Backend返回的数据都是一个字典，当Backend返回的数�
 	      "*"
 	]
 	```
+
+#### Content Types ####
+
+KrakenD可以通过配置`output_encoding`来指定返回给客户端的数据格式，支持的格式有：
+- json: 返回Json格式数据
+- negotiate： 客户端通过`Accept`头部来决定将数据解析为何种格式，支持的格式为JSON、XML、RSS、YAML。
+- string： 返回字符串格式数据
+- no-op：不进行编码解码，相当于KrakenD仅仅当做一个proxy。注意：设置KrakenD为no-op模式下时，KrakenD只会将请求转发到其中一个Backend，不会做merge、Filtering、Grouping、Mapping等操作。
+
+官方对no-op模式的解释：
+ 
+- The KrakenD endpoint works just like a regular proxy
+- The router pipe functionalities are available (e.g., rate limiting the endpoint)
+- The proxy pipe functionalities are disabled (aggregate/merge, filter, manipulations, body inspection, concurrency…)
+- Headers passing to the backend still need to be declared under headers_to_pass, as they hit the router layer first.
+- Backend response and headers remain unchanged (including status codes)
+- The body cannot be changed and is set solely by the backend
+- 1:1 relationship between endpoint-backend (one backend per endpoint).
+
+设置KrakenD为no-op模式：
+
+- 在endpoint中添加`"output_encoding": "no-op"`
+- 在Backend中添加`"encoding": "no-op"`
+
+#### Backend的顺序调用 ####
+
+有时候会有这样一个场景，后面一个API请求的请求体需要使用前面一个API请求的部分返回值，可以通过配置` "sequential": true`来打开此功能。
+示例：
+```
+"endpoint": "/hotels/{id}",
+"backend": [
+    { <--- Index 0
+        "host": [
+            "https://hotels.api"
+        ],
+        "url_pattern": "/hotels/{id}"
+    },
+    { <--- Index 1
+        "host": [
+            "https://hotels.api"
+        ],
+        "url_pattern": "/destinations/{resp0_destination_id}"
+    }
+],
+"extra_config": {
+    "github.com/devopsfaith/krakend/proxy": {
+        "sequential": true
+    }
+}
+```
 
 
