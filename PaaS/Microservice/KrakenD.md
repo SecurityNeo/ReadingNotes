@@ -505,3 +505,49 @@ KrakenD可以根据Backend返回数据成功与否、数据是否完成聚合来
 }
 ```
 
+
+### Backend ###
+
+#### 断路器 ####
+
+KrakenD中有一个组件可以实现当Backend超限返回错误时中断到其上的连接，简单地可以理解为一个断路器。
+
+**工作原理：**
+首先在Backend上配置这样三个参数`interval`、`timeout`、`maxErrors`，在`interval`间隔时间内连续收到Backend返回`maxErrors`个错误，KrakenD将会中断到此Backend的所有连接，中断时间间隔为`timeout`，到达中断时长之后，KrakenD会向此Backend发送一个请求，如果这个请求仍然收到错误，KrakenD将继续中断连接`timeout`时长，如果请求正常返回，KrakenD将恢复到正常状态。
+
+断路器的状态机：
+![](img/KrakenD_Circuit_Breaker_States.png)
+
+- CLOSED: 初始化状态，KrakenD正常转发请求到Backend。
+- OPEN: KrakenD收到Backend返回所配置的错误数量后进入到OPEN状态，并且不会再转发任何请求到Backend上，此状态持续`timeout`秒。
+- HALF-OPEN:`timeout`秒之后，KrakenD再发送一个请求到Backend，如果正常将进入CLOSE状态，正常转发请求，如果继续收到ERROR则重新进入OPEN状态。
+
+**配置**
+
+```
+"endpoints": [
+{
+    "endpoint": "/myendpoint",
+    "method": "GET",
+    "backend": [
+    {
+        "host": [
+            "http://127.0.0.1:8080"
+        ],
+        "url_pattern": "/mybackend-endpoint",
+        "extra_config": {
+            "github.com/devopsfaith/krakend-circuitbreaker/gobreaker": {
+                "interval": 60,
+                "timeout": 10,
+                "maxErrors": 1,
+                "logStatusChange": true
+            }
+        }
+    }
+    ]
+```
+
+
+
+
+
