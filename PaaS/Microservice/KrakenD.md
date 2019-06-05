@@ -19,6 +19,24 @@
 	- Backend
 		- [断路器](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#%E6%96%AD%E8%B7%AF%E5%99%A8)
 		- [并发请求](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#%E5%B9%B6%E5%8F%91%E8%AF%B7%E6%B1%82)
+		- [数据缓存](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#%E6%95%B0%E6%8D%AE%E7%BC%93%E5%AD%98)
+		- [Traffic Shadowing](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#traffic-shadowing)
+		- [flatmap](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#flatmap)
+	- 认证
+		- [JWT Validation](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#jwt-validation)
+		- [JWT Signing](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#jwt-signin)
+		- [OAuth 2.0支持](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#oauth-20%E6%94%AF%E6%8C%81)
+	- 服务发现
+		- [静态](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#%E9%9D%99%E6%80%81)
+		- [DNS SRV](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#dns-srv)
+		- [ETCD](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#etcd)
+		- [Eureka](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#eureka)
+	- 限速与节流
+		- [超时](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#%E8%B6%85%E6%97%B6)
+		- [控制闲置连接](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#%E6%8E%A7%E5%88%B6%E9%97%B2%E7%BD%AE%E8%BF%9E%E6%8E%A5)
+	- Logging和Metrics
+		- [Logging](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#logging)
+		- [Metrics](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md#metrics)
 
 KrakenD是一个收费的API网关生成器和代理生成器，位于客户端和所有源服务器之间，添加了一个新层，可以消除客户机的所有复杂性，为客户机只提供UI需要的信息。 KrakenD充当了许多源的集合，可以将许多源集成到单个端点中，并允许对响应进行分组、包装。 另外它支持大量middelwares和插件，允许扩展功能，比如添加Oauth授权或者安全层。
 
