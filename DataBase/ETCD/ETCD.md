@@ -25,23 +25,59 @@ Etcd是一个用Go语言编写的开源的分布式键值存储，它由CoreOS�
 
 Etcd v2和v3本质上是共享同一套raft协议代码的两个独立的应用，接口不一样，存储不一样，数据互相隔离。也就是说如果从 Etcd v2升级到Etcd v3，原来v2的数据还是只能用v2的接口访问，v3的接口创建的数据也只能访问通过v3的接口访问。
 
-**Etcd v2存储，Watch以及过期机制**
+###Etcd v2存储，Watch以及过期机制###
 
 ![](img/etcd-v2.png)
 
 Etcd v2是个纯内存的实现，并未实时将数据写入到磁盘，持久化机制很简单，就是将store整合序列化成json写入文件。数据在内存中是一个简单的树结构。store中有一个全局的currentIndex，每次变更，index会加1.然后每个event都会关联到currentIndex。当客户端调用watch接口（参数中增加 wait参数）时，如果请求参数中有waitIndex，并且waitIndex小于currentIndex，则从EventHistroy表中查询index小于等于waitIndex，并且和watch key匹配的event，如果有数据，则直接返回。如果历史表中没有或者请求没有带waitIndex，则放入WatchHub中，每个key会关联一个watcher列表。 当有变更操作时，变更生成的event会放入EventHistroy表中，同时通知和该key相关的watcher。
 
 几个注意事项：
+
 - EventHistroy是有长度限制的，最长1000。也就是说，如果你的客户端停了许久，然后重新watch的时候，可能和该waitIndex相关的event已经被淘汰了，这种情况下会丢失变更。
 - 如果通知watch的时候，出现了阻塞（每个watch的channel有100个缓冲空间），Etcd会直接把watcher删除，也就是会导致wait请求的连接中断，客户端需要重新连接。
 - Etcd store的每个node中都保存了过期时间，通过定时机制进行清理。
 
 ETCD V2的一些限制：
+
 - 过期时间只能设置到每个key上，如果多个key要保证生命周期一致则比较困难。
 - watch只能watch某一个key以及其子节点（通过参数 recursive),不能进行多个watch。
 - 很难通过watch机制来实现完整的数据同步（有丢失变更的风险），所以当前的大多数使用方式是通过watch得知变更，然后通过get重新获取数据，并不完全依赖于watch的变更event。
 
-**Etcd v3存储，Watch以及过期机制**
+###Etcd v3存储，Watch以及过期机制###
 
 ![](img/etcd-v3.png)
+
+**store的实现**
+
+Etcd v3将watch和store拆开实现。Etcd v3 store分为两部分，一部分是内存中的索引，kvindex，是基于google开源的一个golang的btree实现的，另外一部分是后端存储。按照它的设计，backend可以对接多种存储，当前使用的boltdb。boltdb是一个单机的支持事务的kv存储，Etcd的事务是基于boltdb的事务实现的。Etcd在boltdb中存储的key是reversion，value是Etcd自己的key-value组合，也就是说Etcd会在boltdb中把每个版本都保存下，从而实现了多版本机制。
+
+示例：
+
+用etcdctl通过批量接口写入两条记录：
+```
+etcdctl txn <<<' 
+put key1 "v1" 
+put key2 "v2" 
+```
+
+再通过批量接口更新这两条记录：
+```
+etcdctl txn <<<' 
+put key1 "v12" 
+put key2 "v22"
+```
+
+boltdb中其实有了4条数据：
+```
+rev={3 0}, key=key1, value="v1" 
+rev={3 1}, key=key2, value="v2" 
+rev={4 0}, key=key1, value="v12" 
+rev={4 1}, key=key2, value="v22"
+```
+
+reversion主要由两部分组成，第一部分main rev，每次事务进行加一，第二部分sub rev，同一个事务中的每次操作加一。如上示例，第一次操作的main rev是3，第二次是4。当然这种机制大家想到的第一个问题就是空间问题，所以 Etcd 提供了命令和设置选项来控制compact，同时支持put操作的参数来精确控制某个key的历史版本数。了解了Etcd的磁盘存储，可以看出如果要从boltdb中查询数据，必须通过reversion，但客户端都是通过key来查询value，所以 Etcd 的内存kvindex保存的就是key和reversion之前的映射关系，用来加速查询。
+
+**watch机制的实现**
+
+Etcd v3的watch机制支持watch某个固定的key，也支持watch一个范围（可以用于模拟目录的结构的watch），所以watchGroup包含两种watcher，一种是key watchers，数据结构是每个key对应一组watcher，另外一种是range watchers, 数据结构是一个IntervalTree，方便通过区间查找到对应的watcher。同时，每个WatchableStore包含两种watcherGroup，一种是synced，一种是unsynced，前者表示该group的watcher数据都已经同步完毕，在等待新的变更，后者表示该group的watcher数据同步落后于当前最新变更，还在追赶。当Etcd收到客户端的watch请求，如果请求携带了revision参数，则比较请求的revision和store当前的revision，如果大于当前revision，则放入synced组中，否则放入unsynced组。同时 Etcd 会启动一个后台的goroutine持续同步unsynced的watcher，然后将其迁移到synced组。也就是这种机制下，Etcd v3支持从任意版本开始watch，没有v2的1000条历史event表限制的问题（当然这是指没有compact的情况下）。
 
