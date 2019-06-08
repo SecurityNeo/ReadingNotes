@@ -81,3 +81,14 @@ reversion主要由两部分组成，第一部分main rev，每次事务进行加
 
 Etcd v3的watch机制支持watch某个固定的key，也支持watch一个范围（可以用于模拟目录的结构的watch），所以watchGroup包含两种watcher，一种是key watchers，数据结构是每个key对应一组watcher，另外一种是range watchers, 数据结构是一个IntervalTree，方便通过区间查找到对应的watcher。同时，每个WatchableStore包含两种watcherGroup，一种是synced，一种是unsynced，前者表示该group的watcher数据都已经同步完毕，在等待新的变更，后者表示该group的watcher数据同步落后于当前最新变更，还在追赶。当Etcd收到客户端的watch请求，如果请求携带了revision参数，则比较请求的revision和store当前的revision，如果大于当前revision，则放入synced组中，否则放入unsynced组。同时 Etcd 会启动一个后台的goroutine持续同步unsynced的watcher，然后将其迁移到synced组。也就是这种机制下，Etcd v3支持从任意版本开始watch，没有v2的1000条历史event表限制的问题（当然这是指没有compact的情况下）。
 
+**ETCD V2与V3的区别**
+
+Etcd v2在通知客户端时，如果网络不好或者客户端读取比较慢，发生了阻塞，则会直接关闭当前连接，客户端需要重新发起请求。Etcd v3为了解决这个问题，专门维护了一个推送时阻塞的watcher队列，在另外的goroutine里进行重试。Etcd v3对过期机制也做了改进，过期时间设置在lease上，然后key和lease关联。这样可以实现多个key关联同一个lease id，方便设置统一的过期时间，以及实现批量续约。
+
+一些主要变化：
+
+- 接口通过grpc提供rpc接口，放弃了v2的http接口。优势是长连接效率提升明显，缺点是使用不如以前方便，尤其对不方便维护长连接的场景。
+- 废弃了原来的目录结构，变成了纯粹的kv，用户可以通过前缀匹配模式模拟目录。
+- 内存中不再保存value，同样的内存可以支持存储更多的key。
+- watch机制更稳定，基本上可以通过watch机制实现数据的完全同步。
+- 提供了批量操作以及事务机制，用户可以通过批量事务请求来实现Etcd v2的CAS机制（批量事务支持if条件判断）。
