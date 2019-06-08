@@ -11,6 +11,24 @@ Etcd是一个用Go语言编写的开源的分布式键值存储，它由CoreOS�
 - 提供key的过期以及续约机制，客户端通过定时刷新来实现续约（v2和v3的实现机制不一样）。用于集群监控以及服务注册发现。
 - 提供原子的CAS（Compare-and-Swap）和 CAD（Compare-and-Delete）支持（v2通过接口参数实现，v3通过批量事务实现）。用于分布式锁以及leader选举。
 
+## 相关概念 ##
+
+- Raft：etcd所采用的保证分布式系统强一致性的算法。
+- Node：一个Raft状态机实例。
+- Member： 一个etcd实例。它管理着一个Node，并且可以为客户端请求提供服务。
+- Cluster：由多个Member构成可以协同工作的etcd集群。
+- Peer：对同一个etcd集群中另外一个Member的称呼。
+- Client： 向etcd集群发送HTTP请求的客户端。
+- WAL：预写式日志，etcd用于持久化存储的日志格式。
+- snapshot：etcd防止WAL文件过多而设置的快照，存储etcd数据状态。
+- Proxy：etcd的一种模式，为etcd集群提供反向代理服务。
+- Leader：Raft算法中通过竞选而产生的处理所有数据提交的节点。
+- Follower：竞选失败的节点作为Raft中的从属节点，为算法提供强一致性保证。
+- Candidate：当Follower超过一定时间接收不到Leader的心跳时转变为Candidate开始竞选。
+- Term：某个节点成为Leader到下一次竞选时间，称为一个Term。
+- Index：数据项编号。Raft中通过Term和Index来定位数据。
+
+
 ## 架构 ##
 ![](img/ETCD_Arch.jpg)
 
