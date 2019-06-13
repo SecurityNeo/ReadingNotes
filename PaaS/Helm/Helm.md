@@ -111,6 +111,61 @@ chart                                # Chart的名字，也就是目录的名字
 注意：其中`Files`变量会经常用到，configmap中一些内容可能与helm的语法有冲突，在部署时并不想helm去渲染这部分内容，可以将这部分内容放到`config.toml`这种文件中，然后在configmap中使用`{{.Files.Get config.toml}}`来获取。
 
 
+## 函数 ##
+
+[https://godoc.org/text/template](https://godoc.org/text/template)
+
+**default函数**
+
+允许在模板内部指定默认值，以防该值被省略。
+```
+drink: {{.Values.favorite.drink | default "tea" | quote}}
+```
+
+**运算符函数**
+
+在模版中有一些运算符（eq，ne，lt，gt，and，or等等）
+
+```
+{{if and .Values.fooString (eq .Values.fooString "foo") }}
+    {{...}}
+{{end}}
+```
+
+## 控制结构 ##
+
+Helm的模板语言提供了以下控制结构：
+
+- if/else 用于创建条件块
+- with 指定范围
+- range，它提供了一个 “for each” 风格的循环
+
+除此之外，它还提供了一些声明和使用命名模板段的操作：
+
+- define 在模板中声明一个新的命名模板
+- template 导入一个命名模板
+- block 声明了一种特殊的可填写模板区域
+
+**if/else**
+
+```
+{{if PIPELINE}}
+  # Do something
+{{else if OTHER PIPELINE}}
+  # Do something else
+{{else}}
+  # Default case
+{{end}}
+```
+
+如果值为如下情况，则管道评估为false:
+
+- 一个布尔型的假
+- 一个数字零
+- 一个空的字符串
+- 一个 nil（空或 null）
+- 一个空的集合（map，slice，tuple，dict，array）
+
 
 
 ## 一些常用技巧 ##
