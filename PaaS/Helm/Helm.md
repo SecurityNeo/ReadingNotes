@@ -88,15 +88,38 @@ chart                                # Chart的名字，也就是目录的名字
 
 **内置变量**
 
-- **Release.Name**: The name of the release (not the chart)
-- **Release.Tim**e: The time the chart release was last updated. This will match the Last Released time on a Release object.
-- **Release.Namespace**: The namespace the chart was released to.
-- **Release.Service**: The service that conducted the release. Usually this is Tiller.
-- **Release.IsUpgrade**: This is set to true if the current operation is an upgrade or rollback.
-- **Release.IsInstall**: This is set to true if the current operation is an install.
-- **Release.Revision**: The revision number. It begins at 1, and increments with each helm upgrade.
-- **Chart**: The contents of the Chart.yaml. Thus, the chart version is obtainable as Chart.Version and the maintainers are in Chart.Maintainers.
-- **Files**: A map-like object containing all non-special files in the chart. This will not give you access to templates, but will give you access to additional files that are present (unless they are excluded using .helmignore). Files can be accessed using {{index .Files "file.name"}} or using the {{.Files.Get name}} or {{.Files.GetString name}} functions. You can also access the contents of the file as []byte using {{.Files.GetBytes}}
-- **Capabilities**: A map-like object that contains information about the versions of Kubernetes ({{.Capabilities.KubeVersion}}, Tiller ({{.Capabilities.TillerVersion}}, and the supported Kubernetes API versions ({{.Capabilities.APIVersions.Has "batch/v1")
+- **Release.Name**: release名称
+- **Release.Time**: release的最近更新时间
+- **Release.Namespace**: release的namespace
+- **Release.Service**: release服务的名称（始终是Tiller）
+- **Release.IsUpgrade**: 如果当前操作是升级或回滚，则将其设置为true
+- **Release.IsInstall**: 如果当前操作是安装，则设置为true
+- **Release.Revision**: 此release的修订版本号。它从1开始，每helm upgrade一次增加一个
+- **Chart**: Chart.yaml文件的内容。任何数据Chart.yaml将在这里访问。
+- **Files**:提供对chart中所有非特殊文件的访问。虽然无法使用它来访问模板，但可以使用它来访问chart中的其他文件。
+	- `Files.Get`是一个按名称获取文件的函数，例如（.Files.Get config.ini）
+	- `Files.GetBytes`是将文件内容作为字节数组而不是字符串获取的函数。这对于像图片这样的东西很有用。
+- **Capabilities**: 这提供了关于Kubernetes集群支持的功能的信息。
+	- `Capabilities.APIVersions`是一组版本信息。
+	- `Capabilities.APIVersions.Has $version`指示是否在群集上启用版本（batch/v1）。
+	- `Capabilities.KubeVersion`提供了查找Kubernetes版本的方法。它具有以下值：Major，Minor，GitVersion，GitCommit，GitTreeState，BuildDate，GoVersion，Compiler和Platform。
+	- `Capabilities.TillerVersion`提供了查找Tiller版本的方法。它具有以下值：SemVer，GitCommit，和 GitTreeState。
+- **Template**：包含有关正在执行的当前模板的信息
+- **Name**：到当前模板的namespace文件路径（例如mychart/templates/mytemplate.yaml）
+- **BasePath**：当前chart模板目录的namespace路径（例如 mychart/templates）。
 
 注意：其中`Files`变量会经常用到，configmap中一些内容可能与helm的语法有冲突，在部署时并不想helm去渲染这部分内容，可以将这部分内容放到`config.toml`这种文件中，然后在configmap中使用`{{.Files.Get config.toml}}`来获取。
+
+
+
+
+## 一些常用技巧 ##
+
+**删除Helm release时保留一些资源**
+
+```
+metadata:
+  annotations:
+    "helm.sh/resource-policy": keep
+```
+注释`"helm.sh/resource-policy": keep`指示Tiller在`helm delete`操作过程中跳过此资源。但是，此资源变成孤儿资源。Helm将不再以任何方式管理它。
