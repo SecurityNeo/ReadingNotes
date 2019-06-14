@@ -166,6 +166,72 @@ Helm的模板语言提供了以下控制结构：
 - 一个 nil（空或 null）
 - 一个空的集合（map，slice，tuple，dict，array）
 
+**控制空格**
+
+- 使用特殊字符修改模板声明的大括号语法，以告诉模板引擎填充空白。{{-（添加了破折号和空格）表示应该将空白左移，而 -}} 意味着应该删除右空格。注意！换行符也是空格！
+- 使用indent函数（{{indent 2 "mug:true"}}）
+
+**使用`with`修改范围**
+
+`with`控制着变量作用域。语法：
+```
+{{with PIPELINE}}
+  # restricted scope
+{{end}}
+```
+示例：
+```
+ myvalue: "Hello World"
+  {{- with .Values.favorite}}
+  drink: {{.drink | default "tea" | quote}}
+  food: {{.food | upper | quote}}
+  {{- end}}
+```
+引用`.drink`和`.food`无需对其进行限定。这是因为该`with`声明设置 . 为指向`.Values.favorite`。在`{{end}}`后 . 复位其先前的范围。
+
+**循环`range`**
+
+示例：
+
+```
+favorite:
+  drink: coffee
+  food: pizza
+pizzaToppings:
+  - mushrooms
+  - cheese
+  - peppers
+  - onions
+```
+----------
+
+```
+  myvalue: "Hello World"
+  {{- with .Values.favorite}}
+  drink: {{.drink | default "tea" | quote}}
+  food: {{.food | upper | quote}}
+  {{- end}}
+  toppings: |-
+    {{- range .Values.pizzaToppings}}
+    - {{. | title | quote}}
+    {{- end}}
+```
+
+----------
+渲染结果：
+```
+  myvalue: "Hello World"
+  drink: "coffee"
+  food: "PIZZA"
+  toppings: |-
+    - "Mushrooms"
+    - "Cheese"
+    - "Peppers"
+    - "Onions"
+```
+注：YAML中的`|-`标记表示一个多行字符串。
+
+
 
 
 ## 一些常用技巧 ##
