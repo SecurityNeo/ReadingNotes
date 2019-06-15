@@ -231,6 +231,41 @@ pizzaToppings:
 ```
 注：YAML中的`|-`标记表示一个多行字符串。
 
+## 命名模板 ##
+
+**用`define`和`template`声明和使用模板**
+
+语法：
+```
+{{ define "MY.NAME" }}
+  # body of template here
+{{ end }}
+```
+示例：
+```
+{{- define "mychart.labels" }}
+  labels:
+    generator: helm
+    date: {{ now | htmlDate }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-configmap
+  {{- template "mychart.labels" }}
+data:
+  myvalue: "Hello World"
+  {{- range $key, $val := .Values.favorite }}
+  {{ $key }}: {{ $val | quote }}
+  {{- end }}
+```
+
+Helm chart 通常将这些模板放入partials文件中，通常是_helpers.tpl。按照惯例，define函数应该有一个简单的文档块`（{{/* ... */}}）`来描述他们所做的事情。
+
+
+## 文件访问 ##
+
+
 
 
 
