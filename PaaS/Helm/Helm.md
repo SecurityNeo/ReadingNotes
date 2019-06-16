@@ -265,9 +265,51 @@ Helm chart 通常将这些模板放入partials文件中，通常是_helpers.tpl�
 
 ## 文件访问 ##
 
+**Glob模式**
 
+`.Glob`返回一个Files类型，可以调用Files返回对象的任何方法。
 
+示例：
+文件结构
+```
+foo/:
+  foo.txt foo.yaml
+bar/:
+  bar.go bar.conf baz.yaml
+```
 
+```
+{{$root := .}}
+{{range $path, $bytes := .Files.Glob "**.yaml"}}
+{{$path}}: |-
+{{$root.Files.Get $path}}
+{{end}}
+```
+
+```
+{{range $path, $bytes := .Files.Glob "foo/*"}}
+{{$path.base}}: '{{ $root.Files.Get $path | b64enc }}'
+{{end}}
+```
+
+**ConfigMap和Secrets工具函数**
+
+```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: conf
+data:
+  {{- (.Files.Glob "foo/*").AsConfig | nindent 2 }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: very-secret
+type: Opaque
+data:
+  {{(.Files.Glob "bar/*").AsSecrets | nindent 2 }}
+```
 
 ## 一些常用技巧 ##
 
