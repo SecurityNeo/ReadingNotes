@@ -164,7 +164,7 @@
 
 - Helm
 
-	- [Terraform](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Helm/Helm.md)
+	- [Helm](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Helm/Helm.md)
 
 
 ## 安全 ##

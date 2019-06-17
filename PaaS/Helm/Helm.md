@@ -311,6 +311,16 @@ data:
   {{(.Files.Glob "bar/*").AsSecrets | nindent 2 }}
 ```
 
+**访问文件的每一行**
+
+```
+data:
+  some-file.txt: {{range .Files.Lines "foo/bar.txt"}}
+    {{.}}{{ end }}
+```
+
+
+
 ## 一些常用技巧 ##
 
 **删除Helm release时保留一些资源**
