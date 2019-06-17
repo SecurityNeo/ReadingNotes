@@ -37,6 +37,7 @@ hook的任务执行的时候，Tiller会阻塞，任务执行失败，则应用�
 - post-upgrade：在Kubernetes更新完全部resource之后执行。
 - pre-rollback：在模板被渲染之后、而在Kubernetes执行对全部resource的回滚之前。
 - post-rollback：在Kubernetes的全部resource已经被修改之后执行。
+- crd-install：在运行其他检查之前添加CRD资源，只能用于chart中其他的资源清单定义的 CRD 资源。
 
 **Hook的权重**
 
@@ -319,7 +320,20 @@ data:
     {{.}}{{ end }}
 ```
 
+## 自定义资源定义(CRD) ##
 
+对于CRD，声明必须在该CRDs种类的任何资源可以使用之前进行注册。注册过程有时需要几秒钟。
+两种方法：
+
+- 独立的chart
+
+	将CRD定义放在一个chart中，然后将所有使用该CRD的资源放入另一个chart中。在这种方法中，每个chart必须单独安装。
+
+- 预安装hook
+
+	在CRD定义中添加一个`crd-install`钩子，以便在执行chart的其余部分之前完全安装它。
+
+注意：如果使用crd-install hook创建CRD ，则该CRD定义在helm delete运行时不会被删除。
 
 ## 一些常用技巧 ##
 
