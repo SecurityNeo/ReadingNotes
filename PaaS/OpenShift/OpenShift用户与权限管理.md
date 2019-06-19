@@ -4,7 +4,7 @@
 
 ## Security Context Constraint（SCC） ##
 
-SCC使用UserID，FsGroupID以及supplemental group ID和SELinux label等策略，通过校验Pod定义的ID是否在有效范围内来限制pod的权限。如果校验失败，则Pod也会启动失败。SCC的策略值设置为RunAsAny表示pod拥有该策略下的所有权限。否则只有pod的SCC设置与SCC策略匹配时才能通过认证。
+SCC使用UserID，FsGroupID以及supplemental group ID和SELinux label等策略，通过校验Pod定义的ID是否在有效范围内来限制pod的权限。如果校验失败，则Pod也会启动失败。SCC的策略值设置为RunAsAny表示pod拥有该策略下的所有权限。否则只有pod的SCC设置与SCC策略匹配时才能通过认证。openshift role和clusterrole用于控制pod服务对openshift资源的访问；而SCC用于控制pod的启动和对挂载卷的访问
 
 **OpenShift默认的scc**
 
@@ -31,7 +31,7 @@ M/N表示M为起始ID，范围为M~M+N-1
 - **gid** 即用户的primary group id（主组ID）。
 - **fsGroup** 定义pod的文件系统group ID，用于块存储，比如Ceph RDB和iSCSI。
 
-`Supplemental groups ID`用于控制访问共享存储，如NFS，Gluster FS，而fsGroup用于控制访问块存储，如Ceph RBD，iSCSI。OpenShift容器中挂载的卷和目标存储拥有相同的权限。如目标存储的UID为1234，groupID为5678，则mount到node和容器中的卷同样拥有这些ID值。因此容器的进程需要匹配一个或两个ID才能使用这些卷。pod中的supplementalGroups和fsGroup在系统层面是不作区分的，只是用于在pod层面区分不同的场景，pod在定义这类值后，会添加到器系统的supplemental groups中。
+`Supplemental groups ID`用于控制访问共享存储，如NFS，Gluster FS，而fsGroup用于控制访问块存储，如Ceph RBD，iSCSI。OpenShift容器中挂载的卷和目标存储拥有相同的权限。如目标存储的UID为1234，groupID为5678，则mount到node和容器中的卷同样拥有这些ID值。因此容器的进程需要匹配一个或两个ID才能使用这些卷。pod中的supplementalGroups和fsGroup在系统层面是不作区分的，只是用于在pod层面区分不同的场景，pod在定义这类值后，会添加到器系统的supplemental groups中。通常使用supplemental group ID或fsGroup作为访问存储的凭证。
 
 **容器使用的默认scc**
 
