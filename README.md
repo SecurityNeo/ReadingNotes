@@ -153,6 +153,7 @@
 
 	- [OpenShift Router](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/OpenShift/OpenShift_Router.md)
 	- [OpenShift网络](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/OpenShift/OpenShift%E7%BD%91%E7%BB%9C.md)
+	- [OpenShift用户与权限管理](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/OpenShift/OpenShift%E7%94%A8%E6%88%B7%E4%B8%8E%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86.md)
 
 - Prometheus
 
