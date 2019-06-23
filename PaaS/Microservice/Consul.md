@@ -1,6 +1,10 @@
 # Consul #
 
-[](https://www.consul.io/)
+## 简介 ##
+
+[官网](https://www.consul.io/)
+
+[API接口文档](https://www.consul.io/api/index.html)
 
 Consul是HashiCorp出品的开源服务发现工具，Consul提供了诸如服务发现，健康检查，KV数据库等功能，方便构建服务集群。
 
@@ -8,11 +12,11 @@ Consul是HashiCorp出品的开源服务发现工具，Consul提供了诸如服�
 
 - **服务发现**：Consul提供了通过DNS或者HTTP接口的方式来注册服务和发现服务。一些外部的服务通过Consul很容易的找到它所依赖的服务。
 - **健康检查**: Consul客户端可用提供任意数量的健康检查,指定一个服务(比如:webserver是否返回了200 OK 状态码)或者使用本地节点(比如:内存使用是否大于90%). 这个信息可由operator用来监视集群的健康.被服务发现组件用来避免将流量发送到不健康的主机. 
-- **Key/Value存储**:应用程序可用根据自己的需要使用Consul的层级的Key/Value存储.比如动态配置,功能标记,协调,领袖选举等等,简单的HTTP API让他更易于使用. 
-- **多数据中心**: Consul支持开箱即用的多数据中心.这意味着用户不需要担心需要建立额外的抽象层让业务扩展到多个区域。
+- **Key/Value存储**:应用程序可用根据自己的需要使用Consul的层级的Key/Value存储.比如动态配置,功能标记,协调,领袖选举等等,简单的HTTP API让他更易于使用.。
+- **多数据中心**: Consul支持开箱即用的多数据中心。这意味着用户不需要担心需要建立额外的抽象层让业务扩展到多个区域。
 
 相关术语：
-[](https://www.cnblogs.com/lsf90/p/6021465.html)
+[https://www.cnblogs.com/lsf90/p/6021465.html](https://www.cnblogs.com/lsf90/p/6021465.html)
 
 - **Agent**： agent是一直运行在Consul集群中每个成员上的守护进程。通过运行consul agent来启动。agent可以运行在client或者server模式。指定节点作为client或者server是非常简单的，除非有其他agent实例。所有的agent都能运行DNS或者HTTP接口，并负责运行时检查和保持服务同步。
 - **Client**： 一个Client是一个转发所有RPC到server的代理。这个client是相对无状态的。client唯一执行的后台活动是加入LAN gossip池。这有一个最低的资源开销并且仅消耗少量的网络带宽。
@@ -26,9 +30,11 @@ Consul是HashiCorp出品的开源服务发现工具，Consul提供了诸如服�
 
 架构：
 
+[https://blog.csdn.net/liuzhuchen/article/details/81913562](https://blog.csdn.net/liuzhuchen/article/details/81913562)
+
 ![](img/Consul_Arch.png)
 
-　　向Consul提供服务的每个节点都运行一个Consul代理。 发现其他服务或获取/设置键/值数据不需要运行代理。 代理负责健康检查节点上的服务以及节点本身。代理与一个或多个Consul服务器通信。Consul 服务器是数据存储和复制的地方。 服务器自己选出一个 leader。 虽然Consul可以在一台服务器上运行，但推荐使用3到5台来避免数据丢失的情况。 每个数据中心都建议使用一组Consul服务器。需要发现其他服务或节点的基础架构组件可以查询任何Consul服务器或任何Consul代理。 代理自动将查询转发到服务器。每个数据中心都运行Consul服务器集群。 当跨数据中心服务发现或配置请求时，本地Consul服务器将请求转发到远程数据中心并返回结果。
+向Consul提供服务的每个节点都运行一个Consul代理。 发现其他服务或获取/设置键/值数据不需要运行代理。 代理负责健康检查节点上的服务以及节点本身。代理与一个或多个Consul服务器通信。Consul服务器是数据存储和复制的地方。 服务器自己选出一个leader。 虽然Consul可以在一台服务器上运行，但推荐使用3到5台来避免数据丢失的情况。 每个数据中心都建议使用一组Consul服务器。需要发现其他服务或节点的基础架构组件可以查询任何Consul服务器或任何Consul代理。 代理自动将查询转发到服务器。每个数据中心都运行Consul服务器集群。 当跨数据中心服务发现或配置请求时，本地Consul服务器将请求转发到远程数据中心并返回结果。
 
 默认端口：
 
@@ -39,3 +45,28 @@ Consul是HashiCorp出品的开源服务发现工具，Consul提供了诸如服�
 - 8500(tcp): HTTP API及Web UI
 - 8600(tcp udp): DNS服务，可以把它配置到53端口来响应dns请求
 
+
+## 配置 ##
+
+**运行Agent**
+
+完成Consul的安装后,必须运行agent,agent可以运行为server或client模式.每个数据中心至少必须拥有一台server.建议在一个集群中有3或者5个server,部署单一的server,在出现失败时会不可避免的造成数据丢失。一个client是一个非常轻量级的进程，用于注册服务、运行健康检查和转发对server的查询。agent必须在集群中的每个主机上运行。
+
+**启动Consul Server**
+
+以server模式运行cosnul agent：
+
+`consul agent -server -bootstrap-expect 3 -data-dir /tmp/consul -node=s1 -bind=10.201.102.198 -ui-dir ./consul_ui/ -rejoin -config-dir=/etc/consul.d/ -client 0.0.0.0`
+
+- server ： 定义agent运行在server模式
+- bootstrap-expect ：在一个datacenter中期望提供的server节点数目，当该值提供的时候，consul一直等到达到指定sever数目的时候才会引导整个集群，该标记不能和bootstrap共用
+- bind：该地址用来在集群内部的通讯，集群内的所有节点到地址都必须是可达的，默认是0.0.0.0
+- node：节点在集群中的名称，在一个集群中必须是唯一的，默认是该节点的主机名
+- ui-dir： 提供存放web ui资源的路径，该目录必须是可读的
+- rejoin：使consul忽略先前的离开，在再次启动后仍旧尝试加入集群中。
+- config-dir：配置文件目录，里面所有以.json结尾的文件都会被加载
+- client：consul服务侦听地址，这个地址提供HTTP、DNS、RPC等服务，默认是127.0.0.1所以不对外提供服务，如果你要对外提供服务改成0.0.0.0
+
+**启动Consul Client**
+
+`consul agent -data-dir /tmp/consul -node=c1 -bind=10.201.102.248 -config-dir=/etc/consul.d/ -join 10.201.102.198`
