@@ -70,3 +70,84 @@ Consul是HashiCorp出品的开源服务发现工具，Consul提供了诸如服�
 **启动Consul Client**
 
 `consul agent -data-dir /tmp/consul -node=c1 -bind=10.201.102.248 -config-dir=/etc/consul.d/ -join 10.201.102.198`
+
+**WEB管理界面**
+
+`consul agent -server -bootstrap-expect 1 -data-dir /tmp/consul -node=s1 -bind=10.201.102.198 -ui-dir ./consul_ui/ -rejoin -config-dir=/etc/consul.d/ -client 0.0.0.0`
+
+- ui-dir： 提供存放web ui资源的路径，指向该目录必须是可读的
+- client： consul服务侦听地址，这个地址提供HTTP、DNS、RPC等服务，默认是127.0.0.1所以不对外提供服务，如果要对外提供服务改成0.0.0.0 
+
+## 命令行 ##
+
+```
+[root@dhcp-10-201-102-198 ~]# consul
+usage: consul [--version] [--help] <command> [<args>]
+Available commands are:
+    agent          agent指令是consul的核心，它运行agent来维护成员的重要信息、运行检查、服务宣布、查询处理等等。
+    configtest     Validate config file
+    event          Fire a new event
+    exec           Executes a command on Consul nodes  在consul节点上执行一个命令
+    force-leave    Forces a member of the cluster to enter the "left" state   强制节点成员在集群中的状态转换到left状态
+    info           Provides debugging information for operators  提供操作的debug级别的信息
+    join           Tell Consul agent to join cluster   加入consul节点到集群中
+    keygen         Generates a new encryption key  生成一个新的加密key
+    keyring        Manages gossip layer encryption keys
+    kv             Interact with the key-value store
+    leave          Gracefully leaves the Consul cluster and shuts down
+    lock           Execute a command holding a lock
+    maint          Controls node or service maintenance mode
+    members        Lists the members of a Consul cluster    列出集群中成员
+    monitor        Stream logs from a Consul agent  打印consul节点的日志信息
+    operator       Provides cluster-level tools for Consul operators
+    reload         Triggers the agent to reload configuration files   触发节点重新加载配置文件
+    rtt            Estimates network round trip time between nodes
+    snapshot       Saves, restores and inspects snapshots of Consul server state
+    version        Prints the Consul version    打印consul的版本信息
+    watch          Watch for changes in Consul   监控consul的改变
+```
+
+**event**
+
+event命令提供了一种机制，用来fire自定义的用户事件，这些事件对consul来说是不透明的，但它们可以用来构建自动部署、重启服务或者其他行动的脚本。
+
+```
+- http-addr：http服务的地址，agent可以链接上来发送命令，如果没有设置，则默认是127.0.0.1:8500。
+- datacenter：数据中心。
+- name：事件的名称
+- node：一个正则表达式，用来过滤节点
+- service：一个正则表达式，用来过滤节点上匹配的服务
+- tag：一个正则表达式，用来过滤节点上符合tag的服务，必须和-service一起使用。
+```
+
+**exec**
+
+exec指令提供了一种远程执行机制，比如你要在所有的机器上执行uptime命令，远程执行的工作通过job来指定，存储在KV中，agent使用event系统可以快速的知道有新的job产生，消息是通过gossip协议来传递的，因此消息传递是最佳的，但是并不保证命令的执行。事件通过gossip来驱动，远程执行依赖KV存储系统(就像消息代理一样)。
+
+```
+- http-addr：http服务的地址，agent可以链接上来发送命令，如果没有设置，则默认是127.0.0.1:8500。
+- datacenter：数据中心。
+- prefix：key在KV系统中的前缀，用来存储请求数据，默认是_rexec
+- node：一个正则表达式，用来过滤节点，评估事件
+- service：一个正则表达式，用来过滤节点上匹配的服务
+- tag：一个正则表达式，用来过滤节点上符合tag的服务，必须和-service一起使用。
+- wait：在节点多长时间没有响应后，认为job已经完成。
+- wait-repl：
+- verbose：输出更多信息
+```
+
+**force-leave**
+
+force-leave治疗可以强制consul集群中的成员进入left状态(空闲状态)，记住，即使一个成员处于活跃状态，它仍旧可以再次加入集群中，这个方法的真实目的是强制移除failed的节点。如果failed的节点还是网络的一部分，则consul会周期性的重新链接failed的节点，如果经过一段时间后(默认是72小时)，consul则会宣布停止尝试链接failed的节点。force-leave指令可以快速的把failed节点转换到left状态。
+
+```
+- rpc-addr:一个rpc地址，agent可以链接上来发送命令，如果没有指定，默认是127.0.0.1:8400。
+```
+
+**info**
+
+info指令提供了各种操作时可以用到的debug信息，对于client和server，info有返回不同的子系统信息，目前有以下几个KV信息：agent(提供agent信息)，consul(提供consul库的信息)，raft(提供raft库的信息)，serf_lan(提供LAN gossip pool),serf_wan(提供WAN gossip pool)
+
+```
+- rpc-addr：一个rpc地址，agent可以链接上来发送命令，如果没有指定，默认是127.0.0.1:8400
+```
