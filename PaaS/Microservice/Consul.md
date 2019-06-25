@@ -78,6 +78,56 @@ Consul是HashiCorp出品的开源服务发现工具，Consul提供了诸如服�
 - ui-dir： 提供存放web ui资源的路径，指向该目录必须是可读的
 - client： consul服务侦听地址，这个地址提供HTTP、DNS、RPC等服务，默认是127.0.0.1所以不对外提供服务，如果要对外提供服务改成0.0.0.0 
 
+**配置文件参数**
+
+- acl_datacenter：只用于server，指定的datacenter的权威ACL信息，所有的servers和datacenter必须同意ACL datacenter
+- acl_default_policy：默认是allow
+- acl_down_policy：
+- acl_master_token：
+- acl_token：agent会使用这个token和consul server进行请求
+- acl_ttl：控制TTL的cache，默认是30s
+- addresses：一个嵌套对象，可以设置以下key：dns、http、rpc
+- advertise_addr：等同于-advertise
+- bootstrap：等同于-bootstrap
+- bootstrap_expect：等同于-bootstrap-expect
+- bind_addr：等同于-bind
+- ca_file：提供CA文件路径，用来检查客户端或者服务端的链接
+- cert_file：必须和key_file一起
+- check_update_interval：
+- client_addr：等同于-client
+- datacenter：等同于-dc
+- data_dir：等同于-data-dir
+- disable_anonymous_signature：在进行更新检查时禁止匿名签名
+- disable_remote_exec：禁止支持远程执行，设置为true，agent会忽视所有进入的远程执行请求
+- disable_update_check：禁止自动检查安全公告和新版本信息
+- dns_config：是一个嵌套对象，可以设置以下参数：allow_stale、max_stale、node_ttl 、service_ttl、enable_truncate
+- domain：默认情况下consul在进行DNS查询时，查询的是consul域，可以通过该参数进行修改
+- enable_debug：开启debug模式
+- enable_syslog：等同于-syslog
+- encrypt：等同于-encrypt
+- key_file：提供私钥的路径
+- leave_on_terminate：默认是false，如果为true，当agent收到一个TERM信号的时候，它会发送leave信息到集群中的其他节点上。
+- log_level：等同于-log-level
+- node_name:等同于-node
+- ports：这是一个嵌套对象，可以设置以下key：dns(dns地址：8600)、http(http api地址：8500)、rpc(rpc:8400)、serf_lan(lan port:8301)、serf_wan(wan port:8302)、server(server rpc:8300)
+- protocol：等同于-protocol
+- recursor：
+- rejoin_after_leave：等同于-rejoin
+- retry_join：等同于-retry-join
+- retry_interval：等同于-retry-interval
+- server：等同于-server
+- server_name：会覆盖TLS CA的node_name，可以用来确认CA name和hostname相匹配
+- skip_leave_on_interrupt：和leave_on_terminate比较类似，不过只影响当前句柄
+- start_join：一个字符数组提供的节点地址会在启动时被加入
+- statsd_addr：
+- statsite_addr：
+- syslog_facility：当enable_syslog被提供后，该参数控制哪个级别的信息被发送，默认Local0
+- ui_dir：等同于-ui-dir
+- verify_incoming：默认false，如果为true，则所有进入链接都需要使用TLS，需要客户端使用ca_file提供ca文件，只用于consul server端，因为client从来没有进入的链接
+- verify_outgoing：默认false，如果为true，则所有出去链接都需要使用TLS，需要服务端使用ca_file提供ca文件，consul server和client都需要使用，因为两者都有出去的链接
+- watches：watch一个详细名单
+
+
 ## 命令行 ##
 
 ```
