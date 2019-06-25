@@ -151,3 +151,66 @@ info指令提供了各种操作时可以用到的debug信息，对于client和se
 ```
 - rpc-addr：一个rpc地址，agent可以链接上来发送命令，如果没有指定，默认是127.0.0.1:8400
 ```
+
+**join**
+
+join指令告诉consul agent加入一个已经存在的集群中，一个新的consul agent必须加入一个已经有至少一个成员的集群中，这样它才能加入已经存在的集群中，如果你不加入一个已经存在的集群，则agent是它自身集群的一部分，其他agent则可以加入进来。agents可以加入其他agent多次。consul join [options] address。如果你想加入多个集群，则可以写多个地址，consul会加入所有的地址。
+
+```
+- wan：agent运行在server模式，xxxxxxx
+- rpc-addr：一个rpc地址，agent可以链接上来发送命令，如果没有指定，默认是127.0.0.1:8400。
+```
+
+**keygen**
+
+keygen指令生成加密的密钥，可以用在consul agent通讯加密
+
+**leave**
+
+leave指令触发一个优雅的离开动作并关闭agent，节点离开后不会尝试重新加入集群中。运行在server状态的节点，节点会被优雅的删除，这是很严重的，在某些情况下一个不优雅的离开会影响到集群的可用性。
+
+```
+- rpc-addr:一个rpc地址，agent可以链接上来发送命令，如果没有指定，默认是127.0.0.1:8400。
+```
+
+**members**
+
+members指令输出consul agent目前所知道的所有的成员以及它们的状态，节点的状态只有alive、left、failed三种状态。
+
+```
+detailed：输出每个节点更详细的信息。
+rpc-addr：一个rpc地址，agent可以链接上来发送命令，如果没有指定，默认是127.0.0.1:8400。
+status：过滤出符合正则规则的节点
+wan：xxxxxx
+```
+
+**monitor**
+
+monitor指令用来链接运行的agent，并显示日志。monitor会显示最近的日志，并持续的显示日志流，不会自动退出，除非你手动或者远程agent自己退出。
+
+```
+- log-level：显示哪个级别的日志，默认是info
+- rpc-addr：一个rpc地址，agent可以链接上来发送命令，如果没有指定，默认是127.0.0.1:8400
+```
+
+**reload**
+
+reload指令可以重新加载agent的配置文件。SIGHUP指令在重新加载配置文件时使用，任何重新加载的错误都会写在agent的log文件中，并不会打印到屏幕。
+
+**watch**
+
+watch指令提供了一个机制，用来监视实际数据视图的改变(节点列表、成员服务、KV)，如果没有指定进程，当前值会被dump出来
+
+```
+http-addr：http服务的地址，agent可以链接上来发送命令，如果没有设置，则默认是127.0.0.1:8500。
+datacenter：数据中心查询。
+token：ACL token
+key：监视key，只针对key类型
+name：监视event，只针对event类型
+prefix：监视key prefix，只针对keyprefix类型
+service：监控service，只针对service类型
+state：过略check state
+tag：过滤service tag
+type：监控类型，一般有key、keyprefix、service、nodes、checks、event
+```
+
