@@ -6,6 +6,8 @@
 
 [API接口文档](https://www.consul.io/api/index.html)
 
+[Consul的Helm包](https://github.com/hashicorp/consul-helm)
+
 Consul是HashiCorp出品的开源服务发现工具，Consul提供了诸如服务发现，健康检查，KV数据库等功能，方便构建服务集群。
 
 主要特性：
