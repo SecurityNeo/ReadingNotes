@@ -148,6 +148,7 @@
 	- [GraphQL](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/GraphQL.md)
 	- [Istio](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/Istio.md)
 	- [KrakenD](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/KrakenD.md)
+	- [调用链](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Microservice/%E8%B0%83%E7%94%A8%E9%93%BE.md)
 
 - OpenShift
 
