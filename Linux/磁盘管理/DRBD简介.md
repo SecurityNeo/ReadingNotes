@@ -32,3 +32,40 @@ DRBD（Distributed Replicated Block Device）：叫做分布式复制块设备�
 - 协议C
 
 	只有当本地节点的磁盘和对端节点的磁盘都完成了写操作，才认为写操作完成。这是集群流行的一种方式，应用也是最多的，这种方式虽然不高效，但是最可靠。
+
+**本地和对等节点的硬盘硬盘状态**
+
+- Diskless 无盘：本地没有块设备分配给DRBD使用，这表示没有可用的设备，或者使用drbdadm命令手工分离或是底层的I/O错误导致自动分离  
+- Attaching：读取无数据时候的瞬间状态 
+- Failed 失败：本地块设备报告I/O错误的下一个状态，其下一个状态为Diskless无盘  
+- Negotiating：在已经连接的DRBD设置进行Attach读取无数据前的瞬间状态 
+- Inconsistent：数据是不一致的，在两个节点上（初始的完全同步前）这种状态出现后立即创建一个新的资源。此外，在同步期间（同步目标）在一个节点上出现这种状态 
+- Outdated：数据资源是一致的，但是已经过时 
+- DUnknown：当对等节点网络连接不可用时出现这种状态 
+- Consistent：一个没有连接的节点数据一致，当建立连接时，它决定数据是UpToDate或是Outdated 
+- UpToDate：一致的最新的数据状态，这个状态为正常状态 
+
+**资源连接状态**
+
+- StandAlone 独立的：网络配置不可用；资源还没有被连接或是被管理断开（使用 drbdadm disconnect 命令），或是由于出现认证失败或是脑裂的情况
+- Disconnecting 断开：断开只是临时状态，下一个状态是StandAlone独立的
+- Unconnected 悬空：是尝试连接前的临时状态，可能下一个状态为WFconnection和WFReportParams
+- Timeout 超时：与对等节点连接超时，也是临时状态，下一个状态为Unconected悬空
+- BrokerPipe：与对等节点连接丢失，也是临时状态，下一个状态为Unconected悬空
+- NetworkFailure：与对等节点推动连接后的临时状态，下一个状态为Unconected悬空
+- ProtocolError：与对等节点推动连接后的临时状态，下一个状态为Unconected悬空
+- TearDown 拆解：临时状态，对等节点关闭，下一个状态为Unconected悬空
+- WFConnection：等待和对等节点建立网络连接
+- WFReportParams：已经建立TCP连接，本节点等待从对等节点传来的第一个网络包
+- Connected 连接：DRBD已经建立连接，数据镜像现在可用，节点处于正常状态
+- StartingSyncS：完全同步，有管理员发起的刚刚开始同步，未来可能的状态为SyncSource或PausedSyncS
+- StartingSyncT：完全同步，有管理员发起的刚刚开始同步，下一状态为WFSyncUUID
+- WFBitMapS：部分同步刚刚开始，下一步可能的状态为SyncSource或PausedSyncS
+- WFBitMapT：部分同步刚刚开始，下一步可能的状态为WFSyncUUID
+- WFSyncUUID：同步即将开始，下一步可能的状态为SyncTarget或PausedSyncT
+- SyncSource：以本节点为同步源的同步正在进行
+- SyncTarget：以本节点为同步目标的同步正在进行
+- PausedSyncS：以本地节点是一个持续同步的源，但是目前同步已经暂停，可能是因为另外一个同步正在进行或是使用命令(drbdadm pause-sync)暂停了同步
+- PausedSyncT：以本地节点为持续同步的目标，但是目前同步已经暂停，这可以是因为另外一个同步正在进行或是使用命令(drbdadm pause-sync)暂停了同步
+- VerifyS：以本地节点为验证源的线上设备验证正在执行
+- VerifyT：以本地节点为验证目标的线上设备验证正在执行
