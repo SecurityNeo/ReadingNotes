@@ -125,6 +125,14 @@ DRBD（Distributed Replicated Block Device）：叫做分布式复制块设备�
 	# drbdadm down r0
 	提示:也可以将r0更改为all
 	```
+- 升级和降级资源
+	```
+	升级资源
+	# drbdadm primary <resource>
+	降级资源
+	# drbdadm secondary <resource>
+	注意：在单主模式下的DRBD，两个节点同时处于连接状态，任何一个节点都可以在特定的时间内变成主；但两个节点中只能一为主，如果已经有一个主，需先降级才可能升级；在双主模式下没有这个限制
+
 
 - 重新配置资源
 
@@ -139,4 +147,11 @@ DRBD（Distributed Replicated Block Device）：叫做分布式复制块设备�
 
 	```
 	drbdadm dump all
+	```
+
+- 连接与断开
+
+	```
+	# drbdadm connect r0
+	# drbdadm disconnect r0
 	```
