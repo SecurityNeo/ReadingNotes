@@ -77,7 +77,7 @@ DRBD（Distributed Replicated Block Device）：叫做分布式复制块设备�
 
 	```drbdadm dstate git```
 	
-	本地和对等节点的硬盘状态：
+	本地和对等节点的硬盘状态（首先输出的是本地硬盘状态，后面的是远程硬盘状态）：
 	
 	- Diskless 无盘：本地没有块设备分配给DRBD使用，这表示没有可用的设备，或者使用drbdadm命令手工分离或是底层的I/O错误导致自动分离  
 	- Attaching：读取无数据时候的瞬间状态 
@@ -115,3 +115,28 @@ DRBD（Distributed Replicated Block Device）：叫做分布式复制块设备�
 	- PausedSyncT：以本地节点为持续同步的目标，但是目前同步已经暂停，这可以是因为另外一个同步正在进行或是使用命令(drbdadm pause-sync)暂停了同步
 	- VerifyS：以本地节点为验证源的线上设备验证正在执行
 	- VerifyT：以本地节点为验证目标的线上设备验证正在执行
+
+- 启用/禁用资源
+
+	```
+	//启用资源r0
+	# drbdadm up r0
+	//禁用资源r0
+	# drbdadm down r0
+	提示:也可以将r0更改为all
+	```
+
+- 重新配置资源
+
+	```
+	DRBD在运行时，允许用户重新配置资源，为了实现这个目的，需要进行以下操作：
+	1、在DRBD的配置文件/etc/drbd.conf(包括所有资源)中进行有必要的改变
+	2、在两个节点之间同步DRBD的配置文件
+	3、在两个节点上执行drbdadm adjust <source>命令 (在执行此命令时，建议添加-d参数)
+	```
+
+- 导出当前资源配置信息
+
+	```
+	drbdadm dump all
+	```
