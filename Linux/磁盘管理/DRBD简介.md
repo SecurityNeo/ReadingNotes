@@ -59,6 +59,17 @@ DRBD（Distributed Replicated Block Device）：叫做分布式复制块设备�
 	- Replication protocol：表示当前复制所使用的协议，可以是ABC
 	- I/O Flags：6个I/O输入输出标志，从各个方面反映了本地资源的状态
 	- Performance indicators：性能指标，这是一组统计数据和计数器，反映出资源的利用情况和性能
+	- IO状态标记表示当前资源的IO操作状态。共有6种状态：
+		- IO挂起：r或s都可能表示IO挂起，一般是r。r=running，s=suspended。
+		- 串行重新同步：资源正在等待进行重新同步，但被resync-after选项延迟了同步进度。该状态标记为"a"，通常该状态栏应该处于"-"。
+		- 对端初始化同步挂起：资源正在等待进行重新同步，但对端节点因为某些原因而IO挂起。该状态标记为"p"，通常该状态栏应该处于"-"。
+		- 本地初始化同步挂起：资源正在等待进行重新同步，但本节点因为某些原因而IO挂起。该状态标记为"u"，通常该状态栏应该处于"-"。
+		- 本地IO阻塞：通常该状态栏应该处于"-"。可能有以下几种标记：
+			- d：因为DRBD内部原因导致的IO阻塞。
+			- b：后端设备正处于IO阻塞。
+			- n：网络套接字阻塞。
+			- a：网络套接字和后端块设备同时处于阻塞状态。
+		- Activity Log更新挂起：当al更新被挂起时，处于该状态，标记为"s"，通常该状态栏应该处于"-"。(如果不知道什么是Active Log，请无视本标记)
 	- ns(network send)：通过网络连接发送到对端的数据量，单位KB.
 	- nr(network receive)：通过网络连接从对点接收的数据量，单位KB.
 	- dw(disk write)：向本地硬盘写入网络数据，单位KB.
@@ -72,6 +83,18 @@ DRBD（Distributed Replicated Block Device）：叫做分布式复制块设备�
 	- ep(epochs)：epoch对象的数，通常为1。当使用barrier或者none写顺序方法时，可能会增加底层I/O负荷。
 	- wo(write order)：当前使用的写顺序的方法：b(barrier)/f(flush)/d(drain)/n(none)。
 	- oos(out of sync)：当前没有同步的数据总数量，单位为KB.
+
+	drbd9中添加了以下几个指标：
+
+	- resync-suspended：重新同步操作当前是否被挂起。可能的值为no/user/peer/dependency。
+	- blocked：本地IO的拥挤情况。
+	- no：本地IO不拥挤。
+	- upper：DRBD层之上的IO被阻塞。例如到文件系统上的IO阻塞。可能有以下几种原因：
+	- 管理员使用drbdadm suspend-io命令挂起了IO操作。
+	- 短暂的IO阻塞，例如attach/detach导致的。
+	- 删除了缓冲区。
+	- bitmap的IO等待。
+	- lower：底层设备处于拥挤状态。
 
 - 查看磁盘状态
 
