@@ -50,6 +50,10 @@ status:
     status: "True"
     type: Established
 ```
+- **name**：用于定义CRD的名字，后缀需要跟group一致，前缀需要跟names中的plural一致。
+- **group以及version用于标识restAPI**：即/apis//。
+- **scope**: 表明作用于，可以是基于namespace的，也可以是基于集群的。 如果是基于namespace的。则API格式为：/apis/{group}/v1/namespaces/{namespace}/{spec.names.plural}/… 如果是基于cluster的。则API格式为：/apis/{group}/v1/{spec.names.plural}/… 
+- **names**：描述了一些自定义资源的名字以及类型的名字（重点是plural定义以及kind定义，因为会在url或者查询资源中用的到）。
 
 这样就创建了一个新的区分命名空间的RESTful API断点：/apis/networking.istio.io/v1alpha3/namespaces/*/virtualservices/...，然后可以使用此端点URL来创建和管理自定义对象，这些对象的kind就是上面创建的CRD中指定的kind: VirtualService对象。
 
