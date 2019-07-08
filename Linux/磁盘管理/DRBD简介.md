@@ -178,3 +178,61 @@ DRBD（Distributed Replicated Block Device）：叫做分布式复制块设备�
 	# drbdadm connect r0
 	# drbdadm disconnect r0
 	```
+
+## 配置 ##
+
+[http://blog.chinaunix.net/uid-20346344-id-3491536.html](http://blog.chinaunix.net/uid-20346344-id-3491536.html)
+
+**global_common.conf**：
+
+- global：
+	在配置文件中global段仅出现一次，且若所有配置信息都保存至同一个配置文件中而不分开为多个文件的话则global段必须位于配置文件最开始处，目前global段中可以定义的参数仅有minor-count, dialog-refresh, disable-ip-verification和usage-count。
+	- minor-count：从（设备）个数，取值范围1~255，默认值为32。该选项设定了允许定义的resource个数，当要定义的resource超过了此选项的设定时，需要重新载入drbd内核模块。
+	- dialog-refresh time：time取值0，或任一正数。默认值为1。
+	- disable-ip-verification：是否禁用ip检查
+	- usage-count：是否参加用户统计，合法参数为yes、no或ask。
+	
+- common：
+    用于定义被每一个资源默认继承的参数，可在资源定义中使用的参数都可在common定义。实际应用中common段并非必须但建议将多个资源共享的参数定义在common段以降低配置复杂度，common配置段中可以包含如下配置段：disk、net、startup、syncer和handlers。
+
+- resource：
+    用于定义drbd资源，每个资源通常定义在一个单独的位于/etc/drbd.d目录中的以.res结尾的文件中。资源在定义时必须为其命名，每个资源段的定义中至少要包含两个host子段，以定义此资源关联至的节点，其它参数均可以从common段或drbd的默认中进行继承而无须定义。
+
+**xxx.res**：
+
+```
+resource Mysqls {     　                   #resource关键字指定资源名称为Mysql    注：resource段一般写入*.res结尾的文件
+　　　protocol C;          　               #使用的协议类型
+　　　  meta-disk internal;                 #meta-data和数据存放在同一个底层
+ 　　   disk {  on-io-error detach; }       #当磁盘出现IO错误时如何处理
+ 　　   startup { degr-wfc-timeout 60;  }   #启动时连接资源的超时时间
+ 　　   on Mysql1 {         　              #集群中的其中一个节点：Mysql1
+　　        device    /dev/drbd1;           #物理设备的逻辑路径（参数最后必须有数字，用于global的minor-count）
+　　        disk     /dev/sda1;             #物理设备  
+　　        address 10.0.0.7:7788;          #监听地址和端口，用于与另一台主机通信（主从的角色由drbdadm命令指定）
+            meta-disk  internal;            #定义metadata的存储方式，有2种（参考本节**metadata存储方式**）
+
+　　     }
+　　     on Mysql2 {       　             　#集群中的其中一个节点：Mysql2
+ 　　       device    /dev/drbd1;     
+ 　　       disk     /dev/sda1;         
+  　　      address 10.0.0.8:7788;         #监听地址和端口，用于与另一台主机通信（主从的角色由drbdadm命令指定）双方配置文件中均需写入各自与对方的监听地址
+
+  　　      } 
+　　　　}
+
+```
+
+**metadata存储方式**：
+
+- Internal metadata：
+	一个resource被配置成使用internal metadata，意味着DRBD把它的metadata，和实际生产数据存储于相同的底层物理设备中。该存储方式是在设备的最后位置留出一个区域来存储metadata。
+	优点：因为metadata是和实际生产数据紧密联系在一起的，如果发生了硬盘损坏，不需要管理员做额外的工作，因为metadata会随实际生产数据的丢失而丢失，同样会随着生产数据的恢复而恢复。
+	缺点：如果底层设备只有一块物理硬盘（和RAID相反），这种存储方式对写操作的吞吐量有负面影响，因为应用程序的写操作请求会触发DRBD的metadata的更新。如果metadata存储于硬盘的同一块盘片上，那么，写操作会导致额外的两次磁头读写移动。
+	要注意的是：如果你打算在已有数据的底层设备中使用internal metadata，需要计算并留出DRBD的metadata所占的空间大小，并采取一些特殊的操作，否则很有可能会破坏掉原有的数据！至于需要什么样的 特殊操作，可以参考DRBD的官方文档。我要说的是，最好不要这样做！
+
+- external metadata：
+	该存储方式比较简单，就是把metadata存储于一个和生产数据分开的专门的设备块中。
+	优点：对某些写操作，提供某些潜在的改进。
+	缺点：因为metadata和生产数据是分开的，如果发生了硬盘损坏，在更换硬盘后，需要管理员进行人工干预，从其它存活的节点向刚替换的硬盘进行完全的数据同步。
+	什么时候应该使用exteranl的存储方式：设备中已经存有数据，而该设备不支持扩展（如LVM），也不支持收缩（shrinking）。
