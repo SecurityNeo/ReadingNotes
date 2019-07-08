@@ -194,6 +194,10 @@ DRBD（Distributed Replicated Block Device）：叫做分布式复制块设备�
 	
 - common：
     用于定义被每一个资源默认继承的参数，可在资源定义中使用的参数都可在common定义。实际应用中common段并非必须但建议将多个资源共享的参数定义在common段以降低配置复杂度，common配置段中可以包含如下配置段：disk、net、startup、syncer和handlers。
+	- startup配置段用来更加精细地调节drbd属性，它作用于配置节点在启动或重启时。
+	- disk配置段用来精细地调节drbd底层存储的属性。
+	- syncer配置段用来更加精细地调节服务的同步进程。
+	- net配置段用来精细地调节drbd的网络相关的属性。
 
 - resource：
     用于定义drbd资源，每个资源通常定义在一个单独的位于/etc/drbd.d目录中的以.res结尾的文件中。资源在定义时必须为其命名，每个资源段的定义中至少要包含两个host子段，以定义此资源关联至的节点，其它参数均可以从common段或drbd的默认中进行继承而无须定义。
