@@ -193,11 +193,11 @@ DRBD（Distributed Replicated Block Device）：叫做分布式复制块设备�
 	- usage-count：是否参加用户统计，合法参数为yes、no或ask。
 	
 - common：
-    用于定义被每一个资源默认继承的参数，可在资源定义中使用的参数都可在common定义。实际应用中common段并非必须但建议将多个资源共享的参数定义在common段以降低配置复杂度，common配置段中可以包含如下配置段：disk、net、startup、syncer和handlers。
-	- startup配置段用来更加精细地调节drbd属性，它作用于配置节点在启动或重启时。
-	- disk配置段用来精细地调节drbd底层存储的属性。
-	- syncer配置段用来更加精细地调节服务的同步进程。
-	- net配置段用来精细地调节drbd的网络相关的属性。
+    用于定义被每一个资源默认继承的参数，可在资源定义中使用的参数都可在common定义。实际应用中common段并非必须但建议将多个资源共享的参数定义在common段以降低配置复杂度，common配置段中可以包含如下配置段：disk、net、startup、syncer和handlers。（参考后面的**common配置项**）
+	- startup： 用来更加精细地调节drbd属性，它作用于配置节点在启动或重启时。
+	- disk： 用来精细地调节drbd底层存储的属性。
+	- syncer： 用来更加精细地调节服务的同步进程。
+	- net： 用来精细地调节drbd的网络相关的属性。
 
 - resource：
     用于定义drbd资源，每个资源通常定义在一个单独的位于/etc/drbd.d目录中的以.res结尾的文件中。资源在定义时必须为其命名，每个资源段的定义中至少要包含两个host子段，以定义此资源关联至的节点，其它参数均可以从common段或drbd的默认中进行继承而无须定义。
@@ -240,3 +240,20 @@ resource Mysqls {     　                   #resource关键字指定资源名称
 	优点：对某些写操作，提供某些潜在的改进。
 	缺点：因为metadata和生产数据是分开的，如果发生了硬盘损坏，在更换硬盘后，需要管理员进行人工干预，从其它存活的节点向刚替换的硬盘进行完全的数据同步。
 	什么时候应该使用exteranl的存储方式：设备中已经存有数据，而该设备不支持扩展（如LVM），也不支持收缩（shrinking）。
+
+**common配置项**
+
+- **startup**
+	- **wfc-timeout**：该选项设定一个时间值，单位是秒。在启用DRBD块时，初始化脚本drbd会阻塞启动进程的运行，直到对等节点的出现。该选项就是用来限制这个等待时间的，默认为0，即不限制，永远等待。
+	- **degr-wfc-timeout**：该选项也设定一个时间值，单位为秒。也是用于限制等待时间，只是作用的情形不同：它作用于一个降级集群（即那些只剩下一个节点的集群）在重启时的等待时间。
+	- **outdated-wfc-timeout**：同上，也是用来设定等待时间，单位为秒。它用于设定等待过期节点的时间。
+
+- **disk（重要）**
+	- **on-io-error选项**：此选项设定了一个策略，如果底层设备向上层设备报告发生I/O错误，将按照该策略进行处理。有效的策略包括：
+		- **pass_on**： 把I/O错误报告给上层设备。如果错误发生在primary节点，把它报告给文件系统，由上层设备处理这些错误（例如，它会导致文件系统以只读方式重新挂载），它可能会导致drbd停止提供服务；如果发生在secondary节点，则忽略该错误（因为secondary节点没有上层设备可以报告）。该策略曾经是默认策略，但现在已被detach所取代。
+		- **call-local-io-error**：调用预定义的本地local-io-error脚本进行处理。该策略需要在resource配置段的handlers部分，预定义一个相应的`local-io-error`命令调用。该策略完全由管理员通过local-io-error命令（或脚本）调用来控制如何处理I/O错误。
+		- **detach**：发生I/O错误的节点将放弃底层设备，以diskless mode继续工作。在diskless mode下，只要还有网络连接，drbd将从secondary node读写数据，而不需要failover。该策略会导致一定的损失，但好处也很明显，drbd服务不会中断。官方推荐和默认策略。
+	- **fencing选项**：该选项设定一个策略来避免split brain的状况。有效的策略包括：
+		- **dont-care**：默认策略。不采取任何隔离措施。
+		- **resourceonly**：在此策略下，如果一个节点处于split brain状态，它将尝试隔离对等端的磁盘。这个操作通过调用fence-peer处理器来实现。fence-peer处理器将通过其它通信路径到达对等节点，并在这个对等节点上调用`drbdadm outdate res`命令。
+		- **resource-and-stonith**：在此策略下，如果一 个节点处于split brain状态，它将停止I/O操作，并调用fence-peer处理器。处理器通过其它通信路径到达对等节点，并在这个对等节点上调用`drbdadm outdate res`命令。如果无法到达对等节点，它将向对等端发送关机命令。一旦问题解决，I/O操作将重新进行。如果处理器失败，你可以使用`resume-io`命令来重新开始I/O操作。
