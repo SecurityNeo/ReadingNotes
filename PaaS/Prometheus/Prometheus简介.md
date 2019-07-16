@@ -42,6 +42,18 @@ Prometheus的工作流
 - Alertmanager根据配置文件，对接收到的警报进行处理，发出告警。
 - 在图形界面中，可视化采集数据。
 
+## 数据模型 ##
+
+**四种时序类型**
+
+Prometheus时序数据分为Counter（变化的增减量）,Gauge（瞬时值）,Histogram（采样并统计）,Summary（采样结果）四种类型。
+
+Counter：表示收集的数据是按照某个趋势（增加／减少）一直变化的，我们往往用它记录服务请求总量、错误总数等。 例如Prometheus server中`http_requests_total`, 表示Prometheus处理的http请求总数，我们可以使用delta, 很容易得到任意区间数据的增量
+Gauge:表示搜集的数据是一个瞬时的值，与时间没有关系，可以任意变高变低，往往可以用来记录内存使用率、磁盘使用率等。 例如Prometheus server中`go_goroutines`, 表示Prometheus当前goroutines的数量。
+Histogram:主要用于表示一段时间范围内对数据进行采样（通常是请求持续时间或响应大小），并能够对其指定区间以及总数进行统计，通常它采集的数据展示为直方图。Histogram由`<basename>_bucket{le="<upper inclusive bound>"}，<basename>_bucket{le="+Inf"}, <basename>_sum，<basename>_count`组成，例如Prometheus server中`prometheus_local_storage_series_chunks_persisted`, 表示Prometheus中每个时序需要存储的chunks数量，我们可以用它计算待持久化的数据的分位数。
+Summary:主要用于表示一段时间内数据采样结果（通常是请求持续时间或响应大小），它直接存储了quantile数据，而不是根据统计区间计算出来的。Summary和Histogram类似，由`<basename>{quantile="<φ>"}，<basename>_sum，<basename>_count`组成，例如Prometheus server中`prometheus_target_interval_length_seconds`。
+
+
 ## 部署配置 ##
 
 [https://www.cnblogs.com/chenqionghe/p/10494868.html](https://www.cnblogs.com/chenqionghe/p/10494868.html)
@@ -80,4 +92,41 @@ scrape_configs可以有多个，一般来说每个任务（Job）对应一个配
 - sample_limit： 存储的数据标签个数限制，如果超过限制，该数据将被忽略，不入存储；默认值为0，表示没有限制
 - relabel_configs： 拉取数据重置标签配置
 - metric_relabel_configs：metric重置标签配置
+- static_configs:静态目标配置，配置了该任务要抓取的所有实例，按组配置，包含相同标签的实例可以分为一组，以简化配置。
+
+**规则配置**
+
+记录规则允许我们把一些经常需要使用并且查询时计算量很大的查询表达式，预先计算并保存到一个新的时序。查询这个新的时序比从原始一个或多个时序实时计算快得多，并且还能够避免不必要的计算。在一些特殊场景下这甚至是必须的，比如仪表盘里展示的各类定时刷新的数据，数据种类多且需要计算非常快。
+
+```
+groups:
+  [ - <rule_group> ]
+```
+单个组的配置如下：
+
+```
+name: <string> 
+[ interval: <duration> | default = global.evaluation_interval ]
+rules:
+  [ - <rule> ... ]
+```
+
+每个组下包含多个规则：
+
+```
+record: <string>
+expr: <string>
+labels:
+  [ <labelname>: <labelvalue> ]
+```
+
+**告警配置**
+
+alerting主要包含两个个参数：
+
+- alert_relabel_configs: 动态修改alert属性的规则配置。
+- alertmanagers: 用于动态发现Alertmanager的配置。
+
+
+
 
