@@ -44,6 +44,24 @@ Prometheus的工作流
 
 ## 数据模型 ##
 
+**时序索引**
+
+时序(time series) 是由指标名字(Metric)，以及一组key/value标签定义的，具有相同的名字以及标签属于相同时序。时序的名字由ASCII字符，数字，下划线，以及冒号组成，它必须满足正则表达式`[a-zA-Z_:][a-zA-Z0-9_:]*`, 其名字应该具有语义化，一般表示一个可以度量的指标，例如: `http_requests_total`, 可以表示http请求的总数。时序的标签可以使Prometheus的数据更加丰富，能够区分具体不同的实例，例如：`http_requests_total{method="POST"}`可以表示所有http中的POST请求。标签名称由ASCII字符，数字，以及下划线组成，其中__开头属于Prometheus保留，标签的值可以是任何Unicode字符，支持中文。
+
+**时序样本**
+
+按照某个时序以时间维度采集的数据，称之为样本，其值包含：
+- 一个float64值
+- 一个毫秒级的unix时间戳
+
+**格式**
+
+Prometheus时序格式与OpenTSDB相似：
+
+`<metric name>{<label name>=<label value>, ...}`
+
+其中包含时序名字以及时序的标签。
+
 **四种时序类型**
 
 Prometheus时序数据分为Counter（变化的增减量）,Gauge（瞬时值）,Histogram（采样并统计）,Summary（采样结果）四种类型。
@@ -127,6 +145,59 @@ alerting主要包含两个个参数：
 - alert_relabel_configs: 动态修改alert属性的规则配置。
 - alertmanagers: 用于动态发现Alertmanager的配置。
 
+
+**远程存储**
+
+在metrics的存储这块，prometheus提供了本地存储，即tsdb时序数据库。本地存储的优势就是运维简单，启动prometheus只需一个命令，下面两个启动参数指定了数据路径和保存时间。
+
+- storage.tsdb.path: tsdb数据库路径，默认 data/
+- storage.tsdb.retention: 数据保留时间，默认15天
+
+本地存储的一个缺点就是无法将大量的metrics持久化。当然prometheus2.0以后压缩数据能力得到了很大的提升。为了解决单节点存储的限制，prometheus没有自己实现集群存储，而是提供了远程读写的接口，让用户自己选择合适的时序数据库来实现prometheus的扩展性。prometheus通过下面两张方式来实现与其他的远端存储系统对接
+
+- Prometheus按照标准的格式将metrics写到远端存储
+- prometheus按照标准格式从远端的url来读取metrics
+
+配置文件：
+
+远程写:
+
+```
+url: <string>  //访问地址
+[ remote_timeout: <duration> | default = 30s ]  //超时时间，默认30S
+write_relabel_configs:                          //标签重置配置, 拉取到的数据，经过重置处理后，发送给远程存储
+  [ - <relabel_config> ... ]
+basic_auth:
+  [ username: <string> ]
+  [ password: <string> ]
+  [ password_file: <string> ]
+
+[ bearer_token: <string> ]
+
+
+[ bearer_token_file: /path/to/bearer/token/file ]
+
+tls_config:
+  [ <tls_config> ]
+
+[ proxy_url: <string> ]
+
+queue_config:
+
+  [ capacity: <int> | default = 100000 ]
+
+  [ max_shards: <int> | default = 1000 ]
+
+  [ max_samples_per_send: <int> | default = 100]
+
+  [ batch_send_deadline: <duration> | default = 5s ]
+
+  [ max_retries: <int> | default = 10 ]
+
+  [ min_backoff: <duration> | default = 30ms ]
+
+  [ max_backoff: <duration> | default = 100ms ]
+```
 
 
 
