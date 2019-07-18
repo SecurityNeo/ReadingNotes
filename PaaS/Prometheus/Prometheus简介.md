@@ -76,6 +76,8 @@ Summary:主要用于表示一段时间内数据采样结果（通常是请求持
 
 [https://www.cnblogs.com/chenqionghe/p/10494868.html](https://www.cnblogs.com/chenqionghe/p/10494868.html)
 
+[https://studygolang.com/articles/13522?fr=sidebar](https://studygolang.com/articles/13522?fr=sidebar)
+
 [https://songjiayang.gitbooks.io/prometheus/content/configuration/global.html](https://songjiayang.gitbooks.io/prometheus/content/configuration/global.html)
 
 **全局配置**：
@@ -158,9 +160,30 @@ alerting主要包含两个个参数：
 - Prometheus按照标准的格式将metrics写到远端存储
 - prometheus按照标准格式从远端的url来读取metrics
 
+现在社区已经实现了以下的远程存储方案(以下只支持远程读):
+
+- AppOptics: write
+- Chronix: write
+- Cortex: read and write
+- CrateDB: read and write
+- Elasticsearch: write
+- Gnocchi: write
+- Graphite: write
+- InfluxDB: read and write
+- OpenTSDB: write
+- PostgreSQL/TimescaleDB: read and write
+- SignalFx: write
+
+下面几种同时支持远程读写：
+
+- Cortex来源于weave公司，整个架构对prometheus做了上层的封装，用到了很多组件。稍微复杂。
+- InfluxDB 开源版不支持集群。对于metrics量比较大的,写入压力大，然后influxdb-relay方案并不是真正的高可用。当然饿了么开源了influxdb-proxy，有兴趣的可以尝试一下。
+- CrateDB 基于es。具体了解不多
+- TimescaleDB 个人比较中意该方案。传统运维对pgsql熟悉度高，运维靠谱。目前支持 streaming replication方案支持高可用。
+
 配置文件：
 
-远程写:
+-  远程写:
 
 ```
 url: <string>  //访问地址
@@ -199,5 +222,54 @@ queue_config:
   [ max_backoff: <duration> | default = 100ms ]
 ```
 
+配置中的`write_relabel_configs`配置项，充分利用了prometheus强大的relabel的功能。可以过滤需要写到远端存储的metrics。
 
+例如：选择指定的metrics。
+
+```
+remote_write:
+      - url: "http://prometheus-remote-storage-adapter-svc:9201/write"
+        write_relabel_configs:
+        - action: keep
+          source_labels: [__name__]
+          regex: container_network_receive_bytes_total|container_network_receive_packets_dropped_total
+```
+
+global配置中external_labels，在prometheus的联邦和远程读写的可以考虑设置该配置项，从而区分各个集群。
+
+```
+global:
+      scrape_interval: 20s
+      # The labels to add to any time series or alerts when communicating with
+      # external systems (federation, remote storage, Alertmanager).
+      external_labels:
+        cid: '9'
+```
+
+- 远程读
+
+```
+url: <string>  // 访问地址
+
+required_matchers:
+  [ <labelname>: <labelvalue> ... ]
+
+[ remote_timeout: <duration> | default = 1m ]  //超时时间，默认1m
+
+[ read_recent: <boolean> | default = false ]
+
+basic_auth:
+  [ username: <string> ]
+  [ password: <string> ]
+  [ password_file: <string> ]
+
+[ bearer_token: <string> ]
+
+[ bearer_token_file: /path/to/bearer/token/file ]
+
+tls_config:
+  [ <tls_config> ]
+
+[ proxy_url: <string> ]
+```
 
