@@ -80,6 +80,8 @@ Prometheus时序数据分为Counter（变化的增减量）,Gauge（瞬时值）
 
 [https://songjiayang.gitbooks.io/prometheus/content/configuration/global.html](https://songjiayang.gitbooks.io/prometheus/content/configuration/global.html)
 
+[https://prometheus.io/docs/prometheus/latest/configuration/configuration/#%3Ctls_config](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#%3Ctls_config)
+
 **全局配置**：
 
 global属于全局的默认配置，它主要包含4个属性：
@@ -289,3 +291,9 @@ tls_config:
 - openstack_sd_configs: OpenStack服务发现
 - azure_sd_configs: Azure服务发现
 - triton_sd_configs: Triton服务发现
+
+## Exporter ##
+
+在Prometheus中负责数据汇报的程序统一叫做Exporter, 而不同的Exporter负责不同的业务。 它们具有统一命名格式，即xx_exporter, 例如负责主机信息收集的node_exporter。
+[社区上支持的Exporter参考]（https://prometheus.io/docs/instrumenting/exporters/#exporters-and-integrations）
+
