@@ -368,3 +368,135 @@ tls_config:
 在Prometheus中负责数据汇报的程序统一叫做Exporter, 而不同的Exporter负责不同的业务。 它们具有统一命名格式，即xx_exporter, 例如负责主机信息收集的node_exporter。
 [社区上支持的Exporter参考]（https://prometheus.io/docs/instrumenting/exporters/#exporters-and-integrations）
 
+**Node Exporter**
+
+- 默认开启的功能
+
+| 名称 | 说明 | 系统 |
+| ------| ------ | ------ |
+| arp | 从 `/proc/net/arp` 中收集 ARP 统计信息 | Linux |
+| conntrack | 从 `/proc/sys/net/netfilter/` 中收集 conntrack 统计信息 | Linux |
+| cpu | 收集 cpu 统计信息 | Darwin, Dragonfly, FreeBSD, Linux |
+| diskstats | 从 `/proc/diskstats` 中收集磁盘 I/O 统计信息  | Linux |
+| edac | 错误检测与纠正统计信息 | Linux |
+| entropy | 可用内核熵信息 | Linux |
+| exec | execution 统计信息 | Dragonfly, FreeBSD |
+| filefd | 从 `/proc/sys/fs/file-nr` 中收集文件描述符统计信息 | Linux |
+| filesystem | 文件系统统计信息，例如磁盘已使用空间 | Darwin, Dragonfly, FreeBSD, Linux, OpenBSD |
+| hwmon | 从 `/sys/class/hwmon/` 中收集监控器或传感器数据信息 | Linux |
+| infiniband | 从 InfiniBand 配置中收集网络统计信息 | Linux |
+| loadavg | 收集系统负载信息 | 	Darwin, Dragonfly, FreeBSD, Linux, NetBSD, OpenBSD, Solaris |
+| mdadm | 从 `/proc/mdstat` 中获取设备统计信息 | Linux |
+| meminfo | 内存统计信息 | Darwin, Dragonfly, FreeBSD, Linux |
+| netdev | 网口流量统计信息，单位 bytes | Darwin, Dragonfly, FreeBSD, Linux, OpenBSD |
+| netstat | 从 `/proc/net/netstat` 收集网络统计数据，等同于 `netstat -s` | Linux |
+| sockstat | 从 `/proc/net/sockstat` 中收集 socket 统计信息 | Linux |
+| stat | 从 `/proc/stat` 中收集各种统计信息，包含系统启动时间，forks, 中断等 | Linux |
+| textfile | 通过 `--collector.textfile.directory` 参数指定本地文本收集路径，收集文本信息 | any |
+| time | 系统当前时间 | any |
+| uname | 通过 `uname` 系统调用, 获取系统信息  | any |
+| vmstat | 从 `/proc/vmstat` 中收集统计信息  | Linux |
+| wifi | 收集 wifi 设备相关统计数据  | Linux |
+| xfs | 收集 xfs 运行时统计信息  | Linux (kernel 4.4+) |
+| zfs | 收集 zfs 性能统计信息 | Linux |
+
+- 默认关闭的功能
+
+| 名称 | 说明 | 系统 |
+| ------| ------ | ------ |
+| bonding | 收集系统配置以及激活的绑定网卡数量 | Linux |
+| buddyinfo | 从 `/proc/buddyinfo` 中收集内存碎片统计信息 | Linux |
+| devstat | 收集设备统计信息 | Dragonfly, FreeBSD |
+| drbd |  收集远程镜像块设备（DRBD）统计信息  | Linux |
+| interrupts | 收集更具体的中断统计信息 | Linux，OpenBSD |
+| ipvs | 从 `/proc/net/ip_vs` 中收集 IPVS 状态信息，从 `/proc/net/ip_vs_stats` 获取统计信息 | Linux |
+| ksmd | 从 `/sys/kernel/mm/ksm` 中获取内核和系统统计信息 | Linux |
+| logind | 从 `logind` 中收集会话统计信息 | Linux |
+| meminfo_numa | 从 `/proc/meminfo_numa` 中收集内存统计信息 | Linux |
+| mountstats | 从 `/proc/self/mountstat` 中收集文件系统统计信息，包括 NFS 客户端统计信息 | Linux |
+| nfs | 从 `/proc/net/rpc/nfs` 中收集 NFS 统计信息，等同于 `nfsstat -c` | Linux |
+| qdisc | 收集队列推定统计信息 | Linux |
+| runit | 收集 runit 状态信息 | any |
+| supervisord | 收集 supervisord 状态信息 | any |
+| systemd | 从 `systemd` 中收集设备系统状态信息 | Linux |
+| tcpstat | 从 `/proc/net/tcp` 和 `/proc/net/tcp6` 收集 TCP 连接状态信息 | Linux |
+
+- 将被废弃功能：
+
+| 名称 | 说明 | 系统 |
+| ------| ------ | ------ |
+| gmond | 收集 Ganglia 统计信息 | any |
+| megacli | 从 MegaCLI 中收集 RAID 统计信息 | Linux |
+| ntp | 从 NTP 服务器中获取时钟 | any |
+
+注意：我们可以使用 `--collectors.enabled` 运行参数指定node_exporter收集的功能模块, 如果不指定，将使用默认模块。
+
+- 数据存储
+
+可以利用Prometheus的static_configs来拉取node_exporter的数据。
+打开 prometheus.yml 文件, 在 scrape_configs 中添加如下配置：
+```
+- job_name: "node"
+    static_configs:
+      - targets: ["127.0.0.1:9100"]
+```
+重启加载配置，然后到Prometheus Console查询，你会看到node_exporter的数据。
+
+- 常用查询语句
+
+CPU使用率:
+
+```
+100 - (avg by (instance) (irate(node_cpu{instance="xxx", mode="idle"}[5m])) * 100)
+```
+
+CPU各mode占比率:
+
+```
+avg by (instance, mode) (irate(node_cpu{instance="xxx"}[5m])) * 100
+```
+
+机器平均负载:
+
+```
+node_load1{instance="xxx"} // 1分钟负载
+node_load5{instance="xxx"} // 5分钟负载
+node_load15{instance="xxx"} // 15分钟负载
+```
+
+内存使用率:
+
+```
+100 - ((node_memory_MemFree{instance="xxx"}+node_memory_Cached{instance="xxx"}+node_memory_Buffers{instance="xxx"})/node_memory_MemTotal) * 100
+```
+
+磁盘使用率:
+
+```
+100 - node_filesystem_free{instance="xxx",fstype!~"rootfs|selinuxfs|autofs|rpc_pipefs|tmpfs|udev|none|devpts|sysfs|debugfs|fuse.*"} / node_filesystem_size{instance="xxx",fstype!~"rootfs|selinuxfs|autofs|rpc_pipefs|tmpfs|udev|none|devpts|sysfs|debugfs|fuse.*"} * 100
+```
+
+或者你也可以直接使用 {fstype="xxx"} 来指定想查看的磁盘信息
+
+网络IO:
+
+```
+// 上行带宽
+sum by (instance) (irate(node_network_receive_bytes{instance="xxx",device!~"bond.*?|lo"}[5m])/128)
+
+// 下行带宽
+sum by (instance) (irate(node_network_transmit_bytes{instance="xxx",device!~"bond.*?|lo"}[5m])/128)
+```
+
+网卡出/入包:
+
+```
+// 入包量
+sum by (instance) (rate(node_network_receive_bytes{instance="xxx",device!="lo"}[5m]))
+
+// 出包量
+sum by (instance) (rate(node_network_transmit_bytes{instance="xxx",device!="lo"}[5m]))
+```
+
+
+
