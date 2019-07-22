@@ -143,6 +143,16 @@ rpc_duration_seconds_sum 1.7560473e+07
 rpc_duration_seconds_count 2693
 ```
 
+## Pushgateway ##
+
+Pushgateway是Prometheus生态中一个重要工具，Prometheus采用pull模式，可能由于不在一个子网或者防火墙原因，导致Prometheus无法直接拉取各个target数据。在监控业务数据的时候，需要将不同数据汇总, 由Prometheus统一收集。pushgateway就是为了解决这些问题，但在使用之前，有必要了解一下它的一些弊端：
+
+- 将多个节点数据汇总到pushgateway, 如果pushgateway挂了，受影响比多个target大。
+- Prometheus拉取状态up只针对pushgateway, 无法做到对每个节点有效。
+- Pushgateway可以持久化推送给它的所有监控数据。
+
+因此，即使你的监控已经下线，prometheus还会拉取到旧的监控数据，需要手动清理pushgateway不要的数据。
+
 ## 部署配置 ##
 
 [https://www.cnblogs.com/chenqionghe/p/10494868.html](https://www.cnblogs.com/chenqionghe/p/10494868.html)
