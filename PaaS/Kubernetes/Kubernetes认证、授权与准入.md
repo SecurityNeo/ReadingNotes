@@ -142,7 +142,9 @@ API Server接收到客户端请求后首先进行认证鉴权，认证鉴权通�
 
 Kubernetes 1.10之前版本在APIerver中配置`--admission_control`参数可以进行准入控制的配置，它的值为一串用逗号连接的、有序的准入模块列表。Kubernetes 1.10之后的版本，`--admission-control`已经废弃，建议使用`--enable-admission-plugins` `--disable-admission-plugins`指定需要打开或者关闭的Admission Controller。 同时用户指定的顺序并不影响实际Admission Controllers的执行顺序，对用户来讲非常友好。
 
-它的模块如下：
+部分模块如下：
+
+[https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/)
 
 - AlwaysAdmit：允许所有请求
  
