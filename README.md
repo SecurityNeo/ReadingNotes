@@ -141,6 +141,7 @@
 	- [Kubernetes调度策略](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Kubernetes/Kubernetes%E8%B0%83%E5%BA%A6%E7%AD%96%E7%95%A5.md)
 	- [Kubernetes负载均衡](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Kubernetes/Kubernetes%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1.md)
 	- [Kubernetes配额管理](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Kubernetes/Kubernetes%E9%85%8D%E9%A2%9D%E7%AE%A1%E7%90%86.md)
+	- [Kubernetes StatefulSet](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Kubernetes/Kubernetes%20StatefulSet.md)
 
 - 微服务
 
