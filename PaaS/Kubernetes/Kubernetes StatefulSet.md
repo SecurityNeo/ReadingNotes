@@ -9,19 +9,47 @@ $(podname).(headless server name)
 FQDN： $(podname).(headless server name).namespace.svc.cluster.local
 ```
 
-**稳定的网络标识**
+**稳定的身份标识**
 
-StatefulSet中反复强调的“稳定的网络标识”，主要指Pods的hostname以及对应的DNS Records。
+StatefulSet中反复强调的“稳定的身份标识”，主要指Pods的hostname以及对应的DNS Records、pvc。
 
 
 - **HostName：** StatefulSet的Pods的hostname按照这种格式生成：$(statefulset name)-$(ordinal)， ordinal从0 ~ N-1(N为期望副本数)。
+
+	```golang
+	@kubernetes/pkg/controller/statefulset/stateful_set_utils.go
+	func getPodName(set *apps.StatefulSet, ordinal int) string {
+	    return fmt.Sprintf("%s-%d", set.Name, ordinal)  // ordinal为索引号
+	}
+	```
 
 	StatefulSet Controller在创建pods时，会给pod加上一个pod name label：statefulset.kubernetes.io/pod-name, 然后设置到Pod的pod name和hostname中。我们可以创建独立的Service匹配到这个指定的pod，然后方便我们单独对这个pod进行debug等处理。
 
 - **DNS Records：**
 
+	```golang
+	@kubernetes/pkg/controller/statefulset/stateful_set_utils.go
+	func initIdentity(set *apps.StatefulSet, pod *v1.Pod) {
+	    updateIdentity(set, pod)
+	    // Set these immutable fields only on initial Pod creation, not updates.
+	    pod.Spec.Hostname = pod.Name  // hostname设置为podName
+	    pod.Spec.Subdomain = set.Spec.ServiceName // subdomain设置为Headless Service的名称
+	}
+	```
+
 	- Headless Service的DNS解析：$(service name).$(namespace).svc.cluster.local 通过DNS RR解析到后端其中一个Pod。SRV Records只包含对应的Running and Ready的Pods，不Ready的Pods不会在对应的SRV Records中。
 	- Pod的DNS解析：$(hostname).$(service name).$(namespace).svc.cluster.local解析到对应hostname的Pod。
+
+- **PVC**
+
+	```golang
+	@kubernetes/pkg/controller/statefulset/stateful_set_utils.go
+	func getPersistentVolumeClaimName(set *apps.StatefulSet, claim *v1.PersistentVolumeClaim, ordinal int) string {
+	    // NOTE: This name format is used by the heuristics for zone spreading in ChooseZoneForVolume
+	    // ordinal为pod的索引号
+	    return fmt.Sprintf("%s-%s-%d", claim.Name, set.Name, ordinal)
+	}
+	```
 
 **Statefulset的启停顺序**
 
