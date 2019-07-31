@@ -127,5 +127,16 @@ func (ssc *StatefulSetController) syncStatefulSet(set *apps.StatefulSet, pods []
 	
 ## 代码分析 ##
 
-摘自[https://segmentfault.com/a/1190000019488735](https://segmentfault.com/a/1190000019488735)和[https://my.oschina.net/jxcdwangtao/blog/1784739?fromerr=XjbBhQrv](https://my.oschina.net/jxcdwangtao/blog/1784739?fromerr=XjbBhQrv)
+摘自[https://segmentfault.com/a/1190000019488735](https://segmentfault.com/a/1190000019488735)
 
+StatefulSet Controller工作的内部结构图：
+
+[摘自xidianwangtao@gmail.com大神的博文](https://my.oschina.net/jxcdwangtao/blog/1784739?fromerr=XjbBhQrv)
+
+![](img/Kubernetes_StatefulSetController.png)
+
+- StatefulSetController主要ListWatch Pod和StatefulSet对象；
+- Pod Informer注册了add/update/delete EventHandler，这三个EventHandler都会将Pod对应的StatefulSet加入到StatefulSet Queue中。
+- StatefulSet Informer同样注册了add/update/event EventHandler，也都会将StatefulSet加入到StatefulSet Queue中。
+- 目前StatefulSetController还未感知PVC Informer的EventHandler，这里继续按照PVC Controller全部处理。在StatefulSet Controller创建和删除Pod时，会调用apiserver创建和删除对应的PVC。
+- RevisionController类似，在StatefulSet Controller Reconcile时会创建或者删除对应的Revision。
