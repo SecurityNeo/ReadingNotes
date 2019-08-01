@@ -140,3 +140,15 @@ StatefulSet Controller工作的内部结构图：
 - StatefulSet Informer同样注册了add/update/event EventHandler，也都会将StatefulSet加入到StatefulSet Queue中。
 - 目前StatefulSetController还未感知PVC Informer的EventHandler，这里继续按照PVC Controller全部处理。在StatefulSet Controller创建和删除Pod时，会调用apiserver创建和删除对应的PVC。
 - RevisionController类似，在StatefulSet Controller Reconcile时会创建或者删除对应的Revision。
+
+**StatefulSetController sync**
+
+接下来，会进入StatefulSetController的worker（只有一个worker，也就是只一个go routine），worker会从StatefulSet Queue中pop out一个StatefulSet对象，然后执行sync进行Reconcile操作。
+
+- sync中根据setLabel匹配出所有revisions、然后检查这些revisions中是否有OwnerReference为空的，如果有，那说明存在Orphaned的Revisions。
+- 调用getPodsForStatefulSet获取这个StatefulSet应该管理的Pods。
+
+	- 获取该StatefulSet对应Namesapce下所有的Pods；
+	- 执行ClaimPods操作：检查set和pod的Label是否匹配上，如果Label不匹配，那么需要release这个Pod，然后检查pod的name和StatefulSet name的格式是否能匹配上。对于都匹配上的，并且ControllerRef UID也相同的，则不需要处理。
+	- 如果Selector和ControllerRef都匹配不上，则执行ReleasePod操作，给Pod打Patch: `{“metadata":{"ownerReferences":[{"$patch":"delete","uid":"%s"}],"uid":"%s"}}`
+	- 对于Label和name格式能匹配上的，但是controllerRef为空的Pods,就执行AdoptPod，给Pod打上Patch： `{“metadata":{"ownerReferences":[{"apiVersion":"%s","kind":"%s","name":"%s","uid":"%s","controller":true,"blockOwnerDeletion":true}],"uid":"%s"}}`
