@@ -152,3 +152,16 @@ StatefulSet Controller工作的内部结构图：
 	- 执行ClaimPods操作：检查set和pod的Label是否匹配上，如果Label不匹配，那么需要release这个Pod，然后检查pod的name和StatefulSet name的格式是否能匹配上。对于都匹配上的，并且ControllerRef UID也相同的，则不需要处理。
 	- 如果Selector和ControllerRef都匹配不上，则执行ReleasePod操作，给Pod打Patch: `{“metadata":{"ownerReferences":[{"$patch":"delete","uid":"%s"}],"uid":"%s"}}`
 	- 对于Label和name格式能匹配上的，但是controllerRef为空的Pods,就执行AdoptPod，给Pod打上Patch： `{“metadata":{"ownerReferences":[{"apiVersion":"%s","kind":"%s","name":"%s","uid":"%s","controller":true,"blockOwnerDeletion":true}],"uid":"%s"}}`
+
+**UpdateStatefulSet**
+
+- ListRevisions获取该StatefulSet的所有Revisions，并按照Revision从小到大进行排序。
+- getStatefulSetRevisions获取currentRevison和UpdateRevision。
+	- 只有当RollingUpdate策略时Partition不为0时，才会有部分Pods是updateRevision。
+	- 其他情况，所有Pods都得维持currentRevision。
+- updateStatefulSet是StatefulSet Controller的核心逻辑，负责创建、更新、删除Pods，使得声明式target得以维护：
+	- 使得target state始终有Spec.Replicas个Running And Ready的Pods。
+	- 如果更新策略是RollingUpdate，并且Partition为0，则保证所有Pods都对应Status.CurrentRevision。
+	- 如果更新策略是RollingUpdate，并且Partition不为0，则ordinal小于Partition的Pods保持Status.CurrentRevision，而ordinal大于等于Partition的Pods更新到Status.UpdateRevision。
+	- 如果更新策略是OnDelete，则只有删除Pods时才会触发对应Pods的更新，也就是说与Revisions不关联。
+- truncateHistory维护History Revision个数不超过.Spec.RevisionHistoryLimit。
