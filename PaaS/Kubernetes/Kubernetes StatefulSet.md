@@ -165,3 +165,72 @@ StatefulSet Controller工作的内部结构图：
 	- 如果更新策略是RollingUpdate，并且Partition不为0，则ordinal小于Partition的Pods保持Status.CurrentRevision，而ordinal大于等于Partition的Pods更新到Status.UpdateRevision。
 	- 如果更新策略是OnDelete，则只有删除Pods时才会触发对应Pods的更新，也就是说与Revisions不关联。
 - truncateHistory维护History Revision个数不超过.Spec.RevisionHistoryLimit。
+
+**updateStatefulSet**
+
+updateStatefulSet是整个StatefulSetController的核心。
+
+- 获取currentRevision和updateRevision对应的StatefulSet Object，并设置generation，currentRevision, updateRevision等信息到StatefulSet status。
+- 将前面getPodsForStatefulSet获取到的pods分成两个slice：
+	- valid replicas slice: : 0 <= getOrdinal(pod) < set.Spec.Replicas
+	- condemned pods slice: set.Spec.Replicas <= getOrdinal(pod)
+- 如果valid replicas中存在某些ordinal没有对应的Pod，则创建对应Revision的Pods Object，后面会检测到该Pod没有真实创建就会去创建对应的Pod实例：
+
+	- 如果更新策略是RollingUpdate且Partition为0或者ordinal < Partition，则使用currentRevision创建该Pod Object。
+	- 如果更新策略时RollingUpdate且Partition不为0且ordinal >= Partition，则使用updateRevision创建该Pod Object。
+- 从valid repilcas和condemned pods两个slices中找出第一个unhealthy的Pod。（ordinal最小的unhealth pod）
+- 对于正在删除(DeletionTimestamp非空)的StatefulSet，不做任何操作，直接返回当前status。 
+- 遍历valid replicas中pods，保证valid replicas中index在[0，spec.replicas）的pod都是Running And Ready的：
+	- 如果检测到某个pod Failed (pod.Status.Phase = Failed), 则删除这个Pod，并重新new这个pod object（注意revisions匹配）
+	- 如果这个pod还没有recreate,则Create it。
+	- 如果ParallelPodManagement = "OrderedReady”，则直接返回当前status。否则ParallelPodManagement = "Parallel”,则循环检测下一个。
+	- 如果pod正在删除并且ParallelPodManagement = "OrderedReady”，则返回status结束。
+	- 如果pod不是RunningAndReady状态，并且ParallelPodManagement = "OrderedReady”，则返回status结束。
+	- 检测该pod与statefulset的identity和storage是否匹配，如果有一个不匹配，则调用apiserver Update Stateful Pod进行updateIdentity和updateStorage（并创建对应的PVC），返回status，结束。
+- 遍历condemned replicas中pods，index由大到小的顺序，确保这些pods最终都被删除：
+	- 如果这个Pod正在删除(DeletionTimestamp)，并且Pod Management是OrderedReady，则进行Block住，返回status，流程结束。
+	- 如果是OrderedReady策略，Pod不是处于Running and Ready状态，且该pod不是first unhealthy pod，则返回status，流程结束。
+	- 其他情况，则删除该statefulset pod。
+	- 根据该pod的controller-revision-hash Label获取Revision，如果等于currentRevision，则更新status.CurrentReplicas；如果等于updateRevision，则更新status.UpdatedReplicas；
+	- 如果是OrderedReady策略，则返回status，流程结束。
+- OnDelete更新策略：删除Pod才会触发更新这个ordinal的更新 如果UpdateStrategy Type是OnDelete, 意味着只有当对应的Pods被手动删除后，才会触发Recreate，因此直接返回status，流程结束。
+- RollingUpdate更新策略：（Partition不设置就相当于0，意味着全部pods进行滚动更新） 如果UpdateStrategy Type是RollingUpdate, 根据RollingUpdate中Partition配置得到updateMin作为update replicas index区间最小值，遍历valid replicas，index从最大值到updateMin递减的顺序：
+	- 如果pod revision不是updateRevision，并且不是正在删除的，则删除这个pod，并更新status.CurrentReplicas，然后返回status，流程结束。
+	- 如果pod不是healthy的，那么将等待它变成healthy，因此这里就直接返回status，流程结束。
+
+**Identity Match**
+
+`updateStatefulSet Reconcile`中，会检查identity match的情况，具体包含：
+
+- pod name和statefulset name内容匹配。
+- namespace匹配。
+- Pod的`Label：statefulset.kubernetes.io/pod-name`与Pod name真实匹配。
+
+**Storage Match**
+
+updateStatefulSet Reconcile中，会检查Storage match的情况:
+
+```golang
+// storageMatches returns true if pod's Volumes cover the set of PersistentVolumeClaims
+func storageMatches(set *apps.StatefulSet, pod *v1.Pod) bool {
+	ordinal := getOrdinal(pod)
+	if ordinal < 0 {
+		return false
+	}
+	volumes := make(map[string]v1.Volume, len(pod.Spec.Volumes))
+	for _, volume := range pod.Spec.Volumes {
+		volumes[volume.Name] = volume
+	}
+	for _, claim := range set.Spec.VolumeClaimTemplates {
+		volume, found := volumes[claim.Name]
+		if !found ||
+			volume.VolumeSource.PersistentVolumeClaim == nil ||
+			volume.VolumeSource.PersistentVolumeClaim.ClaimName !=
+				getPersistentVolumeClaimName(set, &claim, ordinal) {
+			return false
+		}
+	}
+	return true
+}
+```
+
