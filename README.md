@@ -142,6 +142,8 @@
 	- [Kubernetes负载均衡](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Kubernetes/Kubernetes%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1.md)
 	- [Kubernetes配额管理](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Kubernetes/Kubernetes%E9%85%8D%E9%A2%9D%E7%AE%A1%E7%90%86.md)
 	- [Kubernetes StatefulSet](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Kubernetes/Kubernetes%20StatefulSet.md)
+	- [Kubernetes CRDS](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Kubernetes/Kubernetes%20CRDs.md)
+	- [Kubernetes Admission Webhooks](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Kubernetes/Kubernetes%20Admission%20Webhooks.md)
 
 - 微服务
 
