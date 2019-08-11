@@ -2,7 +2,7 @@
 
 [https://github.com/Unknwon/the-way-to-go_ZH_CN/blob/master/eBook/directory.md](https://github.com/Unknwon/the-way-to-go_ZH_CN/blob/master/eBook/directory.md)
 
-[[https://www.w3cschool.cn/go_internals/?](https://www.w3cschool.cn/go_internals/?)]([https://www.w3cschool.cn/go_internals/?](https://www.w3cschool.cn/go_internals/?))
+[https://www.w3cschool.cn/go_internals/?](https://www.w3cschool.cn/go_internals/?)
 
 - 常量计数器iota
 
@@ -55,6 +55,7 @@
 - JSON Tag
 
 	在定义struct的时候，可以在字段后面添加tag，来控制encode/decode：是否要decode/encode某个字段，JSON中的字段名称是什么。可以选择的控制字段有三种：
+
 	`-`：不要解析这个字段
 	`omitempty`：当字段为空（默认值）时，不要解析这个字段。比如false;0;nil;长度为0的array、map、slice、string
 	`FieldName`：当解析json的时候，使用这个名字
