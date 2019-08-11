@@ -2,6 +2,8 @@
 
 [https://github.com/Unknwon/the-way-to-go_ZH_CN/blob/master/eBook/directory.md](https://github.com/Unknwon/the-way-to-go_ZH_CN/blob/master/eBook/directory.md)
 
+[[https://www.w3cschool.cn/go_internals/?](https://www.w3cschool.cn/go_internals/?)]([https://www.w3cschool.cn/go_internals/?](https://www.w3cschool.cn/go_internals/?))
+
 - 常量计数器iota
 
 	iota是常量计数器,只能在常量的表达式中使用。iota在const关键字出现时将被重置为0(const内部的第一行之前)，const中每新增一行常量声明将使iota计数一次(即其值自动加1)。使用iota能简化定义，在定义枚举时很有用。
