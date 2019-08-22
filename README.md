@@ -10,6 +10,7 @@
 
 	- [Go基础](https://github.com/SecurityNeo/ReadingNotes/blob/master/Coding/Go/Go%E5%9F%BA%E7%A1%80.md)
 	- [Go GC算法](https://github.com/SecurityNeo/ReadingNotes/blob/master/Coding/Go/Go%20GC%E7%AE%97%E6%B3%95.md)
+	- [基本数据结构](https://github.com/SecurityNeo/ReadingNotes/blob/master/Coding/Go/%E5%9F%BA%E6%9C%AC%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.md)
 
 
 ## 数据库 ##
