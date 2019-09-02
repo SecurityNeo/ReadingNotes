@@ -39,7 +39,7 @@ struct G
     uintptr    stack0;
     FuncVal*    fnstart;        // goroutine运行的函数
     void*    param;        // 用于传递参数，睡眠时其它goroutine设置param，唤醒时此goroutine可以获取
-    int16    status;        // 状态Gidle,Grunnable,Grunning,Gsyscall,Gwaiting,Gdead
+    int16    status;        // 状态：Gidle,Grunnable,Grunning,Gsyscall,Gwaiting,Gdead
     int64    goid;        // goroutine的id号
     G*    schedlink;
     M*    m;        // for debuggers, but offset not hard-coded
@@ -81,3 +81,71 @@ struct M
     ...
 };
 ```
+
+结构体M中有两个G，一个是curg，代表结构体M当前绑定的结构体G。另一个是g0，是带有调度栈的goroutine，这是一个比较特殊的goroutine。普通的goroutine的栈是在堆上分配的可增长的栈，而g0的栈是M对应的线程的栈。所有调度相关的代码，会先切换到该goroutine的栈中再执行。
+
+**结构体P**
+
+```golang
+struct P
+{
+    Lock;
+    uint32    status;  // 状态：Pidle,Prunning,Psyscall,Pgcstop,Pdead
+    P*    link;
+    uint32    schedtick;   // 每次调度时将它加一
+    M*    m;    // 链接到它关联的M (nil if idle)
+    MCache*    mcache;
+
+    G*    runq[256];
+    int32    runqhead;
+    int32    runqtail;
+
+    // Available G's (status == Gdead)
+    G*    gfree;
+    int32    gfreecnt;
+    byte    pad[64];
+};
+```
+
+Processor的缩写。结构体P的加入是为了提高Go程序的并发度，实现更好的调度。M代表OS线程。P代表Go代码执行时需要的资源。当M执行Go代码时，它需要关联一个P，当M为idle或者在系统调用中时，它也需要P。有刚好GOMAXPROCS个P。所有的P被组织为一个数组，在P上实现了工作流窃取的调度器。跟G不同的是，P不存在waiting状态。MCache被移到了P中，但是在结构体M中也还保留着。在P中有一个Grunnable的goroutine队列，这是一个P的局部队列。当P执行Go代码时，它会优先从自己的这个局部队列中取，这时可以不用加锁，提高了并发度。如果发现这个队列空了，则去其它P的队列中拿一半过来，这样实现工作流窃取的调度。这种情况下是需要给调用器加锁的。
+
+**Sched**
+
+Sched是调度实现中使用的数据结构，该结构体的定义在文件proc.c中。
+
+```golang
+struct Sched {
+    Lock;
+
+    uint64    goidgen;
+
+    M*    midle;     // idle m's waiting for work
+    int32    nmidle;     // number of idle m's waiting for work
+    int32    nmidlelocked; // number of locked m's waiting for work
+    int3    mcount;     // number of m's that have been created
+    int32    maxmcount;    // maximum number of m's allowed (or die)
+
+    P*    pidle;  // idle P's
+    uint32    npidle;  //idle P的数量
+    uint32    nmspinning;
+
+    // Global runnable queue.
+    G*    runqhead;
+    G*    runqtail;
+    int32    runqsize;
+
+    // Global cache of dead G's.
+    Lock    gflock;
+    G*    gfree;
+
+    int32    stopwait;
+    Note    stopnote;
+    uint32    sysmonwait;
+    Note    sysmonnote;
+    uint64    lastpoll;
+
+    int32    profilehz;    // cpu profiling rate
+}
+```
+
+大多数需要的信息都已放在了结构体M、G和P中，Sched结构体只是一个壳。可以看到，其中有M的idle队列，P的idle队列，以及一个全局的就绪的G队列。Sched结构体中的Lock是非常必须的，如果M或P等做一些非局部的操作，它们一般需要先锁住调度器。
