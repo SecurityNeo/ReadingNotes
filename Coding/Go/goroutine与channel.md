@@ -2,6 +2,10 @@
 
 [非常棒的一篇文章https://www.cnblogs.com/wdliu/p/9272220.html](https://www.cnblogs.com/wdliu/p/9272220.html)
 
+[https://blog.csdn.net/qq_25504271/article/details/81000217](https://blog.csdn.net/qq_25504271/article/details/81000217)
+
+[深入golang之---goroutine并发控制与通信](https://studygolang.com/articles/13343)
+
 [https://www.w3cschool.cn/go_internals/go_internals-8h5b282y.html](https://www.w3cschool.cn/go_internals/go_internals-8h5b282y.html)
 
 ## 相关术语 ##
@@ -169,3 +173,4 @@ struct Sched {
 goroutine的状态变迁图：
 
 ![](img/Go_goroutine_state.jpg)
+
