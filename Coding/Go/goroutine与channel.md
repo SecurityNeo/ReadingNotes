@@ -174,3 +174,21 @@ goroutine的状态变迁图：
 
 ![](img/Go_goroutine_state.jpg)
 
+
+## channel ##
+
+[golang channel 使用总结](http://litang.me/post/golang-channel/)
+
+[Golang Channel最佳实践之基本规则](https://www.jianshu.com/p/5046bf8593c3)
+
+**内部结构**
+
+![](img/Go_Chan.png)
+
+- 接收消息的协程队列。这个队列的结构是一个限定最大长度的链表，所有阻塞在channel的接收操作的协程都会被放在这个队列里。
+- 发送消息的协程队列。这个队列的结构也是一个限定最大长度的链表。所有阻塞在channel的发送操作的协程也都会被放在这个队列里。
+- 环形数据缓冲队列。这个环形数组的大小就是channel的容量。如果数组装满了，就表示channel满了，如果数组里一个值也没有，就表示channel是空的。对于一个阻塞型channel来说，它总是同时处于即满又空的状态。不带缓冲的channel此队列size则为0。
+
+**操作规则**
+
+![](img/Go_channel2.jpg)
