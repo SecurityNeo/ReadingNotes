@@ -192,3 +192,63 @@ goroutine的状态变迁图：
 **操作规则**
 
 ![](img/Go_channel2.jpg)
+
+**unbufferd channel和bufferd channel**
+
+[https://blog.csdn.net/u012299594/article/details/85105477](https://blog.csdn.net/u012299594/article/details/85105477)
+
+- unbufferd channel
+
+不存储任何数据，只负责数据的流通，并且数据的接收一定发生在数据发送完成之前。
+
+下边的例子不会打印子goroutine的数字，在子goroutine打印之前，main goroutine就已经执行完成了。
+
+```golang
+
+func main() {
+	go func() {
+		for i := 0; i < 10; i++ {
+			fmt.Printf("%d ", i)
+		}
+	}()
+	fmt.Println("hello")
+}
+```
+
+可以用一个unbufferd channel来让两个goruntine之间有一些通信，让main goruntine收到sub goruntine通知后再退出。在这种场景中，channel并不携带任何数据，只是起到一个信号的作用。
+
+```golang
+
+func main() {
+	var ch = make(chan string)
+	go func() {
+		for i := 0; i < 10; i++ {
+			fmt.Printf("%d ", i)
+		}
+		ch <- "exit"
+	}()
+	fmt.Println("hello")
+	<-ch
+}
+```
+
+- bufferd channel
+
+`buffer size=1`和`buffer size>1`的channel：
+
+- 对于`buffer size=1`的channel，第二个数据发送完成之前，之前发送的第一个数据一定被取走了，否则发送也会被block住，数据的交付得到了延迟保证。
+- 对于`buffer size>1`的channel，发送数据时，之前发送的数据不能保证一定被取走了，并且buffer size越大，数据的交付得到的保证越少。也正是由于这种无保证交付，减少了goroutine之间通信时的阻塞延迟，根据发送数据、接收数据、数据处理的速度合理的设计buffer size，甚至可以在不浪费空间的情况下做到没有任何延迟。
+
+如果channel buffer已经塞满了数据，继续执行发送会导致当前goruntine被block住（阻塞），直到channel中的数据被取走一部分才可以继续向channel发送数据。
+
+## gorutine泄露 ##
+
+如果最终永远堵塞在I/O上，或者陷入死循环，那么goroutine会发生泄露。即使是阻塞的goroutine，也会消耗资源，因此，程序可能会使用比实际需要更多的内存，或者最终耗尽内存，从而导致崩溃。泄露的goruntine并不会被自动回收。
+
+几种容易引起gorontine泄漏的场景：
+
+- 发送到一个没有接收者的channel
+- 从没有发送者的channel中接收数据
+- 从nil channel中读或发送数据
+
+
