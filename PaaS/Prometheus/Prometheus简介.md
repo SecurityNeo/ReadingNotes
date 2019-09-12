@@ -201,6 +201,48 @@ scrape_configs可以有多个，一般来说每个任务（Job）对应一个配
 - metric_relabel_configs：metric重置标签配置
 - static_configs:静态目标配置，配置了该任务要抓取的所有实例，按组配置，包含相同标签的实例可以分为一组，以简化配置。
 
+**relabel_configs**
+
+发生在采集样本数据之前，对Target实例的标签进行重写的机制在Prometheus被称为Relabeling。
+
+一些重要标签：
+
+- __address__：当前Target实例的访问地址<host>:<port>
+- __scheme__：采集目标服务访问地址的HTTP Scheme，HTTP或者HTTPS
+- __metrics_path__：采集目标服务访问地址的访问路径
+- __param_<name>：采集任务目标服务的中包含的请求参数
+
+配置：
+
+```golang
+# The source labels select values from existing labels. Their content is concatenated
+# using the configured separator and matched against the configured regular expression
+# for the replace, keep, and drop actions.
+[ source_labels: '[' <labelname> [, ...] ']' ]
+ 
+# Separator placed between concatenated source label values.
+[ separator: <string> | default = ; ]
+ 
+# Label to which the resulting value is written in a replace action.
+# It is mandatory for replace actions. Regex capture groups are available.
+[ target_label: <labelname> ]
+ 
+# Regular expression against which the extracted value is matched.
+[ regex: <regex> | default = (.*) ]
+ 
+# Modulus to take of the hash of the source label values.
+[ modulus: <uint64> ]
+ 
+# Replacement value against which a regex replace is performed if the
+# regular expression matches. Regex capture groups are available.
+[ replacement: <string> | default = $1 ]
+ 
+# Action to perform based on regex matching.
+[ action: <relabel_action> | default = replace ]
+
+```
+
+
 **规则配置**
 
 记录规则允许我们把一些经常需要使用并且查询时计算量很大的查询表达式，预先计算并保存到一个新的时序。查询这个新的时序比从原始一个或多个时序实时计算快得多，并且还能够避免不必要的计算。在一些特殊场景下这甚至是必须的，比如仪表盘里展示的各类定时刷新的数据，数据种类多且需要计算非常快。
