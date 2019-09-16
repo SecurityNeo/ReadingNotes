@@ -165,6 +165,7 @@
 - Prometheus
 
 	- [Prometheus简介](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Prometheus/Prometheus%E7%AE%80%E4%BB%8B.md)
+	- [Prometheus Operator](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Prometheus/Prometheus%20Operator.md)
 
 - Terraform
 
