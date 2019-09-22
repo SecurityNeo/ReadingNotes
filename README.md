@@ -13,7 +13,7 @@
 	- [基本数据结构](https://github.com/SecurityNeo/ReadingNotes/blob/master/Coding/Go/%E5%9F%BA%E6%9C%AC%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84.md)
     - [函数调用协议](https://github.com/SecurityNeo/ReadingNotes/blob/master/Coding/Go/%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E5%8D%8F%E8%AE%AE.md)
     - [goroutine与channel](https://github.com/SecurityNeo/ReadingNotes/blob/master/Coding/Go/goroutine%E4%B8%8Echannel.md)
-
+	- [备忘录](https://github.com/SecurityNeo/ReadingNotes/blob/master/Coding/Go/%E5%A4%87%E5%BF%98%E5%BD%95.md)
 
 ## 数据库 ##
 
