@@ -2,6 +2,8 @@
 
 [https://blog.csdn.net/xiangxianghehe/article/details/78790601](https://blog.csdn.net/xiangxianghehe/article/details/78790601)
 
+[https://studygolang.com/articles/12264](https://studygolang.com/articles/12264)
+
 一个方法就是一个包含了接受者的函数，接受者可以是命名类型或者结构体类型的一个值或者是一个指针,但是接收者不能是一个接口类型。方法的声明和普通函数的声明类似，只是在函数名称前面多了一个参数，这个参数把这个方法绑定到这个参数对应的类型上。方法常见的语法：
 
 ```golang
