@@ -31,13 +31,13 @@
 		CPUnn        		显示执行时间内CPU占用情况，其中包含user%、sys%、wait%和idle%
 		CPU_ALL         	所有CPU概述，显示所有CPU平均占用情况
 		CPU_SUMM    		每一个CPU在执行时间内的占用情况，其中包含user%、sys%、wait%和idle
-		DGBUSY        		磁盘组每个hdisk设备平均占用情况
+		DGBUSY				磁盘组每个hdisk设备平均占用情况
 		DGREAD        		每个磁盘组的平均读情况
-		DGSIZE      		每个磁盘组的平均读写情况（块大小）
+		DGSIZE				每个磁盘组的平均读写情况（块大小）
 		DGWRITE     		每个磁盘组的平均写情况
-		DGXFER        		每个磁盘组的I/O每秒操作
-		MEM            		内存相关的主要信息，使用、空闲内存大小等
-		NET            		本sheet显示系统中每个网络适配器的数据传输速率（千字节/秒）
+		DGXFER				每个磁盘组的I/O每秒操作
+		MEM					内存相关的主要信息，使用、空闲内存大小等
+		NET					本sheet显示系统中每个网络适配器的数据传输速率（千字节/秒）
 		MEMUSE				除`%comp`参数外,本sheet包含的所有项都和vmtune命令的报告中一样
 		MEMNEW				本sheet显示分配的内存片信息，分三大类：用户进程使用页，文件系统缓存，系统内核使用页
 		NETPACKET    		本sheet统计每个适配器网络读写包的数量；这个类似于`netpmon  –O dd`命令
@@ -57,10 +57,10 @@
 		DISKXFER    		每个hdisk的I/O每秒操作
 		DISKSERV    		本sheet显示在每个收集间隔中hdisk的评估服务时间（未响应时间）
 		DISK_SUMM    		总体disk读、写以及I/O操作
-		JFSFILE        		本sheet显示对于每一个文件系统中，在每个间隔区间正在被使用的空间百分比
-		PROC        		本sheet包含nmon内核内部的统计信息。其中RunQueue和Swap-in域是使用的平均时间间隔，其他项的单位是比率/秒
+		JFSFILE				本sheet显示对于每一个文件系统中，在每个间隔区间正在被使用的空间百分比
+		PROC				本sheet包含nmon内核内部的统计信息。其中RunQueue和Swap-in域是使用的平均时间间隔，其他项的单位是比率/秒
 		PROCAIO        		本sheet包含关于可用的和active的异步IO进程数量信息
-		TOP            		PID进程号
+		TOP					
 		ZZZZ        		本sheet自动转换所有nmon的时间戳为现在真实的时间，方便更容易的分析
 		EMCBSIZE/FAStBSIZE	执行时间内EMC存储的传输块大小
 		EMCBUSY/FAStBUSY	EMC存储设备平均占用情况
@@ -77,6 +77,41 @@
 		JFSFILE				本sheet显示对于每一个文件系统中，在每个间隔区间正在被使用的空间百分比
 		JFSINODE			本sheet显示对于每一个文件系统中，在每个间隔区间正在被使用的inode百分比
 		LARGEPAGE			本图表显示Usedpages和Freepages随着时间的变化
+
+	指标详解：
+		- SYS_SUMM：
+			- CPU%		cpu占有率变化情况
+			- IO/sec	IO的变化情况
+		- AAA：
+			- AIX		AIX版本号
+			- build		build版本号
+			- command	执行命令
+			- cpus		CPU数量
+			- date		执行日期
+			- hardware	被测主机处理器技术；
+			- host		被测主机名；
+			- interval	监控取样间隔；（秒）
+			- kernel	被测主机内核信息；
+			- ML		维护等级；
+			- progname	执行文件名称；
+			- runname	运行主机名称；
+			- snapshots	实际快照次数；
+			- subversion	nmon版本详情；
+			- time		执行开始时间戳；
+			- user		执行命令用户名；
+			- version	收集数据的nmon版本；
+			- analyser	nmon analyser版本号；
+			- environment	所用excel版本；
+			- parms		excel参数设定；
+			- settings	excel环境设置；
+			- elapsed	生成excel消耗时间；
+		- BBBB
+			- name		存储磁盘名称；
+			- size(GB)	磁盘容量；
+			- disc attach type	磁盘类型；
+		- BBBC
+			- hdisknn	各个磁盘信息、状态以及MOUNT位置
+
 
 
 - dd
