@@ -88,29 +88,41 @@
 			- command	执行命令
 			- cpus		CPU数量
 			- date		执行日期
-			- hardware	被测主机处理器技术；
-			- host		被测主机名；
-			- interval	监控取样间隔；（秒）
-			- kernel	被测主机内核信息；
-			- ML		维护等级；
-			- progname	执行文件名称；
-			- runname	运行主机名称；
-			- snapshots	实际快照次数；
-			- subversion	nmon版本详情；
-			- time		执行开始时间戳；
-			- user		执行命令用户名；
-			- version	收集数据的nmon版本；
-			- analyser	nmon analyser版本号；
-			- environment	所用excel版本；
-			- parms		excel参数设定；
-			- settings	excel环境设置；
-			- elapsed	生成excel消耗时间；
+			- hardware	被测主机处理器技术
+			- host		被测主机名
+			- interval	监控取样间隔（秒）
+			- kernel	被测主机内核信息
+			- ML		维护等级
+			- progname	执行文件名称
+			- runname	运行主机名称
+			- snapshots	实际快照次数
+			- subversion	nmon版本详情
+			- time		执行开始时间戳
+			- user		执行命令用户名
+			- version	收集数据的nmon版本
+			- analyser	nmon analyser版本号
+			- environment	所用excel版本
+			- parms		excel参数设定
+			- settings	excel环境设置
+			- elapsed	生成excel消耗时间
 		- BBBB
-			- name		存储磁盘名称；
-			- size(GB)	磁盘容量；
-			- disc attach type	磁盘类型；
+			- name		存储磁盘名称
+			- size(GB)	磁盘容量
+			- disc attach type	磁盘类型
 		- BBBC
 			- hdisknn	各个磁盘信息、状态以及MOUNT位置
+		- BBBD
+			- Adapter_number	磁盘适配器编号
+			- Name		磁盘适配器名称
+			- Disks		磁盘适配器数量
+			- Description	磁盘适配器描述
+		- BBBN
+			- NetworkName	网络名称
+			- MTU			网络上传送的最大数据包，单位是字节
+			- Mbits			带宽
+			- Name			名称
+
+
 
 
 
