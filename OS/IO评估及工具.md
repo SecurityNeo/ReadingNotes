@@ -17,10 +17,15 @@
 **磁盘IO**
 
 - orion
+
 	oracle出品，模拟Oracle数据库IO负载
+
 - iometer
+
 	[http://www.iometer.org/](http://www.iometer.org/)。工作在单系统和集群系统上用来衡量和描述I/O子系统的工具。
+
 - Nmon
+
 	[http://nmon.sourceforge.net/pmwiki.php](http://nmon.sourceforge.net/pmwiki.php)。[nmon analyse可视化展示](https://www.ibm.com/developerworks/community/wikis/home?lang=en#!/wiki/Power+Systems/page/nmon_analyser)
 	[https://blog.csdn.net/saraul/article/details/8570781](https://blog.csdn.net/saraul/article/details/8570781)
 
@@ -79,9 +84,11 @@
 		LARGEPAGE			本图表显示Usedpages和Freepages随着时间的变化
 
 	指标详解：
+
 		- SYS_SUMM：
 			- CPU%		cpu占有率变化情况
 			- IO/sec	IO的变化情况
+			
 		- AAA：
 			- AIX		AIX版本号
 			- build		build版本号
@@ -105,34 +112,110 @@
 			- parms		excel参数设定
 			- settings	excel环境设置
 			- elapsed	生成excel消耗时间
+			
 		- BBBB
 			- name		存储磁盘名称
 			- size(GB)	磁盘容量
 			- disc attach type	磁盘类型
+			
 		- BBBC
 			- hdisknn	各个磁盘信息、状态以及MOUNT位置
+			
 		- BBBD
 			- Adapter_number	磁盘适配器编号
 			- Name		磁盘适配器名称
 			- Disks		磁盘适配器数量
 			- Description	磁盘适配器描述
+			
 		- BBBN
+		
 			- NetworkName	网络名称
 			- MTU			网络上传送的最大数据包，单位是字节
 			- Mbits			带宽
 			- Name			名称
+
+		- CPUnn
+		
+			- CPU nn	执行间隔时间列表
+			- User%		显示在用户模式下执行的程序所使用的CPU百分比
+			- Sys%		显示在内核模式下执行的程序所使用的CPU百分比
+			- Wait%		显示等待IO所花的时间百分比
+			- Idle%		显示CPU的空闲时间百分比
+			- CPU%		CPU总体占用情况
+
+		- DISKBSIZE
+		
+			- Disk Block Size Hostname		执行间隔时间列表
+			- hdisknn		磁盘传输速度时间间隔采样（读和写的总趋势图）
+
+		- DISKBUSY
+		
+			- Disk %Busy Hostname		执行间隔时间列表
+			- hdisknn		每个磁盘执行采样数据（磁盘设备的占用百分比）
+
+		- DISKREAD
+		
+			- Disk Read kb/s Hostname		执行间隔时间列表
+			- hdisknn		每个磁盘执行采样数据（磁盘设备的读速率）
+
+		- DISKWRITE
+		
+			- Disk Write kb/s Hostname		执行间隔时间列表
+			- hdisknn		每个磁盘执行采样数据（磁盘设备的写速率）
+
+		- DISKXFER
+		
+			- Disk transfers per second Hostname		执行间隔时间列表
+			- hdisknn		每秒钟输出到物理磁盘的传输次数
+
+		- DISK_SUMM
+		
+			- Disk total kb/s  Hostname		执行间隔时间列表
+			- Disk Read kb/s		每个磁盘执行采样数据（磁盘设备的读速率）
+			- Disk Write kb/s		每个磁盘执行采样数据（磁盘设备的写速率）
+			- IO/sec		每秒钟输出到物理磁盘的传输次数
+
+		- FILE
+		
+			- iget		在监控期间每秒钟到节点查找例行程序的呼叫数
+			- namei		在监控期间每秒钟路径查找例行程序的呼叫数（sar -a）                                                                                                                                              
+			- dirblk	在监控期间通过目录搜索例行程序每秒钟扫描到的目录块数  （sar -a）                                                                                                                     
+			- readch	在监控期间通过读系统呼叫每秒钟读出的字节数（sar  -c）                                                                                                                                                                                                     
+			- writech	在监控期间通过写系统呼叫每秒钟写入的字节数（sar  -c）                                                                                                                                                                                          
+			- ttyrawch	在监控期间通过TTYs每秒钟读入的裸字节数（sar  -y ）.                                                                                                                                                                                                                    
+			- ttycanch	终端输入队列字符。对于aix Version 4或者更后的版本这个值总是0                                                                                                                                                                                
+			- ttyoutch	终端输出队列字符（sar -y ）
+
+		- IOADAPT
+		
+			- Disk Adapter Hostname(KB/s)		执行间隔时间列表；
+			- Disk Adapter_read			磁盘适配器读速率
+			- Disk Adapter_write		磁盘适配器写速率
+			- Disk  Adapter_xfer-tps	磁盘适配器传输速率（该物理磁盘每秒的IO传输请求数量）
+
+		- JFSFILE
+		
+			- JFS Filespace %Used Hostname		执行间隔时间列表
+			- file  system/LV		文件系统以及mount磁盘设备已使用空间百分比
 
 
 
 
 
 - dd
+
 	仅仅是对文件进行读写，没有模拟应用、业务、场景的效果
+
 - xdd
+
 - iorate
+
 - iozone
+
 - postmark
+
 	可以实现文件读写、创建、删除这样的操作。适合小文件应用场景的测试
+
 
 **网络IO**
 
