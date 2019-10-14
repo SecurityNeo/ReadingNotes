@@ -198,7 +198,75 @@
 			- JFS Filespace %Used Hostname		执行间隔时间列表
 			- file  system/LV		文件系统以及mount磁盘设备已使用空间百分比
 
+		- JFSINODE
 
+			- JFS Inode %Used Hostname	执行间隔时间列表
+			- file  system/LV		文件系统以及mount磁盘设备的inode已使用空间百分比
+
+		- MEM
+
+			- Memory Hostname		执行间隔时间列表
+			- Real Free %		实际剩余内存百分比
+			- Virtual free %		虚拟剩余内存百分比
+			- Real free(MB)		实际剩余内存大小（MB）
+			- Virtual free(MB)		虚拟剩余内存大小（MB）
+			- Real total(MB)		实际内存总体大小（MB）
+			- Virtual  total(MB)		虚拟内存总体大小（MB）
+
+		- MEMUSE
+
+			- %numperm		分配给文件页的实际内存百分比
+			- %minperm		mixperm的缺省值约为20%的物理内存.通常会不断的运行，除非vmtune或rmss命令中使用收集
+			- %maxperm		maxperm的缺省值约为80%的物理内存.  通常会不断的运行，除非vmtune或rmss命令中使用收集
+			- minfree		空闲页面数的最小值
+			- maxfree		空闲页面数的最大值，指定的vmtune命令或系统默认
+			- %comp		分配给计算页的内存百分比,NMON分析器计算这个值。计算页是可被page space支持的，包括存储和程序文本段 他们不包括数据，可执行的和共享的库文件
+
+		- MEMNEW
+
+			- Process%		分配给用户进程的内存百分比
+			- FSCache%		分配给文件系统缓存的内存百分比
+			- System%		系统程序使用的内存百分比
+			- Free%		未被分配的内存百分比           
+			- User%		非系统程序使用的内存百分比
+			
+		- NET
+
+			- read/write		显示系统中每个网络适配器的数据传输速率（千字节/秒）
+
+		- NETPACKET
+
+			- reads/s		统计每个适配器网络读包的数量
+			- writes/s		统计每个适配器网络写包的数量
+
+		- PAGE
+
+			- aults		每秒的page faults数
+			- pgin		每秒钟所读入的页数，包括从文件系统读取的页数
+			- pgout		每秒钟所写出的页数，包括写到文件系统的页数
+			- pgsin		每秒钟从页面空间所读取的页数
+			- pgsout	每秒钟写到页面空间的页数
+			- reclaims		从nmon回收这项之前的10个，和vmstat报告的值是一样的，代表了页替换机制释放的pages/sec的数量
+			- scans		扫描页替换机制的pages/sec的数量，和vmstat报告的值是一样的，页替换在空闲页数量到达最小值时初始化，在空闲到达最大值时停止
+			- cycles		周期times/sec的数值，页替换机制需要扫描整个页表，来补充空闲列表。这和vmstat报告的cy数值一样，只是vmstat报告的这个值是整形值，而nmon报告的是实型值
+			- fsin		分析器计算的数据为pgin-pgsin的图形处理所用
+			- fsout		分析器计算的数据为pgout-pgsout的图形处理所用
+			- sr/fr		分析器计算的数据为scans/reclaims的图形处理所用  
+
+		- PROC
+
+			- RunQueue		运行队列中的内核线程平均数（同`sar -q`中的runq-sz）
+			- Swap-in		等待page in的内核线程平均数（同`sar -q`中的swpq-sz）
+			- pswitch		上下文开关个数（同`sar -w`中的pswch/s）
+			- syscall		系统调用总数（同`sar -c`中的scall/s）
+			- read		系统调用中read的数量（同`sar -c`中的sread/s）
+			- write		系统调用中write的数量（同`sar -c`中的swrit/s）
+			- fork		系统调用中fork的数量（同`sar -c`中的fork/s）
+			- exec		系统调用中exec 的数量（同`sar -c`中的exec/s）
+			- rcvint		tty接收中断的数量（同`sar -y`中的revin/s）
+			- xmtint		tty传输中断的数量（同`sar -y`中的xmtin/s）
+			- sem		IPC信号元的数量 创建，使用和消除)（同`sar -m`中的sema/s）
+			- msg		IPC消息元的数量 (发送和接收)（同`sar -m`中的sema/s）
 
 
 
