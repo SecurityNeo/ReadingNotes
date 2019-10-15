@@ -76,15 +76,12 @@ GCE随着node节点的增加master节点的配置：
 
 **Kube APIServer配置**
 
-node节点数量 >=3000， 推荐设置如下配置：
-
 - `--max-requests-inflight=3000`
+	在给定时间内的最大non-mutating请求数，默认400，可以调整至1000
 - `--max-mutating-requests-inflight=1000`
-
-node节点数量在1000--3000， 推荐设置如下配置：
-
-- `--max-requests-inflight=1500`
-- `--max-mutating-requests-inflight=500`
+	在给定时间内的最大mutating请求数，调整apiserver的流控qos，可以调整至3000，默认为200
+- `--watch-cache-sizes=node#1000,pod#5000`
+	每个资源的监视缓存大小列表，以逗号分隔。格式：`resource [.group] #size`。调大 resources 的 watch size，默认为100，当集群中node以及pod数量非常多时可以稍微调大
 
 内存配置选项和node数量的关系，单位是MB：
 
