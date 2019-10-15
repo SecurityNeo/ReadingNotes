@@ -268,6 +268,25 @@
 			- sem		IPC信号元的数量 创建，使用和消除)（同`sar -m`中的sema/s）
 			- msg		IPC消息元的数量 (发送和接收)（同`sar -m`中的sema/s）
 
+		- TOP
+
+			- PID		进程号
+			- %CPU		CPU使用的平均数
+			- %Usr		显示运行的用户程序所占用的CPU百分比
+			- %Sys		显示运行的系统程序所占用的CPU百分比
+			- Threads		被使用在这个程序中的线程数
+			- Size		对于这个程序一次调用分配给数据段的paging  space平均值                                                                                             
+			- ResText		对于这个程序一次调用分配给代码段的内存平均值                                                                                                                                                                                                                                       
+			- ResData		对于这个程序一次调用分配给数据段的内存平均值
+			- CharIO		通过读写系统调用的每秒字节数                                                                                                                                                              
+			- %RAM		此命令所使用的内存百分比（`(ResText + ResData) / Real Mem`）                                                                                                                           
+			- Paging		此进程所有page  faults的总数                                                                                                                                                                                                                                                      
+			- Command		命令名称                                                                                                                                                                                                                                                                                                                                                                                                        
+			- WLMClass		此程序已分配的Workload Manager superclass名称                                                                                                                                                                                                                                                                                                                    
+			- IntervalCPU		详细信息中显示在时间间隔中所有调用命令所使用的CPU总数  
+			- WSet		详细信息中显示在时间间隔中所有调用命令所使用的内存总数                                                                                                                                                
+			- User		运行进程的用户名                                                                                                                                                                                                                                                                                                              
+			- Arg		包含完整的参数字符串输入命令
 
 
 - dd
