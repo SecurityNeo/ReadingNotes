@@ -297,6 +297,31 @@
 
 - iorate
 
+- iostat
+
+	- %user：CPU处在用户模式下的时间百分比
+	- %nice：CPU处在带NICE值的用户模式下的时间百分比
+	- %system：CPU处在系统模式下的时间百分比
+	- %iowait：CPU等待输入输出完成时间的百分比
+	- %steal：管理程序维护另一个虚拟处理器时，虚拟CPU的无意识等待时间百分比
+	- %idle：CPU空闲时间百分比
+	- tps：该设备每秒的传输次数
+	- kB_read/s：每秒从设备（drive expressed）读取的数据量
+	- kB_wrtn/s：每秒向设备（drive expressed）写入的数据量
+	- kB_read：  读取的总数据量
+	- kB_wrtn：写入的总数量数据量
+	- rrqm/s: 每秒对该设备的读请求被合并次数，文件系统会对读取同块(block)的请求进行合并
+	- wrqm/s: 每秒对该设备的写请求被合并次数
+	- r/s: 每秒完成的读请求次数
+	- w/s: 每秒完成的写请求次数
+	- rkB/s: 每秒读数据量(kB为单位)
+	- wkB/s: 每秒写数据量(kB为单位)
+	- avgrq-sz:平均每次IO操作的数据量(扇区数为单位)
+	- avgqu-sz: 平均等待处理的IO请求队列长度
+	- await: 平均每次IO请求等待时间(包括等待时间和处理时间，毫秒为单位)
+	- svctm: 平均每次IO请求的处理时间(毫秒为单位)
+	- %util: 采用周期内用于IO操作的时间比率，即IO队列非空的时间比率
+
 - iozone
 
 - postmark
