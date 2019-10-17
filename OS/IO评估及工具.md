@@ -324,6 +324,28 @@
 - 总IOPS：				Nmon DISK_SUMM Sheet：IO/Sec
 - 每个盘对应的读IOPS ：	Nmon DISKRIO Sheet
 - 每个盘对应的写IOPS ：	Nmon DISKWIO Sheet
-- 总IOPS：				命令行iostat -Dl：tps
-- 每个盘对应的读IOPS ：	命令行iostat -Dl：rps
-- 每个盘对应的写IOPS ：	命令行iostat -Dl：wps
+- 总IOPS：				命令行`iostat -Dl：tps`
+- 每个盘对应的读IOPS ：	命令行`iostat -Dl：rps`
+- 每个盘对应的写IOPS ：	命令行`iostat -Dl：wps`
+
+**带宽**
+
+- 总带宽：	Nmon DISK_SUMM Sheet：Disk Read KB/s，Disk Write KB/s
+- 每个盘对应的读带宽：	Nmon DISKREAD Sheet
+- 每个盘对应的写带宽：	Nmon DISKWRITE Sheet
+- 总带宽：	命令行`iostat -Dl`：bps
+- 每个盘对应的读带宽：	命令行`iostat -Dl`：bread
+- 每个盘对应的写带宽：	命令行`iostat -Dl`：bwrtn
+
+**响应时间**
+
+- 每个盘对应的读响应时间：	命令行`iostat -Dl`：read avg serv，max serv
+- 每个盘对应的写响应时间：	命令行`iostat -Dl`：write avg serv，max serv
+
+### 网络IO ###
+
+**带宽**
+
+- Nmon：	NET Sheet
+- 命令行topas：	Network：BPS、B-In、B-Out
+
