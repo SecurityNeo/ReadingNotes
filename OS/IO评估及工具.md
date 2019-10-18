@@ -296,6 +296,8 @@
 - xdd
 
 - iorate
+	
+	[https://manned.org/iorate/ff1b0b2d](https://manned.org/iorate/ff1b0b2d)
 
 - iostat
 
@@ -323,6 +325,31 @@
 	- %util: 采用周期内用于IO操作的时间比率，即IO队列非空的时间比率
 
 - iozone
+
+	[www.iozone.org](www.iozone.org)
+	常用参数：
+		-a 全面测试，比如块大小它会自动加
+
+		-i N 用来选择测试项, 比如Read/Write/Random 比较常用的是0 1 2,可以指定成-i 0 -i 1 -i2.这些别的详细内容请查man
+
+			0=write/rewrite
+			1=read/re-read
+			2=random-read/write
+			3=Read-backwards
+			4=Re-write-record
+			5=stride-read
+			6=fwrite/re-fwrite
+			7=fread/Re-fread
+			8=random mix
+			9=pwrite/Re-pwrite
+			10=pread/Re-pread
+			11=pwritev/Re-pwritev
+			12=preadv/Re-preadv
+
+		-r block size 指定一次写入/读出的块大小
+		-s file size 指定测试文件的大小
+		-f filename 指定测试文件的名字,完成后会自动删除(这个文件必须指定你要测试的那个硬盘中)
+		-F file1 file2... 指定多线程下测试的文件名
 
 - postmark
 
