@@ -65,6 +65,50 @@ Redis数据库中的所有数据都存储在内存中。同时提供了对持久
 	`redis> HDEL car price`
 
 
+**列表类型**
+
+- 向列表两端增加元素（`LPUSH key value [value …]` / `RPUSH key value [value …]`）,LPUSH命令用来向列表左边增加元素，返回值表示增加元素后列表的长度。 向列表右边增加元素的话则使用RPUSH命令。
+
+	`redis> LPUSH numbers 1`
+	`redis> LPUSH numbers 2 3`
+	`redis> RPUSH numbers 0 −1`
+
+- 从列表两端弹出元素（`LPOP key` / `RPOP key `），LPOP命令可以从列表左边弹出一个元素。LPOP命令执行两步操作：第一步 是将列表左边的元素从列表中移除，第二步是返回被移除的元素值。
+
+	`redis> LPOP numbers`
+
+- 获取列表中元素的个数（`LLEN key`），当键不存在时LLEN会返回0
+
+	`redis> LLEN numbers`
+
+- 获得列表片段（`LRANGE key start stop`），LRANGE 命令将返回索引从 start到 stop之间的所有元素（包含两端的元素）。
+
+	`redis> LRANGE numbers 0 2`
+
+- 删除列表中指定的值（`LREM key count value `），LREM命令会删除列表中前count个值为value的元素，返回值是实际删除的元素个数。根据count值的不同，LREM命令的执行方式会略有差异。
+
+	- 当count > 0时，LREM命令会从列表左边开始删除前count个值为value的元素。 
+	- 当count < 0时，LREM命令会从列表右边开始删除前|count|个值为value的元素。 
+	- 当count = 0是，LREM命令会删除所有值为value的元素。
+
+- 获得/设置指定索引的元素值（`LINDEX key index` / `LSET key index value`），。LINDEX命令用来返回 指定索引的元素，索引从0开始，如果index是负数则表示从右边开始计算的索引，最右边元素的索引是−1。LSET是另一个通过索引操作列表的命令，它会将索引为index的元素赋值为value。
+
+	`redis> LINDEX numbers 0`
+	`redis> LSET numbers 1 7` 
+
+- 只保留列表指定片段（`LTRIM key start end`），LTRIM 命令可以删除指定索引范围之外的所有元素，其指定列表范围的方法和LRANGE 命令相同。
+
+	`redis> LRANGE numbers 0 1`
+
+- 向列表中插入元素（`LINSERT key BEFORE|AFTER pivot value`）。LINSERT 命令首先会在列表中从左到右查找值为pivot的元素，然后根据第二个参数是BEFORE还是AFTER来决定将value插入到该元素的前面还是后面。LINSERT命令的返回值是插入后列表的元素个数。
+
+	`redis> LINSERT numbers AFTER 7 3`
+	`(integer) 4` 
+
+- 将元素从一个列表转到另一个列表（`RPOPLPUSH source destination`）。先执行RPOP命令再 执行LPUSH命令。RPOPLPUSH命令会先从source列表类型键的右边弹出一个元素，然后将其加入到destination列表类型键的左边，并返回这个元素的值，整个过程是原子的。
+
+
+
 
 
 
