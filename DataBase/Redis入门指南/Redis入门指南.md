@@ -13,6 +13,59 @@ Redis数据库中的所有数据都存储在内存中。同时提供了对持久
 
 [Redis的相关命令](https://redis.io/commands)
 
+### 常用命令： ###
+
+**字符串类型：**
+
+- 增加指定的整数（`INCRBY key increment`）
+	
+	`redis> INCRBY bar 2`
+
+- 减少指定的整数（`DECRBY key decrement`）
+
+	`redis> DECRBY key 5 `
+
+- 增加指定浮点数（`INCRBYFLOAT key increment`）
+
+	`redis> INCRBYFLOAT bar 2.7`
+
+- 向尾部追加值（`APPEND key value`）
+
+	`redis> APPEND key " world!"`
+
+- 获取字符串长度（`STRLEN key`）
+
+	`redis> STRLEN key`
+
+- 同时获得/设置多个键值（`MGET key [key …]` / `MSET key value [key value …]`）
+
+	`redis> MSET key1 v1 key2 v2 key3 v3`
+	`redis> MGET key1 key3 `
+
+**散列类型**
+
+- 赋值与取值（`HSET key field value` / `HGET key field` / `HMSET key field value [field value …]` / `HMGET key field [field …]` / `HGETALL key`）
+
+	`redis> HSET car price 500`
+	`redis> HSET car name BMW`
+	`redis> HGET car name "BMW"`
+
+- 判断字段是否存在（`HEXISTS key field `）,如果存在则返回1，否则返回0（如果键不存 在也会返回0）
+
+	` HEXISTS car model`
+
+- 当字段不存在时赋值（`HSETNX key field value`），如果字段已经存在，HSETNX命令将不 执行任何操作
+
+- 增加数字（`HINCRBY key field increment`）
+
+	`redis> HINCRBY person score 60`
+
+- 删除字段（`HDEL key field [field …]`），可以删除一个或多个字段，返回值是被删除的字段个数
+
+	`redis> HDEL car price`
+
+
+
 
 
 
