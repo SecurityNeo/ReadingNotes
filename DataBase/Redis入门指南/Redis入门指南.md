@@ -108,6 +108,42 @@ Redis数据库中的所有数据都存储在内存中。同时提供了对持久
 - 将元素从一个列表转到另一个列表（`RPOPLPUSH source destination`）。先执行RPOP命令再 执行LPUSH命令。RPOPLPUSH命令会先从source列表类型键的右边弹出一个元素，然后将其加入到destination列表类型键的左边，并返回这个元素的值，整个过程是原子的。
 
 
+**集合类型**
+
+- 增加/删除元素（`SADD key member [member …]` / `SREM key member [member …]`），SADD命令返回值是成功加入的元素数量，SREM命令用来从集合中删除一个或多个元素，并返回删除成功的个数。
+
+	`redis> SADD letters a b c`
+	`redis> SREM letters c d`
+
+- 获得集合中的所有元素（`SMEMBERS key`）
+
+	`redis> SMEMBERS letters`
+
+- 判断元素是否在集合中（`SISMEMBER key member`）,当值存在时SISMEMBER命令返回1，当值不存在或键不存在时返回0
+
+	`redis> SISMEMBER letters a`
+
+- 集合间运算
+
+	`SDIFF key [key „]`，对多个集合执行差集运算
+	`SINTER key [key „]`，对多个集合执行交集运算
+	`SUNION key [key „]`，对多个集合执行并集运算
+
+- 进行集合运算并将结果存储
+
+	`SDIFFSTORE destination key [key …]`
+	`SINTERSTORE destination key [key …]`
+	`SUNIONSTORE destination key [key …]`
+
+- 获得集合中元素个数（`SCARD key`）
+
+	`redis> SCARD letters`
+
+- 随机获得集合中的元素（`SRANDMEMBER key [count]`），可以传递count参数来一次随机获得多个元素，根据count的正负不同，具体表现也不同：
+	- 当count为正数时，SRANDMEMBER会随机从集合里获得count个不重复的元素。如果count的值大于集合中的元素个数，则SRANDMEMBER会返回集合中的全部元素。
+	- 当count为负数时，SRANDMEMBER会随机从集合里获得|count|个的元素，这些元素有可能相同。
+
+- 从集合中弹出一个元素（`SPOP key`）
 
 
 
