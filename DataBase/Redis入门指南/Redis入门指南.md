@@ -146,6 +146,61 @@ Redis数据库中的所有数据都存储在内存中。同时提供了对持久
 - 从集合中弹出一个元素（`SPOP key`）
 
 
+**有序集合类型**
+
+有序集合类型和列表类型的异同：
+
+	- 二者都是有序的。
+	- 二者都可以获得某一范围的元素。但是二者有着很大的区别，这使得它们的应用场景也是不同的。
+	- 列表类型是通过链表实现的，获取靠近两端的数据速度极快，而当元素增多后，访问中间数据的速度会较慢，所以它更加适合实现如“新鲜事”或“日志”这样很少访问中间元素的应用。
+	- 有序集合类型是使用散列表和跳跃表（Skip list）实现的，所以即使读取位于中间部分的数据速度也很快（时间复杂度是O(log(N))）。
+	- 列表中不能简单地调整某个元素的位置，但是有序集合可以（通过更改这个元素的分数）。
+	- 有序集合要比列表类型更耗费内存。
+
+- 增加元素（`ZADD key score member [score member …]`），ZADD 命令用来向有序集合中加入一个元素和该元素的分数，如果该元素已经存在则会用新的分数替换原有的分数。ZADD命令的返回值是新加入到集合中的元素个数。
+
+	`redis> ZADD scoreboard 89 Tom 67 Peter 100 David`
+
+- 获得元素的分数（`ZSCORE key member`）
+
+	`redis> ZSCORE scoreboard Tom`
+
+- 获得排名在某个范围的元素列表（`ZRANGE key start stop [WITHSCORES]` / `ZREVRANGE key start stop [WITHSCORES]`），ZRANGE命令会按照元素分数从小到大的顺序返回索引从 start到stop之间的所有元素（包含两端的元素）。ZREVRANGE命令和ZRANGE的唯一不同在于ZREVRANGE命令是按照元素分数从大到
+小的顺序给出结果的。
+
+	`ZRANGE scoreboard 0 2`
+
+- 获得指定分数范围的元素（`ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]`），如果希望分数范围不包含端点值，可以在分数前加上“(”符号。min和max还支持无穷大，同ZADD命令一样，-inf和+inf分别表示负无穷和正无穷。
+
+	`redis> ZRANGEBYSCORE scoreboard (80 +inf`
+
+- 增加某个元素的分数（`ZINCRBY key increment member`）
+
+	`redis> ZINCRBY scoreboard 4 Jerry`
+
+- 获得集合中元素的数量（`ZCARD key`）
+
+	`redis> ZCARD scoreboard`
+
+- 获得指定分数范围内的元素个数（`ZCOUNT key min max`）
+
+	`redis> ZCOUNT scoreboard 90 100`
+
+- 删除一个或多个元素（`ZREM key member [member …]`），ZREM命令的返回值是成功删除的元素数量（不包含本来就不存在的元素）。
+
+	`redis> ZREM scoreboard Wendy`
+
+- 按照排名范围删除元素（`ZREMRANGEBYRANK key start stop`），ZREMRANGEBYRANK命令按照元素分数从小到大的顺序（即索引0表示最小的值）删除处在指定排名范围内的所有元素，并返回删除的元素数量。
+
+	`redis> ZREMRANGEBYRANK testRem 0 2`
+
+- 按照分数范围删除元素（`ZREMRANGEBYSCORE key min max`），ZREMRANGEBYSCORE命令会删除指定分数范围内的所有元素
+
+	`redis> ZREMRANGEBYSCORE testRem (4 5`
+
+- 获得元素的排名（`ZRANK key member` / `ZREVRANK key member`），ZRANK命令会按照元素分数从小到大的顺序获得指定的元素的排名（从0开始，即分数最小的元素排名为0）。
+
+	`redis> ZRANK scoreboard Peter`
 
 
 
