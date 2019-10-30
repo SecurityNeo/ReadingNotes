@@ -110,7 +110,9 @@ Redis数据库中的所有数据都存储在内存中。同时提供了对持久
 
 **集合类型**
 
-- 增加/删除元素（`SADD key member [member …]` / `SREM key member [member …]`），SADD命令返回值是成功加入的元素数量，SREM命令用来从集合中删除一个或多个元素，并返回删除成功的个数。
+- 增加/删除元素（`
+
+-  key member [member …]` / `SREM key member [member …]`），SADD命令返回值是成功加入的元素数量，SREM命令用来从集合中删除一个或多个元素，并返回删除成功的个数。
 
 	`redis> SADD letters a b c`
 	`redis> SREM letters c d`
@@ -201,6 +203,46 @@ Redis数据库中的所有数据都存储在内存中。同时提供了对持久
 - 获得元素的排名（`ZRANK key member` / `ZREVRANK key member`），ZRANK命令会按照元素分数从小到大的顺序获得指定的元素的排名（从0开始，即分数最小的元素排名为0）。
 
 	`redis> ZRANK scoreboard Peter`
+
+
+## 进阶 ##
+
+### 事务 ###
+
+**错误处理**
+
+- 语法错误。
+
+	语法错误指命令不存在或者命令参数的个数不对。如果事务中有一个命令执行错误，执行EXEC命令后Redis就会直接返回错误，连语法正确的命令也不会执行。注意：Redis2.6.5之前的版本会忽略有语法错误的命令，然后执行事务中其他语法正确的命令。
+
+- 运行错误。
+
+	运行错误指在命令执行时出现的错误。这种错误在实际执行之前 Redis 是无法发现的，所以在事务里这样的命令是会被Redis接受并执行的。如果事务里的一条命令出现了运行错误，事务里其他的命令依然会继续执行（包括出错命令之后的命令）。
+
+注意： Redis的事务没有关系数据库事务提供的回滚（rollback）功能。
+
+
+**WATCH命令**
+
+WATCH 命令可以监控一个或多个键，一旦其中有一个键被修改（或删除），之后的事务就不会执行。监控一直持续到EXEC命令（事务中的命令是在EXEC之后才执行）。执行EXEC命令后会取消对所有键的监控，如果不想执行事务中的命令也可以使用
+UNWATCH命令来取消监控。
+
+```
+redis> SET key 1
+OK
+redis> WATCH key
+OK
+redis> SET key 2
+OK
+redis> MULTI
+OK
+redis> SET key 3
+QUEUED
+redis> EXEC
+(nil)
+redis> GET key
+"2"
+```
 
 
 
