@@ -244,6 +244,36 @@ redis> GET key
 "2"
 ```
 
+### 过期时间 ###
+
+**EXPIRE命令**
+
+使用方法为`EXPIRE key seconds`，其中seconds参数表示键的过期时间，单位是秒。可以使用PERSIST命令取消键的过期时间设置。EXPIRE命令的seconds参数必须是整数，所以最小单位是1秒。如果想要更精确的控制键的过期时间应该使用 PEXPIRE命令，PEXPIRE命令与EXPIRE的唯一区别是前者的时间单位是毫秒。
+
+```
+redis> SET session:29e3d uid1314
+OK
+redis> EXPIRE session:29e3d 900
+(integer) 1
+```
+
+使用TTL命令可以知道一个键还有多久的时间会被删除。当键不存在时TTL命令会返回−2。
+
+如果使用WATCH命令监测了一个拥有过期时间的键，该键时间到期自动删除并不会被WATCH命令认为该键被改变。
+
+**缓存过期**
+
+LRU(Least Recently Used) 算法是众多置换算法中的一种。Redis用到的LRU算法，是一种近似的LRU算法。。 Redis配置文件的maxmemory参数，限制Redis最大可用内存大小（单位是字节），当超出了这个限制时Redis会依据maxmemory policy参数指定的策略来删除不需要的键直到Redis占用的内存小于指定内存。
+
+置换策略：
+
+- noeviction: 不进行置换，表示即使内存达到上限也不进行置换，所有能引起内存增加的命令都会返回error
+- allkeys-lru: 优先删除掉最近最不经常使用的key，用以保存新数据
+- volatile-lru: 只从设置失效（expire set）的key中选择最近最不经常使用的key进行删除，用以保存新数据
+- allkeys-random: 随机从all-keys中选择一些key进行删除，用以保存新数据
+- volatile-random: 只从设置失效（expire set）的key中，选择一些key进行删除，用以保存新数据
+- volatile-ttl: 只从设置失效（expire set）的key中，选出存活时间（TTL）最短的key进行删除，用以保存新数据
+
 
 
 
