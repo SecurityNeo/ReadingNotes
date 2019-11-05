@@ -6,6 +6,8 @@
 
 [https://yunlzheng.gitbook.io/prometheus-book/](https://yunlzheng.gitbook.io/prometheus-book/)
 
+[https://www.bookstack.cn/read/prometheus-book/quickstart-why-monitor.md](https://www.bookstack.cn/read/prometheus-book/quickstart-why-monitor.md)
+
 摘自[https://www.ibm.com/developerworks/cn/cloud/library/cl-lo-prometheus-getting-started-and-practice/index.html](https://www.ibm.com/developerworks/cn/cloud/library/cl-lo-prometheus-getting-started-and-practice/index.html)
 
 **Prometheus特点**
