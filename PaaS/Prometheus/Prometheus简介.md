@@ -1,7 +1,10 @@
 # Prometheus简介 #
 
 [https://prometheus.io/](https://prometheus.io/)
+
 [https://github.com/prometheus](https://github.com/prometheus)
+
+[https://yunlzheng.gitbook.io/prometheus-book/](https://yunlzheng.gitbook.io/prometheus-book/)
 
 摘自[https://www.ibm.com/developerworks/cn/cloud/library/cl-lo-prometheus-getting-started-and-practice/index.html](https://www.ibm.com/developerworks/cn/cloud/library/cl-lo-prometheus-getting-started-and-practice/index.html)
 
