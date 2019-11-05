@@ -371,6 +371,26 @@ Redis默认会将快照文件存储在Redis当前进程的工作目录中的dump
 - 当进行快照的过程中，如果写入操作较多，造成fork前后数据差异较大，是会使得内存使用量显著超过实际数据大小的，因为内存中不仅保存了当前的数据库数据，而且还保存着fork时刻的内存数据。
 - 通过RDB方式实现持久化，一旦Redis异常退出，就会丢失最后一次快照以后更改的所有数据。
 
+
+### AOF ###
+
+AOF可以将Redis执行的每一条写命令追加到硬盘文件中，默认情况下Redis没有开启AOF（append only file）方式的持久化，可以通过appendonly参数启用：`appendonly yes`。AOF文件的保存位置和RDB文件的位置相同，都是通过dir参数设置，默认的文件名是appendonly.aof，可以通过appendfilename参数修改：`appendfilename appendonly.aof`。
+
+**AOF的实现**
+
+AOF文件的内容是Redis客户端向Redis发送的原始通信协议的内容。随着执行的命令越来越多，AOF文件的大小也会越来越
+大，Redis 可以自动优化AOF文件，每当达到一定条件时Redis就会自动重写AOF文件，这个条件可以在配置文件中设置：
+
+- `auto-aof-rewrite-percentage 100`
+	
+	当目前的AOF文件大小超过上一次重写时的AOF文件大小的百分之多少时会再次进行重写，如果之前没有重写过，则以启动时的AOF文件大小为依据。
+
+- `auto-aof-rewrite-min-size 64mb`
+
+	限制允许重写的最小AOF文件大小，通常在AOF文件很小的情况下即使其中有很多冗余的命令我们也并不太关心。
+
+除了让Redis自动执行重写外，我们还可以主动使用`BGREWRITEAOF`命令手动执行AOF重写。
+
 ## 简单动态字符串 ##
 
 Sds（Simple Dynamic String，简单动态字符串）是Redis底层所使用的字符串表示。对比C字符串， sds有以下特性：
