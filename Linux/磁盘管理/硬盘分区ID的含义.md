@@ -1,0 +1,233 @@
+# 硬盘分区ID的含义 #
+
+ID 分区描述
+-- -----------------------------------------------------------
+- 0 Empty
+- 1 DOS 12-bit FAT (0-15 MB)
+- 2 XENIX root
+- 3 XENIX /usr
+- 4 DOS 3.0+ 16-bit FAT (16-32 MB)
+- 5 DOS 3.3+ Extended Partition (0-2 GB)
+- 6 DOS 3.31+ 16-bit FAT (32 MB-2 GB)
+- 7 OS/2 IFS (e.g., HPFS)
+- 7 Windows NT NTFS
+- 7 Advanced Unix
+- 7 QNX2.x pre-1988 (see below under IDs 4d-4f)
+- 8 OS/2 (v1.0-1.3 only)
+- 8 AIX boot partition
+- 8 SplitDrive
+- 8 Commodore DOS
+- 8 DELL partition spanning multiple drives
+- 8 QNX 1.x and 2.x ("qny")
+- 9 AIX data partition
+- 9 Coherent filesystem
+- 9 QNX 1.x and 2.x ("qnz")
+- a OS/2 Boot Manager
+- a Coherent swap partition
+- a OPUS
+- b WIN95 OSR2 32-bit FAT(512 MB 2 TB)
+- c WIN95 OSR2 32-bit FAT, LBA-mapped (512 MB 2 TB )
+- e WIN95: DOS 16-bit FAT, LBA-mapped(32 MB-2 GB)
+- f WIN95: Extended partition, LBA-mapped(0-2 GB)
+- 10 OPUS (?)
+- 11 Hidden DOS 12-bit FAT
+- 12 Compaq config partition
+- 14 Hidden DOS 16-bit FAT <32M
+- 16 Hidden DOS 16-bit FAT >=32M
+- 17 Hidden IFS (e.g., HPFS)
+- 18 AST SmartSleep Partition
+- 19 Unused
+- 1b Hidden WIN95 OSR2 32-bit FAT
+- 1c Hidden WIN95 OSR2 32-bit FAT, LBA-mapped
+- 1e Hidden WIN95 16-bit FAT, LBA-mapped
+- 20 Unused
+- 21 Reserved
+- 21 Unused
+- 22 Unused
+- 23 Reserved
+- 24 NEC DOS 3.x
+- 26 Reserved
+- 31 Reserved
+- 32 NOS
+- 33 Reserved
+- 34 Reserved
+- 35 JFS on OS/2 or eCS  
+- 36 Reserved
+- 38 THEOS ver 3.2 2gb partition
+- 39 Plan 9 partition
+- 39 THEOS ver 4 spanned partition
+- 3a THEOS ver 4 4gb partition
+- 3b THEOS ver 4 extended partition
+- 3c PartitionMagic recovery partition
+- 3d Hidden NetWare
+- 40 Venix 80286
+- 41 Linux/MINIX (sharing disk with DRDOS)
+- 41 Personal RISC Boot
+- 41 PPC PReP (Power PC Reference Platform) Boot
+- 42 Linux swap (sharing disk with DRDOS)
+- 42 SFS (Secure Filesystem)
+- 42 Windows 2000 marker
+- 43 Linux native (sharing disk with DRDOS)
+- 44 GoBack partition
+- 45 Boot-US boot manager
+- 45 Priam
+- 45 EUMEL/Elan  
+- 46 EUMEL/Elan  
+- 47 EUMEL/Elan  
+- 48 EUMEL/Elan  
+- 4a AdaOS Aquila (Default)
+- 4a ALFS/THIN lightweight filesystem for DOS
+- 4d QNX4.x
+- 4e QNX4.x 2nd part
+- 4f QNX4.x 3rd part
+- 4f Oberon partition
+- 50 OnTrack Disk Manager (older versions) RO
+- 50 Lynx RTOS
+- 50 Native Oberon (alt)
+- 51 OnTrack Disk Manager RW (DM6 Aux1)
+- 51 Novell
+- 52 CP/M
+- 52 Microport SysV/AT
+- 53 Disk Manager 6.0 Aux3
+- 54 Disk Manager 6.0 Dynamic Drive Overlay
+- 55 EZ-Drive
+- 56 Golden Bow VFeature Partitioned Volume.
+- 56 DM converted to EZ-BIOS
+- 57 DrivePro
+- 57 VNDI Partition
+- 5c Priam EDisk
+- 61 SpeedStor
+- 63 Unix System V (SCO, ISC Unix, UnixWare, ...), Mach, GNU Hurd
+- 64 PC-ARMOUR protected partition
+- 64 Novell Netware 286, 2.xx
+- 65 Novell Netware 386, 3.xx or 4.xx
+- 66 Novell Netware SMS Partition
+- 67 Novell
+- 68 Novell
+- 69 Novell Netware 5+, Novell Netware NSS Partition
+- 6e ??
+- 70 DiskSecure Multi-Boot
+- 71 Reserved
+- 73 Reserved
+- 74 Reserved
+- 74 Scramdisk partition
+- 75 IBM PC/IX
+- 76 Reserved
+- 77 M2FS/M2CS partition
+- 77 VNDI Partition
+- 78 XOSL FS
+- 7E
+- 80 MINIX until 1.4a
+- 81 MINIX since 1.4b, early Linux
+- 81 Mitac disk manager
+- 82 Prime
+- 82 Solaris x86
+- 82 Linux swap
+- 83 Linux native (usually ext2fs)(ext2fs/xiafs)
+- 84 OS/2 hidden C: drive
+- 84 Hibernation partition
+- 85 Linux extended partition
+- 86 Old Linux RAID partition superblock
+- 86 NTFS volume set
+- 87 NTFS volume set
+- 8a Linux Kernel Partition (used by AiR-BOOT)
+- 8b Legacy Fault Tolerant FAT32 volume
+- 8c Legacy Fault Tolerant FAT32 volume using BIOS extd INT 13h
+- 8d Free FDISK hidden Primary DOS FAT12 partitition
+- 8e Linux Logical Volume Manager partition
+- 90 Free FDISK hidden Primary DOS FAT16 partitition
+- 91 Free FDISK hidden DOS extended partitition
+- 92 Free FDISK hidden Primary DOS large FAT16 partitition
+- 93 Hidden Linux native partition
+- 93 Amoeba
+- 94 Amoeba bad block table
+- 95 MIT EXOPC native partitions
+- 97 Free FDISK hidden Primary DOS FAT32 partitition
+- 98 Free FDISK hidden Primary DOS FAT32 partitition (LBA)
+- 99 DCE376 logical drive
+- 9a Free FDISK hidden Primary DOS FAT16 partitition (LBA)
+- 9b Free FDISK hidden DOS extended partitition (LBA)
+- 9f BSD/OS
+- a0 Laptop hibernation partition
+- a1 Laptop hibernation partition
+- a1 HP Volume Expansion (SpeedStor variant)
+- a3 Reserved
+- a4 Reserved
+- a5 BSD/386, 386BSD, NetBSD, FreeBSD
+- a6 OpenBSD
+- a7 NEXTSTEP
+- a9 NetBSD
+- aa Olivetti Fat 12 1.44Mb Service Partition
+- ab GO! partition
+- ae ShagOS filesystem
+- af ShagOS swap partition
+- b0 BootStar Dummy
+- b1 Reserved
+- b3 Reserved
+- b4 Reserved
+- b6 Reserved
+- b7 BSDI BSD/386 filesystem
+- b8 BSDI BSD/386 swap partition
+- bb Boot Wizard hidden
+- be Solaris 8 boot partition
+- c0 CTOS
+- c0 REAL/32 secure small partition
+- c0 NTFT Partition
+- c1 DRDOS/secured (FAT-12)
+- c2 Reserved for DR-DOS 7+
+- c2 Hidden Linux
+- c3 Hidden Linux swap
+- c4 DRDOS/secured (FAT-16, < 32M)
+- c6 DRDOS/secured (FAT-16, >= 32M)
+- c6 Windows NT corrupted FAT16 volume/stripe set
+- c7 Windows NT corrupted NTFS volume/stripe set
+- c7 Syrinx boot
+- c8
+- c9
+- ca
+- cb reserved for DRDOS/secured (FAT32)
+- cc reserved for DRDOS/secured (FAT32, LBA)
+- cd CTOS Memdump?  
+- ce reserved for DRDOS/secured (FAT16, LBA)
+- d0 REAL/32 secure big partition
+- d1 Old Multiuser DOS secured FAT12
+- d4 Old Multiuser DOS secured FAT16 <32M
+- d5 Old Multiuser DOS secured extended partition
+- d6 Old Multiuser DOS secured FAT16 >=32M
+- d8 CP/M-86
+- da Non-FS Data
+- db Digital Research CP/M, Concurrent CP/M, Concurrent DOS
+- db CTOS (Convergent Technologies OS -Unisys)
+- db KDG Telemetry SCPU boot
+- dd Hidden CTOS Memdump?  
+- de Dell PowerEdge Server utilities (FAT fs)
+- df DG/UX virtual disk manager partition
+- df BootIt EMBRM
+- e0 Reserved by STMicroelectronics for a filesystem called ST AVFS.
+- e1 DOS access or SpeedStor 12-bit FAT extended partition
+- e3 DOS R/O or SpeedStor
+- e4 SpeedStor 16-bit FAT extended partition < 1024 cyl.
+- e5 Tandy DOS with logical sectored FAT
+- e5 Reserved
+- e6 Reserved
+- eb BeOS
+- ed Reserved for Matthias Paul's Spryt*x
+- ee Indication that this legacy MBR is followed by an EFI header
+- ef Partition that contains an EFI file system
+- f0 Linux/PA-RISC boot loader
+- f1 SpeedStor
+- f2 DOS 3.3+ secondary partition
+- f3 Reserved
+- f4 SpeedStor large partition
+- f4 Prologue single-volume partition
+- f5 Prologue multi-volume partition
+- f6 Reserved
+- fb VMware File System partition
+- fc VMware Swap partition
+- fd Linux raid partition with autodetect using persistent superblock
+- fe SpeedStor > 1024 cyl.
+- fe LANstep
+- fe IBM PS/2 IML (Initial Microcode Load) partition, located at the end of the disk.
+- fe Windows NT Disk Administrator hidden partition
+- fe Linux Logical Volume Manager partition (old)
+- ff Xenix Bad Block Table
