@@ -67,6 +67,10 @@
 - ETCD
 	- [ETCD](https://github.com/SecurityNeo/ReadingNotes/blob/master/DataBase/ETCD/ETCD.md)
 
+- Redis入门指南
+
+	- [Redis入门指南](https://github.com/SecurityNeo/ReadingNotes/blob/master/DataBase/Redis%E5%85%A5%E9%97%A8%E6%8C%87%E5%8D%97/Redis%E5%85%A5%E9%97%A8%E6%8C%87%E5%8D%97.md)
+	- [Redis监控（INFO）](https://github.com/SecurityNeo/ReadingNotes/blob/master/DataBase/Redis%E5%85%A5%E9%97%A8%E6%8C%87%E5%8D%97/Redis%E7%9B%91%E6%8E%A7%EF%BC%88INFO%EF%BC%89.md)
 
 ## HTTP ##
 
