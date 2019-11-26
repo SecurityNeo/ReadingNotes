@@ -47,3 +47,49 @@ set_fact模块可以自定义facts，这些自定义的facts可以通过template
       
     - debug: var=innodb_buffer_pool_size_mb
 ```
+
+**fact缓存**
+
+fact缓存目前支持三种存储方式:JSON、memcached、redis。
+
+- Json文件
+
+  使用JSON文件作为fact缓存后端的时候，ansible将会把采集的fact写入到控制主机的文件中。
+
+  ansible.cfg配置如下：
+
+	```
+	[defaults]
+	gathering = smart
+	#缓存时间，单位为秒
+	fact_caching_timeout = 86400    
+	fact_caching = jsonfile
+	#指定ansible包含fact的json文件位置，如果目录不存在，会自动创建
+	fact_caching_connection = /tmp/ansible_fact_cache
+	```
+- Redis
+
+	使用redis作为fact缓存后端，需要在控制主机上安装redis服务并保持运行。需要安装python操作redis的软件包。  
+
+	ansible.cfg配置如下：
+
+	```
+	[defaults]
+	gathering = smart
+	fact_caching_timeout = 86400 
+	fact_caching = redis  
+	```
+
+- Memcached
+
+	使用memcached作为fact缓存后端，需要在控制主机上安装Memcached服务并保持运行，需要安装python操作memcached的软件包。
+
+	ansible.cfg配置如下：
+
+	```
+	[defaults]
+	gathering = smart
+	fact_caching_timeout = 86400 
+	fact_caching = memcached
+	```
+
