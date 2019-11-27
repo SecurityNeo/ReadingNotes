@@ -131,3 +131,30 @@ lineinfile模块，确保”某一行文本”存在于指定的文件中，或�
 - raw和command类似，两个模块都是调用远程主机的指令，但是raw支持管道命令
 - shell模块调用远程主机的指令，支持shell特性，包括执行脚本、管道命令等
 - script只能执行脚本，不能调用其他指令，但是script执行的是存放在ansbile管理机上的脚本，并且script不支持管道命令
+
+**notify与handlers**
+
+notify可用于在每个play的最后被触发，这样可以避免多次有改变发生时每次都执行指定的操作，仅在所有的变化发生完成最后一次性地执行指定操作。在notify中列出的操作称为handler，也即notify中调用handler中定义的操作。
+
+看一个httpd的例子：
+
+```
+tasks:
+  - name: install httpd package
+    yum: name=httpd
+    tages: inshttpd
+  - name: copy conf file
+    copy: src=files/httpd.conf dest=/etc/httpd/conf backup=yes
+    notify: 
+     - restart service
+     - check service
+  - name: start service      
+    service: name=httpd state=started enabled=yes
+    tages: rshttpd
+handlers:
+  - name: restart service
+    service: name=httpd state=restarted  enabled=yes
+  - name: checke service
+    service: killall -0 httpd > /tmp/http.log
+```
+
