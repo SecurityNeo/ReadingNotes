@@ -158,3 +158,33 @@ handlers:
     service: killall -0 httpd > /tmp/http.log
 ```
 
+**role目录功能约定**
+
+- tasks目录：至少应该包含一个main.yml的文件，其定义了此角色的任务列表；此文件可以使用include包含其他的位于此目录的task文件
+- files目录：存放由copy或script等模块调用的文件
+- templates目录：templates模块会自动在此目录中寻找Jinja2模版文件
+- handlers目录：此目录中应该包含一个main.yml
+- yml文件，用于定义此角色用到的各handler，在handler中使用include包含的其他handler文件也应该位于此目录中
+- vars目录：应当包含一个main.yml文件，用于定义此角色用到的变量
+- meta目录：应当包含一个main.yml文件,用于定于此角色的特殊设定及依赖关系,ansible1.3 以后才支持
+- default目录: 为当前角色设定默认变量时使用此目录，应当包含一个main.yml文件
+
+**block**
+
+block是ansible在2.0版本引入的一个特性，块功能可以将任务进行逻辑分组，并且可以在块级别上应用任务变量。同时也可以使用类似于其他编程语言处理异常那样的方法，来处理块内部的任务异常。block中的组任务，都会继承block的属相（支持when，不支持with_items），部署时会分别执行组中的任务，并且都会继承block的属相（在任务后添加block的when条件）
+
+```
+- hosts: localhost
+  tasks:   
+    - block:
+        - yum: name={{ item }} state=installed
+          with_items:
+             - httpd
+             - memcached
+        - template: src=templates/src.j2 dest=/etc/foo.conf
+        - name： start service
+          service: name=bar state=started enabled=True
+      when: ansible_distribution == 'CentOS'
+      become: true
+      become_user: root
+```
