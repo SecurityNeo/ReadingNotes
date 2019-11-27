@@ -15,7 +15,7 @@ ansible是基于paramiko开发的,并且基于模块化工作，本身没有批�
 - CustomModules：自定义模块，完成核心模块无法完成的功能，支持多种语言。
 - ConnectionPlugins：连接插件，Ansible和Host通信使用
 
-## 剧本编写 ##
+## 杂项 ##
 
 **tags**
 
@@ -93,3 +93,41 @@ fact缓存目前支持三种存储方式:JSON、memcached、redis。
 	fact_caching = memcached
 	```
 
+**stat**
+
+获取文件的详细信息，一般与register一起使用。
+
+```
+tasks:
+    - name: check dir state
+      stat:
+        path: /home/ansible
+      register: dir_state
+    - debug:
+        msg: "{{dir_state.stat.size}}"
+      when: dir_state.stat.size > 6
+```
+
+**lineinfile**
+[https://blog.csdn.net/dylloveyou/article/details/80698531](https://blog.csdn.net/dylloveyou/article/details/80698531)
+
+lineinfile模块，确保”某一行文本”存在于指定的文件中，或者确保从文件中删除指定的”文本”（即确保指定的文本不存在于文件中），还可以根据正则表达式，替换”某一行文本”。
+
+常用参数：
+
+- path参数 ：必须参数，指定要操作的文件。
+- line参数 : 使用此参数指定文本内容。
+- regexp参数 ：使用正则表达式匹配对应的行，当替换文本时，如果有多行文本都能被匹配，则只有最后面被匹配到的那行文本才会被替换，当删除文本时，如果有多行文本都能被匹配，这么这些行都会被删除。
+- state参数：当想要删除对应的文本时，需要将state参数的值设置为absent，absent为缺席之意，表示删除，state的默认值为present。
+- backrefs参数：默认情况下，当根据正则替换文本时，即使regexp参数中的正则存在分组，在line参数中也不能对正则中的分组进行引用，除非将backrefs参数的值设置为yes。backrefs=yes表示开启后向引用，这样，line参数中就能对regexp参数中的分组进行后向引用了，这样说不太容易明白，可以参考后面的示例命令理解。backrefs=yes除了能够开启后向引用功能，还有另一个作用，默认情况下，当使用正则表达式替换对应行时，如果正则没有匹配到任何的行，那么line对应的内容会被插入到文本的末尾，不过，如果使用了backrefs=yes，情况就不一样了，当使用正则表达式替换对应行时，同时设置了backrefs=yes，那么当正则没有匹配到任何的行时，则不会对文件进行任何操作，相当于保持原文件不变。
+- insertafter参数：借助insertafter参数可以将文本插入到“指定的行”之后，insertafter参数的值可以设置为EOF或者正则表达式，EOF为End Of File之意，表示插入到文档的末尾，默认情况下insertafter的值为EOF，如果将insertafter的值设置为正则表达式，表示将文本插入到匹配到正则的行之后，如果正则没有匹配到任何行，则插入到文件末尾，当使用backrefs参数时，此参数会被忽略。
+- insertbefore参数：借助insertbefore参数可以将文本插入到“指定的行”之前，insertbefore参数的值可以设置为BOF或者正则表达式，BOF为Begin Of File之意，表示插入到文档的开头，如果将insertbefore的值设置为正则表达式，表示将文本插入到匹配到正则的行之前，如果正则没有匹配到任何行，则插入到文件末尾，当使用backrefs参数时，此参数会被忽略。
+- backup参数：是否在修改文件之前对文件进行备份。
+- create参数 ：当要操作的文件并不存在时，是否创建对应的文件。
+
+**命令行模块**
+
+- command为系统默认模块，使用时可以直接省略，注意command不支持管道命令
+- raw和command类似，两个模块都是调用远程主机的指令，但是raw支持管道命令
+- shell模块调用远程主机的指令，支持shell特性，包括执行脚本、管道命令等
+- script只能执行脚本，不能调用其他指令，但是script执行的是存放在ansbile管理机上的脚本，并且script不支持管道命令
