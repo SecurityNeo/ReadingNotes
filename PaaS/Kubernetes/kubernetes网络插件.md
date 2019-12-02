@@ -14,11 +14,27 @@ kubelet启动的命令有关CNI的参数：
 
 **CNI插件分类：**
 
+[https://github.com/containernetworking/cni/blob/master/SPEC.md](https://github.com/containernetworking/cni/blob/master/SPEC.md)
+
 - main插件：提供某种网络功能，比如birdge就是创建Linux网桥的程序、ptp就是创建Veth Pair设备的程序、loopback就是创建lo设备的程序，等等。
+
+	- bridge：创建网桥，并添加主机和容器到该网桥
+	- ipvlan：在容器中添加一个ipvlan接口
+	- loopback：创建一个回环接口
+	- macvlan：创建一个新的MAC地址，将所有的流量转发到容器
+	- ptp：创建veth对
+	- vlan：分配一个vlan设备
 
 - meta插件：不能作为独立的插件使用，需要调用其他插件，例如flannel，或者配合其他插件使用，例如portmap。meta插件一般由社区维护。
 
+	- flannel：根据flannel的配置文件创建接口
+	- tuning：调整现有接口的sysctl参数
+	- portmap：一个基于iptables的portmapping插件。将端口从主机的地址空间映射到容器。
+
 - ipam插件：对所有CNI插件共有的IP管理部分的抽象，从而减少插件编写过程中的重复工作，官方提供的有dhcp和host-local两种类型，dhcp就是会向DHCP服务器发起地址申请、host-local就是会使用预先设置的IP地址段来进行分配，就像在dockerd中设置--bip一样。
+
+	- dhcp：在主机上运行守护程序，代表容器发出DHCP请求
+	- host-local：维护分配IP的本地数据库
 
 **CNI配置文件**
 
