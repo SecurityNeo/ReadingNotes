@@ -249,14 +249,15 @@ OpenShift Serivce有多种类型，默认的和最常用的是ClusterIP类型。
 
 OVS使用Linux内核自带的traffic-control机制进行流量控制以实现SDN QoS。主要分为如下两种：
 
-- Policing管制
+- Policing
 
 	Policing用于控制接口上接收分组（ingress）的速率，是一种简单的QoS的功能，通过简单的丢包机制实现接口速率的限制，它既可以作用于物理接口，也可以作用于虚拟接口
 
-- Shaping整形
+- Shaping
 
 	Shaping是作用于接口上的出口流量（egress）策略，可以实现多个QoS队列，不同队列里面处理不同策略
 
+**Policing**
 policing在OVS中采用ingress_policing_rate和ingress_policing_burst两个字段完成ingress入口限速功能，该两个字段放在Interface表中。配置命令：
 
 ```
@@ -267,3 +268,24 @@ policing在OVS中采用ingress_policing_rate和ingress_policing_burst两个字�
 - ingress_policing_rate：为接口最大收包速率，单位kbps，超过该速度的报文将被丢弃，默认值为0表示关闭该功能；
 - ingress_policing_burst：为最大突发流量大小，单位kb。默认值0表示1000kb，这个参数最小值应不小于接口的MTU，通常设置为ingress_policing_rate的10%更有利于tcp实现全速率；
 
+**Shaping**
+
+shaping用于实现出口流量的控制，使用了队列queue，可以缓存和调度数据包发送顺序，比policing更加精确和有效，在OVS的数据表中主要使用QoS和Queue两张表。配置命令：
+
+```
+ovs-vsctl set port eth1 qos=@newqos --  
+--id=@newqos create qos type=linux-htb queues=0=@q0 -- 
+--id=@q0 create queue other-config:max-rate=100000000
+```
+
+- `--id=@q0 create queue other-config:max-rate=100000000`
+
+	创建q0队列，设置最大速率100M
+
+- `--id=@newqos create qos type=linux-htb queues=0=@q0`
+
+	创建qos规则newqos，类型为linux-htb，并连接key值为0的队列q0
+
+- `set port eth1 qos=@newqos`
+
+	设置接口eth1的qos为newqos
