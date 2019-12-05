@@ -14,6 +14,12 @@ OpenShift使用SDN（软件定义网络）提供集群网络，实现集群POD�
 
 当使用ansible部署OpenShift时，默认会启用ovs-subnet。
 
+Openshift SDN的特点：
+
+- 控制节点：监控节点加入事件，为新加入的node分配网络，在etcd进行注册；如果是ovs-multitenant模式，还需要监控Openshift project的建立和删除来分配和删除VxLAN VNID。
+- 工作节点：向master节点注册并从etcd获取分配到的网络，并建立网桥br0、OVS端口tun0和OVS VXLAN设备vxlan0三个设备；POD将veth对的一端绑定到br0，tun0提供POD访问外网的能力，vxlan0通过over layer方式提供不同node之间POD的互联互通。节点还要监控新的节点和项目的增删事件，进行相应SDN的改变(加减subnet、加减VNID等)
+
+
 ## Nodes网络 ##
 
 ![](img/OpenShift_Network.png)
@@ -239,4 +245,25 @@ oc get namespaces
 OpenShift Serivce有多种类型，默认的和最常用的是ClusterIP类型。每个这种类型的Service，创建时都会被从一个子网中分配一个IP地址，在集群内部可以使用该IP地址来访问该服务，进而访问到它后端的pod。因此，Service实际上是用于OpenShift集群内部的四层负载均衡器，它是基于 iptables实现的。
 
 
+## 流量控制（QoS） ##
+
+OVS使用Linux内核自带的traffic-control机制进行流量控制以实现SDN QoS。主要分为如下两种：
+
+- Policing管制
+
+	Policing用于控制接口上接收分组（ingress）的速率，是一种简单的QoS的功能，通过简单的丢包机制实现接口速率的限制，它既可以作用于物理接口，也可以作用于虚拟接口
+
+- Shaping整形
+
+	Shaping是作用于接口上的出口流量（egress）策略，可以实现多个QoS队列，不同队列里面处理不同策略
+
+policing在OVS中采用ingress_policing_rate和ingress_policing_burst两个字段完成ingress入口限速功能，该两个字段放在Interface表中。配置命令：
+
+```
+# ovs-vsctl set interface eth1 ingress_policing_rate=1000
+# ovs-vsctl set interface eth1 ingress_policing_burst=100
+```
+
+- ingress_policing_rate：为接口最大收包速率，单位kbps，超过该速度的报文将被丢弃，默认值为0表示关闭该功能；
+- ingress_policing_burst：为最大突发流量大小，单位kb。默认值0表示1000kb，这个参数最小值应不小于接口的MTU，通常设置为ingress_policing_rate的10%更有利于tcp实现全速率；
 
