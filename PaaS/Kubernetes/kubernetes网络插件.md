@@ -2,6 +2,10 @@
 
 [https://www.cnblogs.com/rexcheny/p/10960233.html](https://www.cnblogs.com/rexcheny/p/10960233.html)
 
+[https://github.com/containernetworking/cni](https://github.com/containernetworking/cni)
+
+[https://github.com/keontang/k8s-notes/blob/master/kubernetes-network.md](https://github.com/keontang/k8s-notes/blob/master/kubernetes-network.md)
+
 在Kubernetes中，kubelet主要负责和容器打交道，和容器引擎交互使用的是CRI（Container Runtime Interface，它规定了运行一个容器所必须的参数和标准）接口，所以只要容器引擎提供了符合CRI标准的接口那么可以被Kubernetes使用。容器引擎会把接口传递过来的数据进行翻译，翻译成对Linux的系统调用操作，比如创建各种名称空间、Cgroups等。而kubelet默认使用的容器运行时是通过kubelet命令中的`--container-runtime=`来设置的，默认就是docker。
 
 kubelet启动的命令有关CNI的参数：
