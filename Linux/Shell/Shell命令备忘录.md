@@ -36,3 +36,38 @@ u：当一个应用程序请求删除这个文件，系统会保留其数据块�
 t:文件系统支持尾部合并（tail-merging）。
 X：可以直接访问压缩文件的内容。
 ```
+
+**nsenter**
+
+nsenter命令可以在指定进程的命令空间下运行指定程序的命令。包含在util-linux包中。
+
+```
+nsenter [options] [program [arguments]]
+
+options:
+-t, --target pid：指定被进入命名空间的目标进程的pid
+-m, --mount[=file]：进入mount命令空间。如果指定了file，则进入file的命令空间
+-u, --uts[=file]：进入uts命令空间。如果指定了file，则进入file的命令空间
+-i, --ipc[=file]：进入ipc命令空间。如果指定了file，则进入file的命令空间
+-n, --net[=file]：进入net命令空间。如果指定了file，则进入file的命令空间
+-p, --pid[=file]：进入pid命令空间。如果指定了file，则进入file的命令空间
+-U, --user[=file]：进入user命令空间。如果指定了file，则进入file的命令空间
+-G, --setgid gid：设置运行程序的gid
+-S, --setuid uid：设置运行程序的uid
+-r, --root[=directory]：设置根目录
+-w, --wd[=directory]：设置工作目录
+
+如果没有给出program，则默认执行$SHELL。
+```
+
+示例：在宿主机上抓容器内的包
+
+查询容器PID：
+
+`docker inspect -f {{.State.Pid}} CONTAINER—ID`
+
+使用nsenter命令进入该容器的网络命令空间，然后就可以进行抓容器内的包了：
+
+`nsenter -n -t CONTAINER—PID`
+
+
