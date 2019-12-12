@@ -18,7 +18,11 @@ kubelet启动的命令有关CNI的参数：
 
 **CNI插件分类：**
 
+![](img/CNI_Driver.PNG)
+
 [https://github.com/containernetworking/cni/blob/master/SPEC.md](https://github.com/containernetworking/cni/blob/master/SPEC.md)
+
+[https://feisky.gitbooks.io/kubernetes/network/network.html](https://feisky.gitbooks.io/kubernetes/network/network.html)
 
 - main插件：提供某种网络功能，比如birdge就是创建Linux网桥的程序、ptp就是创建Veth Pair设备的程序、loopback就是创建lo设备的程序，等等。
 
