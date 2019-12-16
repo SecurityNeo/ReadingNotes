@@ -289,3 +289,22 @@ ovs-vsctl set port eth1 qos=@newqos --
 - `set port eth1 qos=@newqos`
 
 	设置接口eth1的qos为newqos
+
+## IP failover ##
+
+[https://blog.csdn.net/cloudvtech/article/details/80092284](https://blog.csdn.net/cloudvtech/article/details/80092284)
+
+ipfailover管理一个VIP的池，每个VIP都代表着后端一系列POD或者一个service，VIP绑定在任何一个或者多个健康的工作节点上。ipfailover借助keepalived，使用VRRP协议通过IP floating保证VIP永远绑定在健康的节点上，只要后端服务是健康的，VIP就可以提供对外的服务。
+
+工作流程：
+
+- keepalived在所有运行Router的节点之间相互通信，为每个VIP选择一个active master对外advertise这个VIP和MAC
+- 客户端向VIP发送的请求到达之后，由HAProxy进行处理
+- HAProxy根据URL和请求内容，选择合适的后端POD
+- 通过iptables进行四层数据包NAT然后由OVS SDN将数据包转送到POD所在节点
+- 在POD所在节点经过NAT操作进入POD
+- POD处理请求并产生返回数据包
+- 数据包经上述步骤的反方向操作返回接入HAProxy
+- HAProxy将数据返回给客户端
+
+相关环境变量参考官网[https://docs.okd.io/latest/admin_guide/high_availability.html#options-environment-variables](https://docs.okd.io/latest/admin_guide/high_availability.html#options-environment-variables)
