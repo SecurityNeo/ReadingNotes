@@ -71,3 +71,81 @@ options:
 `nsenter -n -t CONTAINER—PID`
 
 
+**ip**
+
+![https://www.cnblogs.com/diantong/p/9511072.html](https://www.cnblogs.com/diantong/p/9511072.html)
+
+`ip [ OPTIONS ] OBJECT { COMMAND | help }`
+
+ - OBJECT={ link | addr | addrlabel | route | rule | neigh | ntable | tunnel | maddr | mroute | mrule | monitor | xfrm | token }
+
+	- link 网络设备
+	- address 设备上的协议（IP或IPv6）地址
+	- addrlabel 协议地址选择的标签配置
+	- neighbour ARP或NDISC缓存条目
+	- route 路由表条目
+	- rule 路由策略数据库中的规则
+	- maddress 组播地址
+	- mroute 组播路由缓存条目
+	- tunnel IP隧道
+	- xfrm IPSec协议框架
+
+ - OPTIONS={ -V[ersion] | -s[tatistics] | -d[etails] | -r[esolve] | -h[uman-readable] | -iec | -f[amily] { inet | inet6 | ipx | dnet | link } | -o[neline] | -t[imestamp] | -b[atch] [filename] | -rc[vbuf] [size] }
+
+	- -V，-Version 显示指令版本信息
+	- -s,-stats,statistics 输出详细信息
+	- -h,-human,-human-readable 输出人类可读的统计信息和后缀
+	- -iec 以IEC标准单位打印人类可读速率（例如1K=1024）
+	- -f,-family <FAMILY> 指定要使用的协议族。协议族标识可以是inet、inet6、ipx、dnet或link之一。如果此选项不存在，则从其他参数中推测协议族。如果命令行的其余部分没有提供足够的信息来推测该族，则ip会退回到默认值，通常是inet或any。link是一个特殊的系列标识符，表示不涉及网络协议。
+	- -4 –family inet的快捷方式
+	- -6 –family inet6的快捷方式
+	- -0 –family link的快捷方式
+	- -o,-oneline 将每条记录输出到一行，用’\’字符替换换行符。
+	- -r,-resolve 使用系统名称解析程序来打印DNS名称而不是主机地址。
+
+示例：
+
+1、启用/禁用网卡
+
+`ip link set enp0s3 up`
+
+2、为网卡分配 IP 地址以及其他网络信息
+
+`ip addr add 192.168.0.50/255.255.255.0 dev enp0s3`
+
+3、为网卡添加别名(为网卡添加多个IP)
+
+`ip addr add 192.168.0.20/24 dev enp0s3 label enp0s3:1`
+
+4、检查路由/默认网关的信息
+
+`ip route show`
+
+`ip route get 192.168.0.1`
+
+5、检查所有的ARP记录
+
+`ip neigh`
+
+6、修改ARP记录
+
+`ip neigh del 192.168.0.106 dev enp0s3`  / 删除对应ARP记录
+
+`ip neigh add 192.168.0.150 lladdr 33:1g:75:37:r3:84 dev enp0s3 nud perm`  / 往ARP缓存中添加新记录  
+
+	nud的意思是 “neghbour state”（网络邻居状态），它的值可以是：
+	
+	- perm 永久有效并且只能被管理员删除
+	- noarp 记录有效，但在生命周期过期后就允许被删除了
+	- stale 记录有效，但可能已经过期
+	- reachable 记录有效，但超时后就失效了
+
+7、查看网络统计信息
+
+`ip -s link`
+
+
+
+
+
+
