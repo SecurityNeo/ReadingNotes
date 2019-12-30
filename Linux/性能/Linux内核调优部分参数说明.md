@@ -2,6 +2,8 @@
 
 [http://www.ttlsa.com/linux/linux-kernel-tuning-section-parameter-description/](http://www.ttlsa.com/linux/linux-kernel-tuning-section-parameter-description/)
 
+[https://blog.csdn.net/largetalk/article/details/16863689](https://blog.csdn.net/largetalk/article/details/16863689)
+
 - net.core.rmem_default = 262144
 
 	接收套接字缓冲区大小的默认值(以字节为单位)。TCP动态改变窗口大小以避免网络拥挤。它使用rmem_default和wmem_default的值初始化窗口大小，并且窗口永远不会大于rmem_max和wmem_max。而UDP不会改变它的窗口尺寸，它使用rmem_default和wmem_default作为它的窗口尺寸大小。
@@ -66,11 +68,11 @@
 
 - net.ipv4.tcp_max_orphans = 262144
 
-	表示系统中最多有多少TCP套接字不被关联到任何一个用户文件句柄上。如果超过这里设置的数字，连接就会复位并输出警告信息。这个限制仅仅是为了防止简单的DoS攻击。此值不能太小。
+	表示系统中最多有多少TCP套接字不被关联到任何一个用户文件句柄上。如果超过这里设置的数字，连接就会复位并输出警告信息。这个限制仅仅是为了防止简单的DoS攻击。此值不能太小。注意：当`cat /proc/net/sockstat`看到的orphans数量达到`net.ipv4.tcp_max_orphans`的约一半时，就会报：Out of socket memory。
 
 - net.ipv4.tcp_max_syn_backlog = 262144
 
-	表示那些尚未收到客户端确认信息的连接（SYN消息）队列的长度，默认为1024，加大队列长度为262144，可以容纳更多等待连接的网络连接数。
+	定义了处于SYN_RECV（半连接）的TCP最大连接数，当处于SYN_RECV状态的TCP连接数超过tcp_max_syn_backlog后，会丢弃后续的SYN报文，现象即是无法建立连接，在启用syncookie机制的情况下，这个参数是被忽略的。默认为1024，加大队列长度可以容纳更多等待连接的网络连接数。
  
 - net.ipv4.tcp_max_tw_buckets = 10000
 
@@ -94,11 +96,11 @@
 
 - net.ipv4.tcp_synack_retries = 1
 
-	表示系统允许SYN连接的重试次数。为了打开对端的连接，内核需要发送一个SYN并附带一个回应前面一个SYN的ACK包。也就是所谓三次握手中的第二次握手。这个设置决定了内核放弃连接之前发送SYN+ACK包的数量。
+	表示系统允许SYN连接的重试次数。为了打开对端的连接，内核需要发送一个SYN并附带一个回应前面一个SYN的ACK包。也就是所谓三次握手中的第二次握手。这个设置决定了内核放弃连接之前发送SYN+ACK包的数量。缺省值为5，不能超过255。
 
 - net.ipv4.tcp_syn_retries = 1
 
-	表示在内核放弃建立连接之前发送SYN包的数量。
+	表示在内核放弃建立连接之前发送SYN包的数量。不应该大于255，默认值是5。
 
 - net.ipv4.tcp_fin_timeout = 30
 
