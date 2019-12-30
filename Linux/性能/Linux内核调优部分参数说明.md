@@ -4,7 +4,7 @@
 
 - net.core.rmem_default = 262144
 
-	接收套接字缓冲区大小的默认值(以字节为单位)。
+	接收套接字缓冲区大小的默认值(以字节为单位)。TCP动态改变窗口大小以避免网络拥挤。它使用rmem_default和wmem_default的值初始化窗口大小，并且窗口永远不会大于rmem_max和wmem_max。而UDP不会改变它的窗口尺寸，它使用rmem_default和wmem_default作为它的窗口尺寸大小。
 
 - net.core.rmem_max = 16777216
 
@@ -20,7 +20,7 @@
 
 - net.core.somaxconn = 262144
 
-	用来限制监听(LISTEN)队列最大数据包的数量，超过这个数量就会导致链接超时或者触发重传机制。
+	定义了系统中每一个端口最大的监听队列的长度,这是个全局的参数,默认值为128。表示socket监听（listen）的backlog上限。backlog是socket的监听队列，当一个请求（request）尚未被处理或建立时，他会进入backlog。而socket server可以一次性处理backlog中的所有请求，处理后的请求不再位于监听队列中。当server处理请求较慢，以至于监听队列被填满后，新来的请求会被拒绝。
 
 - net.core.netdev_max_backlog = 262144
 
@@ -140,3 +140,12 @@
 - vm.swappiness = 0
 
 	表示尽量使用内存，减少使用磁盘swap交换分区，内存速度明显高于磁盘一个数量级。
+
+- net.ipv4.conf.default.accept_source_route
+
+	是否接受含有源路由信息的ip包。参数值为布尔值，1表示接受，0表示不接受。在充当网关的linux主机上缺省值为1，在一般的linux主机上缺省值为0。
+
+- net.inet.udp.checksum
+
+	对UDP包的校验和进行计算，防止不正确的udp包的攻击
+
