@@ -144,7 +144,19 @@ options:
 
 `ip -s link`
 
+**变量默认值**
 
+- `${var:-string}和${var:=string}`
+	若变量var为空，则用在命令行中用string来替换${var:-string}，变量var不为空时，则用变量var的值来替换${var:-string}
+
+- `${var:=string}`
+	${var:=string}的替换规则和${var:-string}是一样的，不同之处是${var:=string}若var为空时，用string替换${var:=string}的同时，把string赋给变量var,${var:=string}很常用的一种用法是，判断某个变量是否赋值，没有的话则给它赋上一个默认值。
+
+- `${var:+string}`
+	替换规则和上面的相反，即只有当var不是空的时候才替换成string，若var为空时则不替换或者说是替换成变量 var的值，即空值。(因为变量var此时为空，所以这两种说法是等价的)
+ 
+- `${var:?string}`
+	若变量var不为空，则用变量var的值来替换${var:?string}；若变量var为空，则把string输出到标准错误中，并从脚本中退出。我们可利用此特性来检查是否设置了变量的值。
 
 
 
