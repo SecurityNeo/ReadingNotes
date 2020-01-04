@@ -156,8 +156,36 @@ options:
 	替换规则和上面的相反，即只有当var不是空的时候才替换成string，若var为空时则不替换或者说是替换成变量 var的值，即空值。(因为变量var此时为空，所以这两种说法是等价的)
  
 - `${var:?string}`
-	若变量var不为空，则用变量var的值来替换${var:?string}；若变量var为空，则把string输出到标准错误中，并从脚本中退出。我们可利用此特性来检查是否设置了变量的值。
+	若变量var不为空，则用变量var的值来替换${var:?string}；若变量var为空，则把string输出到标准错误中，并从脚本中退出。我们可利用此特性来检查是否设置了变量的值
 
+**模式匹配替换**
 
+- `${variable%pattern}`
+	shell在variable中查找，看它是否以模式pattern结尾，如果是，就从命令行把variable中的内容去掉右边最短的匹配模式
+
+- `${variable%%pattern}`
+	shell在variable中查找，看它是否以模式pattern结尾，如果是，就从命令行把variable中的内容去掉右边最长的匹配模式
+ 
+- `${variable#pattern}`
+	shell在variable中查找，看它是否以模式pattern开始，如果是，就从命令行把variable中的内容去掉左边最短的匹配模式
+ 
+- `${variable##pattern}`
+	shell在variable中查找，看它是否以模式pattern结尾，如果是，就从命令行把variable中的内容去掉右边最长的匹配模式
+
+这四种模式中都不会改变variable的值，其中，只有在pattern中使用了`*`匹配符号时，%和%%，#和##才有区别。结构中的pattern支持通配符，`*`表示零个或多个任意字符，`?`表示仅与一个任意字符匹配，`[...]`表示匹配中括号里面的字符，`[!...]`表示不匹配中括号里面的字符。
+
+**字符串提取和替换**
+
+- ${var:num}
+	shell在var中提取第num个字符到末尾的所有字符。若num为正数，从左边0处开始；若num为负数，从右边开始提取字串，但必须使用在冒号后面加空格或一个数字或整个num加上括号，如${var: -2}、${var:1-3}或${var:(-2)}。
+
+- ${var:num1:num2}
+	num1是位置，num2是长度。表示从$var字符串的第$num1个位置开始提取长度为$num2的子串。不能为负数。
+
+- ${var/pattern/pattern}
+	表示将var字符串的第一个匹配的pattern替换为另一个pattern。
+
+- ${var//pattern/pattern}
+	表示将var字符串中的所有能匹配的pattern替换为另一个pattern。
 
 
