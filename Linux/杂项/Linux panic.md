@@ -4,8 +4,8 @@
 
 有两种主要类型kernel panic：
 
-1.hard panic(也就是Aieee信息输出)
-2.soft panic (也就是Oops信息输出)
+- hard panic(也就是Aieee信息输出)
+- soft panic (也就是Oops信息输出)
 
 只有加载到内核空间的驱动模块才能直接导致kernel panic，可以在系统正常的情况下，使用lsmod查看当前系统加载了哪些模块。除此之外，内建在内核里的组件（比如memory map等）也能导致panic。
 
