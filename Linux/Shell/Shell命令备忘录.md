@@ -189,3 +189,6 @@ options:
 	表示将var字符串中的所有能匹配的pattern替换为另一个pattern。
 
 
+**查询某个POD的容器ID**
+
+`kubectl describe pod POD_NAME | grep -A10 "^Containers:" | grep -Eo 'docker://.*$' | head -n 1 |sed 's/docker:\/\/\(.*\)$/\1/'`
