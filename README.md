@@ -163,6 +163,7 @@
 	- [Kubernetes CRDS](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Kubernetes/Kubernetes%20CRDs.md)
 	- [Kubernetes Admission Webhooks](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Kubernetes/Kubernetes%20Admission%20Webhooks.md)
 	- [kubernetes集群相关参数优化](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Kubernetes/Kubernetes%E9%9B%86%E7%BE%A4%E4%B8%AD%E7%9A%84%E5%8F%82%E6%95%B0%E4%BC%98%E5%8C%96.md)
+	- [博文收藏](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Kubernetes/%E5%8D%9A%E6%96%87%E6%94%B6%E8%97%8F.md)
 
 - 微服务
 
