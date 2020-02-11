@@ -6,7 +6,7 @@ socket接收的所有连接都存放在队列类型中，队列有以下两种�
 - syns queue（半连接队列，用来保存处于SYN_SENT和SYN_RECV状态的请求）
 - accept queue（全连接队列，用来保存处于established状态，但是应用层没有调用accept取走的请求）
 
-![](img/tcp-sync-queue-and-accept-queue-small.jpg)
+![sync-queue-and-accept-queue](img/tcp-sync-queue-and-accept-queue-small.jpg)
 
 图片来源于[http://www.cnxct.com/something-about-phpfpm-s-backlog/](http://www.cnxct.com/something-about-phpfpm-s-backlog/)
 
