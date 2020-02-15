@@ -3,7 +3,7 @@
 
 socket接收的所有连接都存放在队列类型中，队列有以下两种：
 
-- syns queue（半连接队列，用来保存处于SYN_SENT和SYN_RECV状态的请求）
+- syns queue（半连接队列，用来保存处于SYN_RECV状态的请求）
 - accept queue（全连接队列，用来保存处于established状态，但是应用层没有调用accept取走的请求）
 
 队列的长度：
@@ -27,5 +27,5 @@ socket接收的所有连接都存放在队列类型中，队列有以下两种�
 
 备注：关于内核参数，可以到[Linux内核调优部分参数说明](https://github.com/SecurityNeo/ReadingNotes/blob/master/Linux/%E6%80%A7%E8%83%BD/Linux%E5%86%85%E6%A0%B8%E8%B0%83%E4%BC%98%E9%83%A8%E5%88%86%E5%8F%82%E6%95%B0%E8%AF%B4%E6%98%8E.md)复习。
 
-对于一个SYN包，如果syn queue满了并且没有开启syncookies就丢包，并将`ListenDrops`计数器 +1。如果accept queue满了也会丢包，并将`ListenOverflows`和`ListenDrops`计数器+1。可以通过命令`netstat -s |grep -E 'overflow|drop'`或者`nstat -az |grep -E 'TcpExtListenOverflows|TcpExtListenDrops'`来查看。另外注意，对于低版本内核，当accept queue满了，并不会完全丢弃SYN包，而是对SYN限速。
+对于一个SYN包，如果syn queue满了并且没有开启syncookies就丢包，并将`ListenDrops`计数器 +1。如果accept queue满了也会丢包，并将`ListenOverflows`和`ListenDrops`计数器 +1。可以通过命令`netstat -s |grep -E 'overflow|drop'`或者`nstat -az |grep -E 'TcpExtListenOverflows|TcpExtListenDrops'`来查看。另外注意，对于低版本内核，当accept queue满了，并不会完全丢弃SYN包，而是对SYN限速。
 
