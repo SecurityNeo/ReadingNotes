@@ -1,5 +1,6 @@
 # TCP的SYN queue和accept queue #
 
+[https://blog.csdn.net/russell_tao/article/details/9950615](https://blog.csdn.net/russell_tao/article/details/9950615)
 
 socket接收的所有连接都存放在队列类型中，队列有以下两种：
 
