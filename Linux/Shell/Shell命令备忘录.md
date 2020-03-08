@@ -230,3 +230,25 @@ options:
 - 删除所有状态为dead的容器
 
 `docker rm -v $(docker ps -aq -f status=dead)`
+
+**Harbor空间清理**
+
+1、查看仓库镜像信息
+
+`skopeo inspect docker://docker.io/fedora`
+
+2、拷贝镜像
+
+`skopeo copy docker://busybox:1-glibc atomic:myns/unsigned:streaming`
+
+3、删除镜像
+
+`skopeo delete docker://localhost:5000/imagename:latest`
+
+4、进入harbor的registry容器执行垃圾回收命令
+
+`registry garbage-collect /etc/docker/registry/config.yml`
+
+5、如果执行垃圾回收遇到一些文件校验的错时尝试先将大小为0的文件删除再执行
+
+`find . -name "*" -type f -size 0c`
