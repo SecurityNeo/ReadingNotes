@@ -192,3 +192,41 @@ options:
 **查询某个POD的容器ID**
 
 `kubectl describe pod POD_NAME | grep -A10 "^Containers:" | grep -Eo 'docker://.*$' | head -n 1 |sed 's/docker:\/\/\(.*\)$/\1/'`
+
+**Docker相关维护命令**
+
+- 杀死所有正在运行的容器
+- 
+`docker kill $(docker ps -a -q)`
+
+- 删除所有已经停止的容器
+ 
+`docker rm $(docker ps -a -q)`
+
+- 删除所有未打 dangling 标签的镜像
+ 
+`docker rmi $(docker images -q -f dangling=true)`
+
+- 删除所有镜像
+ 
+`docker rmi $(docker images -q)`
+
+- 强制删除镜像名称中包含“doss-api”的镜像
+
+`docker rmi --force $(docker images | grep doss-api | awk '{print $3}')`
+
+- 删除所有未使用数据
+
+`docker system prune`
+
+- 只删除未使用的volumes
+
+`docker volume prune`
+
+- 删除所有已退出的容器
+
+`docker rm -v $(docker ps -aq -f status=exited)`
+
+- 删除所有状态为dead的容器
+
+`docker rm -v $(docker ps -aq -f status=dead)`
