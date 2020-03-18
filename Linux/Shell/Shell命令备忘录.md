@@ -252,3 +252,17 @@ options:
 5、如果执行垃圾回收遇到一些文件校验的错时尝试先将大小为0的文件删除再执行
 
 `find . -name "*" -type f -size 0c`
+
+**Nexus重置密码**
+
+1、进入OrientDB控制台
+
+`java -jar ./lib/support/nexus-orient-console.jar`
+
+2、连接security数据库
+
+`connect plocal:../sonatype-work/nexus3/db/security admin admin`
+
+3、重置admin的密码为admin123
+
+`update user SET password="$shiro1$SHA-512$1024$NE+wqQq/TmjZMvfI7ENh/g==$V4yPw8T64UQ6GfJfxYq2hLsVrBY8D1v+bktfOxGdt4b/9BthpWPNUy/CBk6V9iA0nHpzYzJFWO8v/tZFtES8CA==" UPSERT WHERE id="admin"`
