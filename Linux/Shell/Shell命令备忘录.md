@@ -266,3 +266,62 @@ options:
 3、重置admin的密码为admin123
 
 `update user SET password="$shiro1$SHA-512$1024$NE+wqQq/TmjZMvfI7ENh/g==$V4yPw8T64UQ6GfJfxYq2hLsVrBY8D1v+bktfOxGdt4b/9BthpWPNUy/CBk6V9iA0nHpzYzJFWO8v/tZFtES8CA==" UPSERT WHERE id="admin"`
+
+**strace**
+
+strace会追踪程序运行时的整个生命周期，输出每一个系统调用的名字、参数、返回值和执行所消耗的时间等
+
+常见参数
+
+```
+-p 跟踪指定的进程
+-f 跟踪由fork子进程系统调用
+-F 尝试跟踪vfork子进程系统调吸入，与-f同时出现时, vfork不被跟踪
+-o filename 默认strace将结果输出到stdout。通过-o可以将输出写入到filename文件中
+-ff 常与-o选项一起使用，不同进程(子进程)产生的系统调用输出到filename.PID文件
+-r 打印每一个系统调用的相对时间
+-t 在输出中的每一行前加上时间信息。 -tt 时间确定到微秒级。还可以使用-ttt打印相对时间
+-v 输出所有系统调用。默认情况下，一些频繁调用的系统调用不会输出
+-s 指定每一行输出字符串的长度,默认是32。文件名一直全部输出
+-c 统计每种系统调用所执行的时间，调用次数，出错次数。
+-e expr 输出过滤器，通过表达式，可以过滤出掉你不想要输出
+
+        常见选项：
+        -e trace=[set]    只跟踪指定的系统调用
+        -e trace=file     只跟踪与文件操作有关的系统调用
+        -e trace=process  只跟踪与进程控制有关的系统调用
+        -e trace-network  只跟踪与网络有关的系统调用
+        -e trace=signal   只跟踪与系统信号有关的系统调用
+        -e trace=desc     只跟踪与文件描述符有关的系统调用
+        -e trace=ipc      只跟踪与进程通信有关的系统调用
+        -e abbrev=[set]   设定strace输出的系统调用的结果集
+        -e raw=[set]      将指定的系统调用的参数以十六进制显示
+        -e signal=[set]   指定跟踪的系统信号
+        -e read=[set]     输出从指定文件中读出的数据
+        -e write=[set]    输出写入到指定文件中的数据
+```
+
+**ltrace**
+
+ltrace 能够跟踪进程的库函数调用，它会显现出调用了哪个库函数，而 strace则是跟踪进程的每个系统调用。 
+
+常见参数：
+
+```
+-c    统计库函数每次调用的时间，最后程序退出时打印摘要
+-C    解码低级别名称（内核级）为用户级名称
+-d    打印调试信息
+-e expr    输出过滤器，通过表达式，可以过滤掉你不想要的输出
+          -e printf  表示只查看printf函数调用
+          -e !printf 表示查看除printf函数以外的所有函数调用
+-f         跟踪子进程
+-o filename   将ltrace的输出写入文件filename
+-p pid     指定要跟踪的进程pid
+-r         输出每一个调用的相对时间
+-S         显示系统调用
+-t         在输出中的每一行前加上时间信息。例如16：45：28
+-tt        在输出中的每一行前加上时间信息，精确到微秒。例如11：18：59.759546
+-ttt       在输出中的每一行前加上时间信息，精确到微秒，而且时间表示为UNIX时间截。例如1486111461.650434
+-T          显示每次调用所花费的时间
+-u username 以username的UID和GID执行所跟踪的命令
+```
