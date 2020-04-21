@@ -49,3 +49,27 @@
 - FIN(Finish)
  
 	带有该标志置位的数据包用来结束一个TCP会话，但对应端口仍处于开放状态，准备接收后续数据。
+
+## 三次握手 ##
+
+![](img/TCP_Handsshake.PNG)
+
+注意： 第三次握手是可以携带数据的。RFC 793中有一句话: ["Data or controls which were queued for transmission may be included."](https://www.rfc-editor.org/rfc/rfc793.html)。
+
+- Q1：TCP握手为什么不是两次、四次？
+
+	1、防止旧的重复连接初始化造成混乱。RFC 793中也有提及： ["The principle reason for the three-way handshake is to prevent old duplicate connection initiations from causing confusion."](https://www.rfc-editor.org/rfc/rfc793.html)
+	2、三次握手才可以同步双方的初始序列号
+	3、减少通信次数，避免资源浪费
+
+- Q2：初始序列号ISN如何产生？
+
+	初始序列号不能设置为一个固定的值，否则容易被攻击者推算出后续的序列号。RFC 1948中提出了一个较好的初始化序列号ISN随机生成算法： `ISN = M + F(localhost, localport, remotehost, remoteport)`。M是一个计时器，这个计时器每隔4毫秒加1。F是一个Hash算法，根据源IP、目的IP、源端口、目的端口生成一个随机数值。（能在一定程度上预防序列号猜测攻击。）
+
+- Q3： MTU和MSS
+
+	MTU（Maximum Transmit Unit,最大传输单元）：一个网络包的最大长度，以太网中一般为1500字节
+	MSS（Maximum Segment Size，最大报文长度）：除去IP和TCP头部之后，一个网络包所能容纳的TCP数据的最大长度
+	![](img/TCP_MTU_MSS.PNG)
+
+	当IP层有一个超过MTU大小的数据（TCP头部 + TCP数据）要发送，那么IP层就要进行分片，把数据分片成若干片，保证每一个分片都小于MTU。把一份IP数据报进行分片以后，由目标主机的IP层来进行重新组装后，在交给上一层TCP传输层。但网络是不可靠的，如果一个IP分片丢失，整个IP报文的所有分片都得重传。IP层本身没有超时重传机制，它由传输层的TCP来负责超时和重传。当接收方发现TCP报文（头部 + 数据）的某一片丢失后，则不会响应ACK给对方，那么发送方的TCP在超时后，就会重发整个TCP报文（头部 + 数据）。另外，TCP协议在建立连接的时候通常要协商双方的MSS值，当TCP层发现数据超过MSS时，则就先会进行分片，当然由它形成的IP包的长度也就不会大于MTU ，自然也就不用IP分片了。
