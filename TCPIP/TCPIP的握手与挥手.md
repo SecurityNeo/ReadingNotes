@@ -73,3 +73,25 @@
 	![](img/TCP_MTU_MSS.PNG)
 
 	当IP层有一个超过MTU大小的数据（TCP头部 + TCP数据）要发送，那么IP层就要进行分片，把数据分片成若干片，保证每一个分片都小于MTU。把一份IP数据报进行分片以后，由目标主机的IP层来进行重新组装后，在交给上一层TCP传输层。但网络是不可靠的，如果一个IP分片丢失，整个IP报文的所有分片都得重传。IP层本身没有超时重传机制，它由传输层的TCP来负责超时和重传。当接收方发现TCP报文（头部 + 数据）的某一片丢失后，则不会响应ACK给对方，那么发送方的TCP在超时后，就会重发整个TCP报文（头部 + 数据）。另外，TCP协议在建立连接的时候通常要协商双方的MSS值，当TCP层发现数据超过MSS时，则就先会进行分片，当然由它形成的IP包的长度也就不会大于MTU ，自然也就不用IP分片了。
+
+## 四次挥手 ##
+
+![](img/TCP_Disconnect.PNG)
+
+注意：主动关闭连接的，才有TIME_WAIT状态。
+
+- Q1：为什么挥手需要四次？
+
+	1、关闭连接时，客户端向服务端发送 FIN 时，仅仅表示客户端不再发送数据了但是还能接收数据。
+	2、服务器收到客户端的 FIN 报文时，先回一个 ACK 应答报文，而服务端可能还有数据需要处理和发送，等服务端不再发送数据时，才发送 FIN 报文给客户端来表示同意现在关闭连接。
+
+- Q2：为什么需要TIME_WAI状态？
+
+	[https://blog.csdn.net/wsyw126/java/article/details/70050297](https://blog.csdn.net/wsyw126/java/article/details/70050297)
+	- 1、保证连接正确关闭。RFC 793中有提及["TIME-WAIT - represents waiting for enough time to pass to be sure the remote TCP received the acknowledgment of its connection termination request."](https://www.rfc-editor.org/rfc/rfc793.html)。客户端四次挥手的最后一个ACK报文如果在网络中被丢失了，此时如果客户端TIME-WAIT过短或没有，则就直接进入了CLOSE状态了，那么服务端则会一直处在LASE-ACK状态。当客户端发起建立连接的SYN请求报文后，服务端会发送RST报文给客户端，连接建立的过程就会被终止。
+	- 2、防止旧连接的数据包。如果Client直接CLOSED，然后又再向Server发起一个新连接，我们不能保证这个新连接与刚关闭的连接的端口号是不同的。也就是说有可能新连接和老连接的端口号是相同的。一般来说不会发生什么问题，但是还是有特殊情况出现：假设新连接和已经关闭的老连接端口号是一样的，如果前一次连接的某些数据仍然滞留在网络中，这些延迟数据在建立新连接之后才到达Server，由于新连接和老连接的端口号是一样的，又因为TCP协议判断不同连接的依据是socket pair，于是，TCP协议就认为那个延迟的数据是属于新连接的，这样就和真正的新连接的数据包发生混淆了。
+
+
+
+
+	
