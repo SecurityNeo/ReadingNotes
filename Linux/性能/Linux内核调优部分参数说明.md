@@ -88,7 +88,11 @@
 
 - net.ipv4.tcp_tw_reuse = 1
 
-	表示允许重用TIME_WAIT状态的套接字用于新的TCP连接,默认为0，表示关闭。
+	表示允许重用TIME_WAIT状态的套接字用于新的TCP连接,默认为0，表示关闭。使用这个选项，还有一个前提，需要打开对TCP时间戳的支持，即`net.ipv4.tcp_timestamps = 1`。
+
+- net.ipv4.tcp_timestamps = 1
+
+	这个时间戳的字段是在TCP头部的「选项」里，用于记录TCP发送方的当前时间戳和从对端接收到的最新时间戳。注意：当客户端与服务端主机时间不同步时，客户端的发送的消息会被直接拒绝掉，慎用！
 
 - net.ipv4.tcp_syncookies = 1
 
