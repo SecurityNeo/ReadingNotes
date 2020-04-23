@@ -91,6 +91,18 @@
 	- 1、保证连接正确关闭。RFC 793中有提及["TIME-WAIT - represents waiting for enough time to pass to be sure the remote TCP received the acknowledgment of its connection termination request."](https://www.rfc-editor.org/rfc/rfc793.html)。客户端四次挥手的最后一个ACK报文如果在网络中被丢失了，此时如果客户端TIME-WAIT过短或没有，则就直接进入了CLOSE状态了，那么服务端则会一直处在LASE-ACK状态。当客户端发起建立连接的SYN请求报文后，服务端会发送RST报文给客户端，连接建立的过程就会被终止。
 	- 2、防止旧连接的数据包。如果Client直接CLOSED，然后又再向Server发起一个新连接，我们不能保证这个新连接与刚关闭的连接的端口号是不同的。也就是说有可能新连接和老连接的端口号是相同的。一般来说不会发生什么问题，但是还是有特殊情况出现：假设新连接和已经关闭的老连接端口号是一样的，如果前一次连接的某些数据仍然滞留在网络中，这些延迟数据在建立新连接之后才到达Server，由于新连接和老连接的端口号是一样的，又因为TCP协议判断不同连接的依据是socket pair，于是，TCP协议就认为那个延迟的数据是属于新连接的，这样就和真正的新连接的数据包发生混淆了。
 
+- Q3：为什么TIME_WAIT等待的时间是2MSL？
+
+	MSL是Maximum Segment Lifetime，报文最大生存时间，它是任何报文在网络上存在的最长时间，超过这个时间报文将被丢弃。因为TCP报文基于是IP协议的，而IP头中有一个TTL字段，是IP数据报可以经过的最大路由数，每经过一个处理他的路由器此值就减1，当此值为0则数据报将被丢弃，同时发送ICMP报文通知源主机。2MSL的时间是从客户端接收到FIN后发送ACK开始计时的。如果在TIME-WAIT时间内，因为客户端的ACK没有传输到服务端，客户端又接收到了服务端重发的FIN报文，那么2MSL时间将重新计时。
+	在Linux系统里2MSL默认是60秒，那么一个MSL也就是30秒。Linux系统停留在TIME_WAIT的时间为固定的60秒。
+
+- Q4：TIME_WAIT过多的危害
+
+	如果服务器有处于TIME-WAIT状态的TCP，则说明是由服务器方主动发起的断开请求。过多的 TIME-WAIT 状态主要的危害有两种：第一是内存资源占用；第二是对端口资源的占用，一个TCP连接至少消耗一个本地端口，如果服务端TIME_WAIT状态过多，占满了所有端口资源，则会导致无法创建新连接。
+
+
+
+
 
 
 
