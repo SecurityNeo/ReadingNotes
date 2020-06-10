@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 /*
 单向环形链表：
@@ -34,6 +36,53 @@ func InsertHeroNode(head *HeroNode, newHeroNode *HeroNode) {
 	}
 }
 
+func deleteHeroNode(head *HeroNode, ID int) *HeroNode{
+	if head.next == nil {
+		fmt.Printf("Empty! \n")
+		return head
+	}
+	// 链表中只有一个节点时，设（head.next = nil）即可
+	if head.next == head {
+		head.next = nil
+		return head
+	}
+	tempNode := head
+	helperNode := head
+	for {
+		if helperNode.next == head {
+			break
+		}
+		helperNode = helperNode.next
+	}
+	flag := true
+	for {
+		// 这个时候只比较到倒数第二个节点，最后一个节点还没比较，只是找到了最后一个节点
+		if tempNode.next == head {
+			break
+		}
+		if tempNode.ID == ID {
+			if tempNode == head {
+				head = head.next
+			}
+			helperNode.next = tempNode.next
+			flag = false
+			break
+		}
+		tempNode = tempNode.next
+		helperNode = helperNode.next
+	}
+	// 如果flag为true，说明在上边这个for循环中没有进行节点删除。那我们要把最后一个节点再比较一次。
+	if flag {
+		if tempNode.ID == ID {
+			helperNode.next = tempNode.next
+		}else {
+			// 说明比较了所有节点，仍然没有找到对应ID的节点
+			fmt.Printf("ID %d does not exist!\n", ID)
+		}
+	}
+	return  head
+}
+
 func showHeroNode(head *HeroNode){
 	if head.next == nil {
 		fmt.Println("Empty!")
@@ -47,6 +96,7 @@ func showHeroNode(head *HeroNode){
 		}
 		tempNode = tempNode.next
 	}
+	fmt.Println()
 }
 
 func main() {
@@ -67,6 +117,12 @@ func main() {
 	InsertHeroNode(head, hero1)
 	InsertHeroNode(head, hero2)
 	InsertHeroNode(head, hero3)
+	showHeroNode(head)
+	head = deleteHeroNode(head, 20)
+	showHeroNode(head)
+	head = deleteHeroNode(head, 1)
+	showHeroNode(head)
+	head = deleteHeroNode(head, 3)
 	showHeroNode(head)
 
 }
