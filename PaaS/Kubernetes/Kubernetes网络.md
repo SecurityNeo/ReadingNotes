@@ -6,21 +6,26 @@
 
 veth-pair 是成对出现的一种虚拟网络设备，一端连接着协议栈，一端彼此相连，数据从一端出，从另一端进。
 
-创建一对名为 veth0 和 veth1 的 veth 接口。
-`ip link add veth0 type veth peer name veth1`
+1. 创建一对名为 veth0 和 veth1 的 veth 接口：
 
-创建 ns1 网络命名空间
-`ip netns add ns1`
+	`ip link add veth0 type veth peer name veth1`
 
-将 veth0 接口加到 ns1 网络命名空间里
-`ip link set veth0 netns ns1`
+2. 创建 ns1 网络命名空间：
 
-为 veth0 接口配置 IP 地址
-`ip -n ns1 addr add 10.1.1.1/24 dev veth0`
+	`ip netns add ns1`
 
-将 veth0 接口和 lo 口 up 起来
-`ip -n ns1 link set veth0 up`
-`ip -n ns1 link set lo up`
+3. 将 veth0 接口加到 ns1 网络命名空间里：
+
+	`ip link set veth0 netns ns1`
+ 
+4. 为 veth0 接口配置 IP 地址：
+ 
+	`ip -n ns1 addr add 10.1.1.1/24 dev veth0`
+ 
+5. 将 veth0 接口和 lo 口 up 起来：
+
+	`ip -n ns1 link set veth0 up`
+	`ip -n ns1 link set lo up`
 
 ```shell
 [root@VM-0-4-centos ~]# ip -n ns1 addr show
@@ -43,18 +48,22 @@ PING 10.1.1.1 (10.1.1.1) 56(84) bytes of data.
 
 现在配置另一个接口veth1
 
-创建 ns2 网络命名空间
-`ip netns add ns2`
+1. 创建 ns2 网络命名空间：
 
-将 veth1 接口加到 ns2 网络命名空间里
-`ip link set veth1 netns ns2`
+	`ip netns add ns2`
 
-为 veth1 接口配置 IP 地址
-`ip -n ns2 addr add 10.2.1.1/24 dev veth1`
+2. 将 veth1 接口加到 ns2 网络命名空间里：
 
-将 veth1 接口和 lo 口 up 起来
-`ip -n ns2 link set veth1 up`
-`ip -n ns2 link set lo up`
+	`ip link set veth1 netns ns2`
+
+3. 为 veth1 接口配置 IP 地址：
+
+	`ip -n ns2 addr add 10.2.1.1/24 dev veth1`
+
+4. 将 veth1 接口和 lo 口 up 起来：
+
+	`ip -n ns2 link set veth1 up`
+	`ip -n ns2 link set lo up`
 
 ```shell
 [root@VM-0-4-centos ~]# ip -n ns2 addr show
