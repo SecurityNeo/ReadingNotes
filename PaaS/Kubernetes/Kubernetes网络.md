@@ -147,6 +147,51 @@ rtt min/avg/max/mdev = 0.052/0.061/0.071/0.012 ms
 
 ### ipset ###
 
+## 创建 ##
+
+命令：
+
+`ipset create SETNAME TYPENAME`
+
+注解：
+
+	SETNAME： ipset的名称
+	TYPENAME： 类型，格式为： method:datatype[,datatype[,datatype]]
+		method: 指定ipset中的entry存放的方式，随后的datatype约定了每个entry的格式。bitmap, hash, list
+		datatype: 可以为ip, net, mac, port, iface
+
+示例：
+
+```shell
+[root@VM-0-4-centos ~]# ipset create blacklist hash:ip
+[root@VM-0-4-centos ~]# ipset create webserver hash:ip,port
+[root@VM-0-4-centos ~]# ipset create database hash:net
+[root@VM-0-4-centos ~]# ipset list
+Name: blacklist
+Type: hash:ip
+Revision: 1
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16528
+References: 0
+Members:
+
+Name: webserver
+Type: hash:ip,port
+Revision: 2
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16528
+References: 0
+Members:
+
+Name: database
+Type: hash:net
+Revision: 3
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16784
+References: 0
+Members:
+```
+
 ### conntract ###
 
 ### iptables ###
