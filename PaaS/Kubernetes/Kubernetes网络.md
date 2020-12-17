@@ -192,6 +192,55 @@ References: 0
 Members:
 ```
 
+## 添加条目 ##
+
+命令：
+
+`ipset add SETNAME ENTRY`
+
+注解：
+	
+	ENTRY： 形式为ip/port/ip-ip等，注意：创建的集合属于哪种类型，在添加时的数据就要符合对应的类型
+
+示例：
+
+```
+[root@VM-0-4-centos ~]# ipset add blacklist 192.168.1.2
+[root@VM-0-4-centos ~]# ipset add blacklist 192.168.1.3,10.10.10.10
+ipset v6.29: Syntax error: Elem separator in 192.168.1.3,10.10.10.10, but settype hash:ip supports none.
+[root@VM-0-4-centos ~]# ipset add webserver 10.10.10.10,80
+[root@VM-0-4-centos ~]# ipset add database 172.25.0.0/16
+[root@VM-0-4-centos ~]# ipset list
+Name: blacklist
+Type: hash:ip
+Revision: 1
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16544
+References: 0
+Members:
+192.168.1.2
+
+Name: webserver
+Type: hash:ip,port
+Revision: 2
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16560
+References: 0
+Members:
+10.10.10.10,tcp:80
+
+Name: database
+Type: hash:net
+Revision: 3
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16816
+References: 0
+Members:
+172.25.0.0/16
+
+```
+
+
 ### conntract ###
 
 ### iptables ###
