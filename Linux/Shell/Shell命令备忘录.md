@@ -325,3 +325,297 @@ ltrace 能够跟踪进程的库函数调用，它会显现出调用了哪个库�
 -T          显示每次调用所花费的时间
 -u username 以username的UID和GID执行所跟踪的命令
 ```
+
+## IPSET ##
+### 创建(create) ###
+
+命令：
+
+`ipset create SETNAME TYPENAME`
+
+注解：
+
+	SETNAME： ipset的名称
+	TYPENAME： 类型，格式为： method:datatype[,datatype[,datatype]]
+		method: 指定ipset中的entry存放的方式，随后的datatype约定了每个entry的格式。bitmap, hash, list
+		datatype: 可以为ip, net, mac, port, iface
+
+示例：
+
+```shell
+[root@VM-0-4-centos ~]# ipset create blacklist hash:ip
+[root@VM-0-4-centos ~]# ipset create webserver hash:ip,port
+[root@VM-0-4-centos ~]# ipset create database hash:net
+[root@VM-0-4-centos ~]# ipset list
+Name: blacklist
+Type: hash:ip
+Revision: 1
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16528
+References: 0
+Members:
+
+Name: webserver
+Type: hash:ip,port
+Revision: 2
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16528
+References: 0
+Members:
+
+Name: database
+Type: hash:net
+Revision: 3
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16784
+References: 0
+Members:
+```
+
+### 添加条目(add) ###
+
+命令：
+
+`ipset add SETNAME ENTRY`
+
+注解：
+	
+	ENTRY： 形式为ip/port/ip-ip等，注意：创建的集合属于哪种类型，在添加时的数据就要符合对应的类型
+
+示例：
+
+```
+[root@VM-0-4-centos ~]# ipset add blacklist 192.168.1.2
+[root@VM-0-4-centos ~]# ipset add blacklist 192.168.1.3,10.10.10.10
+ipset v6.29: Syntax error: Elem separator in 192.168.1.3,10.10.10.10, but settype hash:ip supports none.
+[root@VM-0-4-centos ~]# ipset add webserver 10.10.10.10,80
+[root@VM-0-4-centos ~]# ipset add database 172.25.0.0/16
+[root@VM-0-4-centos ~]# ipset list
+Name: blacklist
+Type: hash:ip
+Revision: 1
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16544
+References: 0
+Members:
+192.168.1.2
+
+Name: webserver
+Type: hash:ip,port
+Revision: 2
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16560
+References: 0
+Members:
+10.10.10.10,tcp:80
+
+Name: database
+Type: hash:net
+Revision: 3
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16816
+References: 0
+Members:
+172.25.0.0/16
+
+```
+
+### 删除条例(del/flush/destroy) ###
+
+命令&示例：
+
+`ipset del SETNAME ENTRY`: 删除某个IP条目
+
+```shell
+[root@VM-0-4-centos ~]# ipset list blacklist
+Name: blacklist
+Type: hash:ip
+Revision: 1
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16576
+References: 0
+Members:
+192.168.1.2
+192.168.1.3
+192.168.1.4
+[root@VM-0-4-centos ~]# ipset del blacklist 192.168.1.4
+[root@VM-0-4-centos ~]# ipset list blacklist
+Name: blacklist
+Type: hash:ip
+Revision: 1
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16576
+References: 0
+Members:
+192.168.1.2
+192.168.1.3
+```
+
+`ipset flush SETNAME`：删除某个集合的所有IP条目
+
+```shell
+[root@VM-0-4-centos ~]# ipset list database
+Name: database
+Type: hash:net
+Revision: 3
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16848
+References: 0
+Members:
+10.125.0.0/16
+172.25.0.0/16
+[root@VM-0-4-centos ~]# ipset flush database
+[root@VM-0-4-centos ~]# ipset list database
+Name: database
+Type: hash:net
+Revision: 3
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16784
+References: 0
+Members:
+```
+
+`ipset flush`：清空ipset中所有集合的ip条目（删条目，不删集合）
+
+```shell
+[root@VM-0-4-centos ~]# ipset list
+Name: blacklist
+Type: hash:ip
+Revision: 1
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16576
+References: 0
+Members:
+192.168.1.2
+192.168.1.3
+
+Name: webserver
+Type: hash:ip,port
+Revision: 2
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16560
+References: 0
+Members:
+10.10.10.10,tcp:80
+
+Name: database
+Type: hash:net
+Revision: 3
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16784
+References: 0
+Members:
+[root@VM-0-4-centos ~]# ipset flush
+[root@VM-0-4-centos ~]# ipset list
+Name: blacklist
+Type: hash:ip
+Revision: 1
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16528
+References: 0
+Members:
+
+Name: webserver
+Type: hash:ip,port
+Revision: 2
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16528
+References: 0
+Members:
+
+Name: database
+Type: hash:net
+Revision: 3
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16784
+References: 0
+Members:
+```
+
+`ipset destroy SETNAME`： 删除ipset中的某个集合或者所有集合
+
+```shell
+[root@VM-0-4-centos ~]# ipset list
+Name: blacklist
+Type: hash:ip
+Revision: 1
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16528
+References: 0
+Members:
+
+Name: webserver
+Type: hash:ip,port
+Revision: 2
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16528
+References: 0
+Members:
+
+Name: database
+Type: hash:net
+Revision: 3
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16784
+References: 0
+Members:
+[root@VM-0-4-centos ~]# ipset destroy database
+[root@VM-0-4-centos ~]# ipset list
+Name: blacklist
+Type: hash:ip
+Revision: 1
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16528
+References: 0
+Members:
+
+Name: webserver
+Type: hash:ip,port
+Revision: 2
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16528
+References: 0
+Members:
+```
+
+### IPSET选项 ###
+
+#### timeout选项 ####
+
+timeout设置超时时间，如果设置为0，表示永久生效，条目的超时时间也可以通过`-exist`来进行修改。可以为整个集合设置超时时间，即为加入此集合的条目默认超时时间，也可为具体条目设置超时时间。超时到期后自动清除条目。
+
+示例：
+
+```shell
+[root@VM-0-4-centos ~]# ipset list webserver
+Name: webserver
+Type: hash:ip
+Revision: 1
+Header: family inet hashsize 1024 maxelem 65536 timeout 50
+Size in memory: 16592
+References: 0
+Members:
+[root@VM-0-4-centos ~]# ipset add webserver 10.125.31.80 timeout 100
+[root@VM-0-4-centos ~]# ipset add webserver 10.125.31.81
+[root@VM-0-4-centos ~]# ipset list webserver
+Name: webserver
+Type: hash:ip
+Revision: 1
+Header: family inet hashsize 1024 maxelem 65536 timeout 50
+Size in memory: 16720
+References: 0
+Members:
+10.125.31.81 timeout 30
+10.125.31.80 timeout 75
+[root@VM-0-4-centos ~]# ipset -exist add webserver 10.125.31.81 timeout 200
+[root@VM-0-4-centos ~]# ipset list webserver
+Name: webserver
+Type: hash:ip
+Revision: 1
+Header: family inet hashsize 1024 maxelem 65536 timeout 50
+Size in memory: 16720
+References: 0
+Members:
+10.125.31.81 timeout 197
+10.125.31.80 timeout 20
+```
