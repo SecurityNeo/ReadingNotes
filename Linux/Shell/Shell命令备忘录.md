@@ -1,6 +1,6 @@
-## Shell命令备忘录 ##
+# Shell命令备忘录 #
 
-**eval**
+## eval ##
 
 语法： `eval command-line`
 
@@ -18,7 +18,7 @@ ptrx=x
 eval echo \$$ptrx
 ```
 
-**chattr**
+## chattr ##
 
 语法： `chattr [ -RVf ] [ -v version ] [ mode ] files…`
 
@@ -37,7 +37,7 @@ t:文件系统支持尾部合并（tail-merging）。
 X：可以直接访问压缩文件的内容。
 ```
 
-**nsenter**
+## nsenter ##
 
 nsenter命令可以在指定进程的命令空间下运行指定程序的命令。包含在util-linux包中。
 
@@ -71,7 +71,7 @@ options:
 `nsenter -n -t CONTAINER—PID`
 
 
-**ip**
+## ip ##
 
 ![https://www.cnblogs.com/diantong/p/9511072.html](https://www.cnblogs.com/diantong/p/9511072.html)
 
@@ -144,7 +144,7 @@ options:
 
 `ip -s link`
 
-**变量默认值**
+## 变量默认值 ##
 
 - `${var:-string}和${var:=string}`
 	若变量var为空，则用在命令行中用string来替换${var:-string}，变量var不为空时，则用变量var的值来替换${var:-string}
@@ -158,7 +158,7 @@ options:
 - `${var:?string}`
 	若变量var不为空，则用变量var的值来替换${var:?string}；若变量var为空，则把string输出到标准错误中，并从脚本中退出。我们可利用此特性来检查是否设置了变量的值
 
-**模式匹配替换**
+## 模式匹配替换 ##
 
 - `${variable%pattern}`
 	shell在variable中查找，看它是否以模式pattern结尾，如果是，就从命令行把variable中的内容去掉右边最短的匹配模式
@@ -174,7 +174,7 @@ options:
 
 这四种模式中都不会改变variable的值，其中，只有在pattern中使用了`*`匹配符号时，%和%%，#和##才有区别。结构中的pattern支持通配符，`*`表示零个或多个任意字符，`?`表示仅与一个任意字符匹配，`[...]`表示匹配中括号里面的字符，`[!...]`表示不匹配中括号里面的字符。
 
-**字符串提取和替换**
+## 字符串提取和替换 ##
 
 - ${var:num}
 	shell在var中提取第num个字符到末尾的所有字符。若num为正数，从左边0处开始；若num为负数，从右边开始提取字串，但必须使用在冒号后面加空格或一个数字或整个num加上括号，如${var: -2}、${var:1-3}或${var:(-2)}。
@@ -189,11 +189,11 @@ options:
 	表示将var字符串中的所有能匹配的pattern替换为另一个pattern。
 
 
-**查询某个POD的容器ID**
+## 查询某个POD的容器ID ##
 
 `kubectl describe pod POD_NAME | grep -A10 "^Containers:" | grep -Eo 'docker://.*$' | head -n 1 |sed 's/docker:\/\/\(.*\)$/\1/'`
 
-**Docker相关维护命令**
+## Docker相关维护命令 ##
 
 - 杀死所有正在运行的容器
 - 
@@ -231,7 +231,7 @@ options:
 
 `docker rm -v $(docker ps -aq -f status=dead)`
 
-**Harbor空间清理**
+## Harbor空间清理 ##
 
 1、查看仓库镜像信息
 
@@ -253,7 +253,7 @@ options:
 
 `find . -name "*" -type f -size 0c`
 
-**Nexus重置密码**
+## Nexus重置密码 ##
 
 1、进入OrientDB控制台
 
@@ -267,7 +267,7 @@ options:
 
 `update user SET password="$shiro1$SHA-512$1024$NE+wqQq/TmjZMvfI7ENh/g==$V4yPw8T64UQ6GfJfxYq2hLsVrBY8D1v+bktfOxGdt4b/9BthpWPNUy/CBk6V9iA0nHpzYzJFWO8v/tZFtES8CA==" UPSERT WHERE id="admin"`
 
-**strace**
+## strace ##
 
 strace会追踪程序运行时的整个生命周期，输出每一个系统调用的名字、参数、返回值和执行所消耗的时间等
 
@@ -301,7 +301,7 @@ strace会追踪程序运行时的整个生命周期，输出每一个系统调�
         -e write=[set]    输出写入到指定文件中的数据
 ```
 
-**ltrace**
+## ltrace ##
 
 ltrace 能够跟踪进程的库函数调用，它会显现出调用了哪个库函数，而 strace则是跟踪进程的每个系统调用。 
 
