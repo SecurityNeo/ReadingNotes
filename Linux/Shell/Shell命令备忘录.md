@@ -337,8 +337,8 @@ ltrace 能够跟踪进程的库函数调用，它会显现出调用了哪个库�
 
 	SETNAME： ipset的名称
 	TYPENAME： 类型，格式为： method:datatype[,datatype[,datatype]]
-		method: 指定ipset中的entry存放的方式，随后的datatype约定了每个entry的格式。bitmap, hash, list
-		datatype: 可以为ip, net, mac, port, iface
+		method: 指定ipset中的entry存放的方式，随后的datatype约定了每个entry的格式。bitmap, hash, list。bitmap和list使用固定大小的存储，hash使用hash表来存储元素。但为了避免Hash表键冲突,在ipset会在hash表key用完后，若又有新增条目，则ipset将自动对hash表扩大,假如当前哈希表大小为100条,则它将扩展为200条。当在iptables/ip6tables中使用了ipset hash类型的集合，则该集合将不能再新增条目。
+		datatype: 可以为ip, net, mac, port, iface。[官网](http://ipset.netfilter.org/ipset.man.html)
 
 示例：
 
@@ -619,3 +619,85 @@ Members:
 10.125.31.81 timeout 197
 10.125.31.80 timeout 20
 ```
+
+#### counters, packets, bytes选项 ####
+
+示例：
+
+```shell
+[root@VM-0-4-centos ~]# ipset create test hash:ip counters
+[root@VM-0-4-centos ~]# ipset add test 100.1.1.2 packets 100 bytes 200
+[root@VM-0-4-centos ~]# ipset add test 100.1.1.3
+[root@VM-0-4-centos ~]# ipset list test
+Name: test
+Type: hash:ip
+Revision: 1
+Header: family inet hashsize 1024 maxelem 65536 counters
+Size in memory: 16720
+References: 0
+Members:
+100.1.1.2 packets 100 bytes 200
+100.1.1.3 packets 0 bytes 0
+```
+
+#### hashsize ####
+
+定义集合的初始哈希大小，默认值为1024。哈希大小必须是2的幂，内核会自动舍入两个哈希大小的非幂到第一个正确的值。
+
+示例：
+
+```shell
+[root@VM-0-4-centos ~]# ipset creat2 test hash:ip
+[root@VM-0-4-centos ~]# ipset list test
+Name: test
+Type: hash:ip
+Revision: 1
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 16528
+References: 0
+Members:
+[root@VM-0-4-centos ~]# ipset create test2 hash:ip hashsize 2048
+[root@VM-0-4-centos ~]# ipset list test2
+Name: test2
+Type: hash:ip
+Revision: 1
+Header: family inet hashsize 2048 maxelem 65536
+Size in memory: 32912
+References: 0
+Members:
+```
+
+#### maxelem ####
+
+定义可以存储在集合中的元素的最大数量，默认值为65536.
+
+```shell
+[root@VM-0-4-centos ~]# ipset create test hash:ip maxelem 100000
+[root@VM-0-4-centos ~]# ipset list test
+Name: test
+Type: hash:ip
+Revision: 1
+Header: family inet hashsize 1024 maxelem 100000
+Size in memory: 16528
+References: 0
+Members:
+```
+
+#### family {inet|inet6} ####
+
+定义要存储在集合中的IP地址的协议族，不指定时默认为IPV4。这个参数对于除hash:mac之外的所有hash类型集的create命令都是有效的。
+
+```shell
+[root@VM-0-4-centos ~]# ipset create test hash:ip family inet6
+[root@VM-0-4-centos ~]# ipset list test
+Name: test
+Type: hash:ip
+Revision: 1
+Header: family inet6 hashsize 1024 maxelem 65536
+Size in memory: 16528
+References: 0
+Members:
+```
+
+
+
