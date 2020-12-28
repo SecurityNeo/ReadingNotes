@@ -75,7 +75,7 @@ $ iptables -t nat -S KUBE-SERVICES | grep nginx
 -A KUBE-SERVICES -d 10.102.40.108/32 -p tcp -m comment --comment "default/nginx-svc: cluster IP" -m tcp --dport 80 -j KUBE-SVC-R2VK7O5AFVLRAXSH
 ```
 
-再看看扩展链“KUBE-SVC-4CRUJHTV5RT5YMFY”：
+再看看扩展链“KUBE-SVC-R2VK7O5AFVLRAXSH”：
 
 ```shell
 $ iptables -t nat -S KUBE-SVC-R2VK7O5AFVLRAXSH
