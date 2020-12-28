@@ -62,36 +62,39 @@ const (
 K8S会在`KUBE-SERVICES`链中为每个service创建规则，并为其创建新的链，名称以`KUBE-SVC-`开头。另外会为挂载在此service下边的endpoint创建新的链，名称以`KUBE-SEP-`开头， 看例子理解：
 
 ```shell
-$ kubectl get svc -n kubernetes-dashboard  kubernetes-dashboard
-NAME                   TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
-kubernetes-dashboard   ClusterIP   10.96.132.92   <none>        80/TCP    2m29s
-$ kubectl get pod -n kubernetes-dashboard   kubernetes-dashboard-79d9cd965-27pk7 -o wide
-NAME                                   READY   STATUS    RESTARTS   AGE     IP           NODE       NOMINATED NODE   READINESS GATES
-kubernetes-dashboard-79d9cd965-27pk7   1/1     Running   0          2m29s   172.18.0.3   minikube   <none>           <none>
+$ kubectl get pod -o wide
+NAME                     READY   STATUS    RESTARTS   AGE    IP           NODE       NOMINATED NODE   READINESS GATESnginx-7bdbbfb5cf-88knd   1/1     Running   0          118s   172.18.0.5   minikube   <none>           <none>nginx-7bdbbfb5cf-p2h2s   1/1     Running   0          118s   172.18.0.4   minikube   <none>           <none>
+$ kubectl get svc | grep nginx
+nginx-svc    ClusterIP   10.102.40.108   <none>        80/TCP    9m20s
 ```
 
 KUBE-SERVICES中相关规则如下：
 
 ```shell
-$ iptables -t nat -S KUBE-SERVICES | grep kubernetes-dashboard/kubernetes-dashboard
--A KUBE-SERVICES -d 10.96.132.92/32 -p tcp -m comment --comment "kubernetes-dashboard/kubernetes-dashboard: cluster IP" -m tcp --dport 80 -j KUBE-SVC-4CRUJHTV5RT5YMFY
+$ iptables -t nat -S KUBE-SERVICES | grep nginx
+-A KUBE-SERVICES -d 10.102.40.108/32 -p tcp -m comment --comment "default/nginx-svc: cluster IP" -m tcp --dport 80 -j KUBE-SVC-R2VK7O5AFVLRAXSH
 ```
 
 再看看扩展链“KUBE-SVC-4CRUJHTV5RT5YMFY”：
 
 ```shell
-$ iptables -t nat -S KUBE-SVC-4CRUJHTV5RT5YMFY
--N KUBE-SVC-4CRUJHTV5RT5YMFY
--A KUBE-SVC-4CRUJHTV5RT5YMFY -j KUBE-SEP-HDZYAGRHLDHIDAMC
+$ iptables -t nat -S KUBE-SVC-R2VK7O5AFVLRAXSH
+-N KUBE-SVC-R2VK7O5AFVLRAXSH
+-A KUBE-SVC-R2VK7O5AFVLRAXSH -m statistic --mode random --probability 0.50000000000 -j KUBE-SEP-R6MNIMRVL7R2ID27
+-A KUBE-SVC-R2VK7O5AFVLRAXSH -j KUBE-SEP-SONECWMN2373EQTO
 ```
 
 继续往下看：
 
 ```
-$ iptables -t nat -S KUBE-SEP-HDZYAGRHLDHIDAMC
--N KUBE-SEP-HDZYAGRHLDHIDAMC
--A KUBE-SEP-HDZYAGRHLDHIDAMC -s 172.18.0.3/32 -j KUBE-MARK-MASQ
--A KUBE-SEP-HDZYAGRHLDHIDAMC -p tcp -m tcp -j DNAT --to-destination 172.18.0.3:9090
+$ iptables -t nat -S KUBE-SEP-R6MNIMRVL7R2ID27
+-N KUBE-SEP-R6MNIMRVL7R2ID27
+-A KUBE-SEP-R6MNIMRVL7R2ID27 -s 172.18.0.4/32 -j KUBE-MARK-MASQ
+-A KUBE-SEP-R6MNIMRVL7R2ID27 -p tcp -m tcp -j DNAT --to-destination 172.18.0.4:80
+$ iptables -t nat -S KUBE-SEP-SONECWMN2373EQTO
+-N KUBE-SEP-SONECWMN2373EQTO
+-A KUBE-SEP-SONECWMN2373EQTO -s 172.18.0.5/32 -j KUBE-MARK-MASQ
+-A KUBE-SEP-SONECWMN2373EQTO -p tcp -m tcp -j DNAT --to-destination 172.18.0.5:80
 ```
 
 
