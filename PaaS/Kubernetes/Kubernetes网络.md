@@ -84,7 +84,7 @@ $ iptables -t nat -S KUBE-SVC-R2VK7O5AFVLRAXSH
 -A KUBE-SVC-R2VK7O5AFVLRAXSH -j KUBE-SEP-SONECWMN2373EQTO
 ```
 
-继续往下看：
+可以看到，service -> pod的负载就在KUBE-SVC-XXXX链规则内完成的。继续往下看：
 
 ```
 $ iptables -t nat -S KUBE-SEP-R6MNIMRVL7R2ID27
@@ -97,5 +97,35 @@ $ iptables -t nat -S KUBE-SEP-SONECWMN2373EQTO
 -A KUBE-SEP-SONECWMN2373EQTO -p tcp -m tcp -j DNAT --to-destination 172.18.0.5:80
 ```
 
+当service类型为nodePort时，KUBE-NODEPORTS链会将数据包导入“KUBE-SVC-XXX”链。其余跟ClusterIP类型的一致。看个示例：
+
+```shell
+$ kubectl get pod -o wide
+NAME                     READY   STATUS    RESTARTS   AGE    IP           NODE       NOMINATED NODE   READINESS GATES
+nginx-57c6bff7f6-7tg9s   1/1     Running   0          9m3s   172.18.0.5   minikube   <none>           <none>
+nginx-57c6bff7f6-kxk6v   1/1     Running   0          9m3s   172.18.0.4   minikube   <none>           <none>
+$ kubectl get svc nginx-svc
+NAME        TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+nginx-svc   NodePort   10.110.25.59   <none>        80:30168/TCP   4m31s
+```
+
+我们可以看到在KUBE-NODEPORTS链中会增加两条规则：
+
+```shell
+$ iptables -t nat -S KUBE-NODEPORTS-N KUBE-NODEPORTS
+-A KUBE-NODEPORTS -p tcp -m comment --comment "default/nginx-svc:" -m tcp --dport 30168 -j KUBE-MARK-MASQ
+-A KUBE-NODEPORTS -p tcp -m comment --comment "default/nginx-svc:" -m tcp --dport 30168 -j KUBE-SVC-R2VK7O5AFVLRAXSH
+```
+
+注意：实际上系统是优先处理的ClusterIP类型流量，我们可以看到在KUBE-SERVICES链的最后一个才将流量转发至KUBE-NODEPORTS链中。
+
+```shell
+$ iptables -t nat -S KUBE-SERVICES
+-N KUBE-SERVICES
+......
+-A KUBE-SERVICES -d 10.110.25.59/32 -p tcp -m comment --comment "default/nginx-svc: cluster IP" -m tcp --dport 80 -j KUBE-SVC-R2VK7O5AFVLRAXSH
+......
+-A KUBE-SERVICES -m comment --comment "kubernetes service nodeports; NOTE: this must be the last rule in this chain" -m addrtype --dst-type LOCAL -j KUBE-NODEPORTS
+```
 
 ## ipvs ##
