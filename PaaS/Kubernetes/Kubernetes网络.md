@@ -129,3 +129,192 @@ $ iptables -t nat -S KUBE-SERVICES
 ```
 
 ## ipvs ##
+
+ipvs模式下并不是完全不使用iptables，ipvs只有DNAT功能，所以跟多功能仍然依靠iptables来完成。在ipvs模式下，kube-proxy会在节点上新添加一个网卡，一般名称为`kube-ipvs0`，集群内所有服务的ClusterIP都会设置在此网卡上，如下：
+
+```shell
+[root@VM-0-16-centos ~]# ip addr show kube-ipvs0
+4: kube-ipvs0: <BROADCAST,NOARP> mtu 1500 qdisc noop state DOWN group default
+    link/ether 62:87:11:34:94:61 brd ff:ff:ff:ff:ff:ff
+    inet 172.16.254.132/32 brd 172.16.254.132 scope global kube-ipvs0
+       valid_lft forever preferred_lft forever
+    inet 172.16.252.1/32 brd 172.16.252.1 scope global kube-ipvs0
+       valid_lft forever preferred_lft forever
+    inet 172.16.255.254/32 brd 172.16.255.254 scope global kube-ipvs0
+       valid_lft forever preferred_lft forever
+    inet 172.16.252.40/32 brd 172.16.252.40 scope global kube-ipvs0
+       valid_lft forever preferred_lft forever
+```
+
+对于service -> pod的流量转发由ipvs完成，相关规则可通过命令`ipvsadm -Ln`查看，如下：
+```shell
+[root@VM-0-16-centos ~]# ipvsadm -Ln
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
+TCP  172.16.252.40:80 rr
+  -> 172.16.0.196:80              Masq    1      0          0
+  -> 172.16.0.197:80              Masq    1      0          0
+```
+
+梳理一下ClusterIP和NodePort两种service类型的流量转发：
+
+**ClusterIP类型**
+
+
+```shell
+[root@10-206-0-3 ~]# kubectl get pod -o wide
+NAME                    READY   STATUS    RESTARTS   AGE   IP             NODE          NOMINATED NODE   READINESS GATES
+nginx-9d776f4cf-5psws   1/1     Running   0          78s   172.16.0.197   10.206.0.16   <none>           <none>
+nginx-9d776f4cf-vcq86   1/1     Running   0          89s   172.16.0.196   10.206.0.16   <none>           <none>
+[root@10-206-0-3 ~]# kubectl get svc nginx
+NAME    TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+nginx   ClusterIP   172.16.252.40   <none>        80/TCP    2m32s
+[root@10-206-0-3 ~]# kubectl get ep nginx
+NAME    ENDPOINTS                         AGE
+nginx   172.16.0.196:80,172.16.0.197:80   2m34s
+```
+
+梳理一下数据包流向：
+
+1、数据包首先进入NAT表的PREROUTING链，然后将所有请求都交由KUBE-SERVICES链。
+
+```shell
+[root@VM-0-16-centos ~]# iptables -t nat -S PREROUTING
+-P PREROUTING ACCEPT
+-A PREROUTING -m comment --comment "kubernetes service portals" -j KUBE-SERVICES
+```
+
+2、在KUBE-SERVICES链上，如果请求的目的ip和port在KUBE-CLUSTER-IP对应的ipset里面，则会命中规则继续跳往KUBE-MARK-MASQ链。
+
+```shell
+[root@VM-0-16-centos ~]# iptables -t nat -S KUBE-SERVICES
+-N KUBE-SERVICES
+-A KUBE-SERVICES -m comment --comment "Kubernetes service cluster ip + port for masquerade purpose" -m set --match-set KUBE-CLUSTER-IP src,dst -j KUBE-MARK-MASQ
+-A KUBE-SERVICES -m addrtype --dst-type LOCAL -j KUBE-NODE-PORT
+-A KUBE-SERVICES -m set --match-set KUBE-CLUSTER-IP dst,dst -j ACCEPT
+```
+
+注：`-m set --match-set`是iptables的一种扩展模式，依靠ipset大大降低iptables规则数目。
+
+```shell
+[root@VM-0-16-centos ~]# ipset list KUBE-CLUSTER-IP
+Name: KUBE-CLUSTER-IP
+Type: hash:ip,port
+Revision: 5
+Header: family inet hashsize 1024 maxelem 65536
+Size in memory: 440
+References: 2
+Number of entries: 5
+Members:
+172.16.255.254,udp:53
+172.16.252.1,tcp:443
+172.16.254.132,tcp:443
+172.16.255.254,tcp:53
+172.16.252.40,tcp:80
+```
+
+3、数据会到KUBE-MARK-MASQ链上过一遍，主要就是为其打上标签，方便后续做自动SNAT。
+
+```shell
+[root@VM-0-16-centos ~]# iptables -t nat -S KUBE-MARK-MASQ
+-N KUBE-MARK-MASQ
+-A KUBE-MARK-MASQ -j MARK --set-xmark 0x4000/0x4000
+```
+
+注：标签不一定是`0x4000/0x4000`
+
+4、接下来数据会进入filter表的INPUT链，在此链上会将所有数据转向KUBE-FIREWALL链。
+
+```
+[root@VM-0-16-centos ~]# iptables -S INPUT
+-P INPUT ACCEPT
+-A INPUT -j KUBE-FIREWALL
+```
+
+5、在KUBE-FIREWALL链上，如果发现数据包打了0x8000/0x8000就将包DROP掉。
+
+```shell
+[root@VM-0-16-centos ~]# iptables -S KUBE-FIREWALL
+-N KUBE-FIREWALL
+-A KUBE-FIREWALL -m comment --comment "kubernetes firewall for dropping marked packets" -m mark --mark 0x8000/0x8000 -j DROP
+-A KUBE-FIREWALL ! -s 127.0.0.0/8 -d 127.0.0.0/8 -m comment --comment "block incoming localnet connections" -m conntrack ! --ctstate RELATED,ESTABLISHED,DNAT -j DROP
+```
+
+注：与iptables模式一样，异常数据包会在此处丢掉。比如创建了SVC，但是没有对应的endpoint，访问这种SVC的报文就会走此链被无情DROP掉。
+
+6、ipvs工作在INPUT链上，在其做完DNAT之后数据库会直接转发到KUBE-POSTROUTING链上。进入KUBE-POSTROUTING链，对打了标记`0x4000/0x4000`的数据包做SNAT转换。
+
+```shell
+[root@VM-0-16-centos ~]# iptables -t nat -S KUBE-POSTROUTING
+-N KUBE-POSTROUTING
+-A KUBE-POSTROUTING -m comment --comment "kubernetes service traffic requiring SNAT" -m mark --mark 0x4000/0x4000 -j MASQUERADE
+-A KUBE-POSTROUTING -m comment --comment "Kubernetes endpoints dst ip:port, source ip for solving hairpin purpose" -m set --match-set KUBE-LOOP-BACK dst,dst,src -j MASQUERADE
+```
+
+**NodePort**
+
+```shell
+[root@10-206-0-3 ~]# kubectl get pod -o wide
+NAME                    READY   STATUS    RESTARTS   AGE   IP             NODE          NOMINATED NODE   READINESS GATES
+nginx-9d776f4cf-5psws   1/1     Running   0          23m   172.16.0.197   10.206.0.16   <none>           <none>
+nginx-9d776f4cf-vcq86   1/1     Running   0          24m   172.16.0.196   10.206.0.16   <none>           <none>
+[root@10-206-0-3 ~]# kubectl get svc nginx
+NAME    TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+nginx   NodePort   172.16.252.40   <none>        80:32684/TCP   25m
+[root@10-206-0-3 ~]# kubectl get ep nginx
+NAME    ENDPOINTS                         AGE
+nginx   172.16.0.196:80,172.16.0.197:80   25m
+```
+
+梳理一下数据包流向：
+
+1、与ClusterIP一样，数据包首先进入NAT表的PREROUTING链，然后将所有请求都交由KUBE-SERVICES链。
+
+```shell
+[root@VM-0-16-centos ~]# iptables -t nat -S PREROUTING
+-P PREROUTING ACCEPT
+-A PREROUTING -m comment --comment "kubernetes service portals" -j KUBE-SERVICES
+```
+
+2、在KUBE-SERVICES链上，如果进来的流量是通过NodePort访问的，则会命中`-A KUBE-SERVICES -m addrtype --dst-type LOCAL -j KUBE-NODE-PORT`规则。
+
+```shell
+[root@VM-0-16-centos ~]# iptables -t nat -S KUBE-SERVICES
+-N KUBE-SERVICES
+-A KUBE-SERVICES -m comment --comment "Kubernetes service cluster ip + port for masquerade purpose" -m set --match-set KUBE-CLUSTER-IP src,dst -j KUBE-MARK-MASQ
+-A KUBE-SERVICES -m addrtype --dst-type LOCAL -j KUBE-NODE-PORT
+-A KUBE-SERVICES -m set --match-set KUBE-CLUSTER-IP dst,dst -j ACCEPT
+```
+
+3、在`KUBE-NODE-PORT`链上就将流量转入`KUBE-MARK-MASQ`链，也是为了为其打上标签`0x4000/0x4000`，方便后续做自动SNAT。
+
+```shell
+[root@VM-0-16-centos ~]# iptables -t nat -S KUBE-NODE-PORT
+-N KUBE-NODE-PORT
+-A KUBE-NODE-PORT -p tcp -m comment --comment "Kubernetes nodeport TCP port for masquerade purpose" -m set --match-set KUBE-NODE-PORT-TCP dst -j KUBE-MARK-MASQ
+```
+
+```shell
+[root@VM-0-16-centos ~]# iptables -t nat -S KUBE-MARK-MASQ
+-N KUBE-MARK-MASQ
+-A KUBE-MARK-MASQ -j MARK --set-xmark 0x4000/0x4000
+```
+
+注：此处也使用了iptables扩展。
+
+
+```shell
+[root@VM-0-16-centos ~]# ipset list KUBE-NODE-PORT-TCP
+Name: KUBE-NODE-PORT-TCP
+Type: bitmap:port
+Revision: 3
+Header: range 0-65535
+Size in memory: 8300
+References: 1
+Number of entries: 1
+Members:
+32684
+```
+
+后续的流程跟ClusterIP一致。
