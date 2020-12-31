@@ -1,6 +1,4 @@
-11# ReadingNotes
-记录所学知识点，以期温故而知新
-包含网络、Linux、信息安全、数据库、容器、Coding等
+# ReadingNotes
 
 # 目录 #
 
@@ -123,6 +121,9 @@
 
 	- [Linux内核调优部分参数说明](https://github.com/SecurityNeo/ReadingNotes/blob/master/Linux/%E6%80%A7%E8%83%BD/Linux%E5%86%85%E6%A0%B8%E8%B0%83%E4%BC%98%E9%83%A8%E5%88%86%E5%8F%82%E6%95%B0%E8%AF%B4%E6%98%8E.md)
 
+- Shell
+
+	- [Shell命令备忘录](https://github.com/SecurityNeo/ReadingNotes/blob/master/Linux/Shell/Shell%E5%91%BD%E4%BB%A4%E5%A4%87%E5%BF%98%E5%BD%95.md)
 
 ## 网络 ##
 
@@ -164,6 +165,7 @@
 	- [Kubernetes Admission Webhooks](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Kubernetes/Kubernetes%20Admission%20Webhooks.md)
 	- [kubernetes集群相关参数优化](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Kubernetes/Kubernetes%E9%9B%86%E7%BE%A4%E4%B8%AD%E7%9A%84%E5%8F%82%E6%95%B0%E4%BC%98%E5%8C%96.md)
 	- [博文收藏](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Kubernetes/%E5%8D%9A%E6%96%87%E6%94%B6%E8%97%8F.md)
+	- [kube proxy](https://github.com/SecurityNeo/ReadingNotes/blob/master/PaaS/Kubernetes/Kubernetes%E7%BD%91%E7%BB%9C.md)
 
 - 微服务
 
