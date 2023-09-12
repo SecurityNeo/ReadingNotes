@@ -859,6 +859,6 @@ while read line
 do
   time=$(date +'%Y-%m-%d %T')
   echo "================================= $time =================================" >> /var/log/data-back.log
-  rsync -avurtopg --delete /data/* /data-back >> /var/log/data-back.log
+  rsync -avurtopg --delete /data/ /data-back/ >> /var/log/data-back.log
 done
 ```
