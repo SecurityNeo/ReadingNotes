@@ -840,3 +840,25 @@ PING 10.1.1.1 (10.1.1.1) 56(84) bytes of data.
 2 packets transmitted, 2 received, 0% packet loss, time 999ms
 rtt min/avg/max/mdev = 0.052/0.061/0.071/0.012 ms
 ```
+
+## 清理部分文件 ##
+
+如下示例：找出/data目录下（除/data/base/下的文件）30天未访问的文件并删除
+```shell
+find /data -not -path "/data/base/*" -ctime +30 -type f -name "*" -exec rm -rf {} \;
+```
+
+## 文件同步 ##
+
+如下示例实现实时同步/data下的文件至/daba-back目录，并打印日志
+```shell
+#!/bin/bash
+
+inotifywait -mrq /data/  --format '%w%f'  -e create,delete,close_write,moved_to|\
+while read line
+do
+  time=$(date +'%Y-%m-%d %T')
+  echo "================================= $time =================================" >> /var/log/data-back.log
+  rsync -avurtopg --delete /data/* /data-back >> /var/log/data-back.log
+done
+```
