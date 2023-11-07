@@ -866,28 +866,43 @@ done
 ## 数据库维护相关 ##
 1、GTID集群从库跳过错误position
 	(1)停止slave进程
+ ```shell
 	mysql> STOP SLAVE;
-
+```
 	(2)设置事务号，事务号从Retrieved_Gtid_Set获取，在session里设置gtid_next，即跳过这个GTID
+ ```shell
 	mysql> SET @@SESSION.GTID_NEXT= '8f9e146f-0a18-11e7-810a-0050568833c8:4'
+```
 
 	（3）设置空事物
+ ```shell
 	mysql> BEGIN; COMMIT;
+```
 
 	（4）恢复事物号
+ ```shell
 	mysql> SET SESSION GTID_NEXT = AUTOMATIC;
+```
 
 	(5)启动slave进程
+ ```shell
 	mysql> START SLAVE;
+```
 	
 2、导入数据报错“ERROR 1776 (HY000) at line 22: Parameters MASTER_LOG_FILE, MASTER_LOG_POS, RELAY_LOG_FILE and RELAY_LOG_POS cannot be set when MASTER_AUTO_POSITION is active.”
-	由于之前用的master_auto_position=1，现在改回0
+	
+ 	由于之前用的master_auto_position=1，现在改回0
+  ```shell
 	mysql> change master to master_auto_position=0;
+```
 
 3、GTID集群导出所有数据库
+```shell
 	mysqldump -u root -pcloudos --set-gtid-purged=OFF --single-transaction --master-data=1 --all-databases > data_bak_20220108.sql
+```
 
 3、手动切换主从
+```shell
 	(1)新主库
 	mysql> stop slave;
 	mysql> reset slave all;
@@ -902,3 +917,4 @@ done
 	(3)旧主库打开read only：
 	mysql> show variables like 'read_only';
 	mysql> SET @@global.read_only=ON;
+```
