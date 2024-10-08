@@ -848,6 +848,11 @@ rtt min/avg/max/mdev = 0.052/0.061/0.071/0.012 ms
 find /data -not -path "/data/base/*" -ctime +30 -type f -name "*" -exec rm -rf {} \;
 ```
 
+## iscsi开机自动登录 ##
+```shell
+iscsiadm -m node -T iqn.2018-01.com.h3c.onestor:81a072288c1f4e82a5d8fd67e52201fc -p 192.168.12.10:3260 --op update -n node.startup -v automatic
+```
+
 ## 文件同步 ##
 
 如下示例实现实时同步/data下的文件至/daba-back目录，并打印日志
